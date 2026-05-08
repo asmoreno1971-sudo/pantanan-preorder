@@ -596,7 +596,6 @@ button:disabled{
 }
 
 .notify-actions{
-  grid-template-columns:repeat(2, minmax(0, 1fr));
   padding-top:12px;
   border-top:1px solid #e4d8cd;
 }
@@ -621,18 +620,9 @@ button:disabled{
   min-height:46px;
 }
 
-.whatsapp-btn{
-  background:#25d366;
-  color:#0d2918;
-}
-
-.viber-btn{
-  background:#7360f2;
-  color:#fff;
-}
-
-.sms-btn{
-  grid-column:1 / -1;
+.notify-btn{
+  width:100%;
+  min-height:46px;
   background:#2f6f9f;
   color:#fff;
 }

@@ -1,13 +1,6 @@
 let seenOrderIds = new Set();
 let soundEnabled = false;
 let audioContext;
-let smsConfigured = false;
-
-async function loadConfig(){
-  const res = await fetch("/api/config");
-  const config = await res.json();
-  smsConfigured = Boolean(config.smsConfigured);
-}
 
 async function loadOrders(){
   const res = await fetch("/api/orders");
@@ -89,12 +82,8 @@ function orderCard(order){
       <strong>P${item.subtotal}</strong>
     </div>
   `).join("");
-  const messageButton = canOpenWhatsApp(order)
-    ? `
-      <button class="kitchen-action-btn whatsapp-btn" onclick="openWhatsAppCustomer('${order.id}')">Send WhatsApp</button>
-      <button class="kitchen-action-btn viber-btn" onclick="openViberCustomer('${order.id}')">Send Viber</button>
-      ${smsButton(order)}
-    `
+  const messageButton = order.customerContact
+    ? `<button class="kitchen-action-btn notify-btn" onclick="notifyCustomerReady('${order.id}')">Notify Customer</button>`
     : `<button class="kitchen-action-btn" onclick="messageCustomer('${order.id}')">No Valid Number</button>`;
   const doneButton = order.status === "Ready for Payment and Pickup"
     ? `<div class="order-status">Ready for payment and pickup</div>`
@@ -136,14 +125,6 @@ function emptyState(message){
   return `<div class="empty-state">${message}</div>`;
 }
 
-function smsButton(order){
-  if(!smsConfigured){
-    return "";
-  }
-
-  return `<button class="kitchen-action-btn sms-btn" onclick="openSmsCustomer('${order.id}')">Text Customer</button>`;
-}
-
 async function markDone(id){
   await finishOrder(id);
   await loadOrders();
@@ -173,7 +154,7 @@ async function messageCustomer(id){
   messageModal.classList.add("show");
 }
 
-async function openWhatsAppCustomer(id){
+async function notifyCustomerReady(id){
   const res = await fetch(`/api/orders/${id}`);
   const data = await res.json();
 
@@ -182,73 +163,13 @@ async function openWhatsAppCustomer(id){
   }
 
   const order = data.order;
-  const number = normalizeWhatsAppNumber(order.customerContact || "");
-
-  if(!number){
-    await messageCustomer(id);
-    return;
-  }
-
   const messageTextValue = customerMessage(order);
   await copyText(messageTextValue);
   await finishOrder(id);
-  const message = encodeURIComponent(messageTextValue);
-  window.location.href = `https://api.whatsapp.com/send?phone=${number}&text=${message}`;
-}
-
-async function openViberCustomer(id){
-  const res = await fetch(`/api/orders/${id}`);
-  const data = await res.json();
-
-  if(!data.ok){
-    return;
-  }
-
-  const order = data.order;
-  const number = normalizeWhatsAppNumber(order.customerContact || "");
-
-  if(!number){
-    await messageCustomer(id);
-    return;
-  }
-
-  await copyText(customerMessage(order));
-  await finishOrder(id);
-  window.location.href = `viber://chat?number=%2B${number}`;
-}
-
-async function openSmsCustomer(id){
-  if(!smsConfigured){
-    alert("Automatic SMS is not connected yet. Add your SMS API key in Render first.");
-    return;
-  }
-
-  const res = await fetch(`/api/orders/${id}`);
-  const data = await res.json();
-
-  if(!data.ok){
-    return;
-  }
-
-  const order = data.order;
-  const number = normalizeWhatsAppNumber(order.customerContact || "");
-
-  if(!number){
-    await messageCustomer(id);
-    return;
-  }
-
-  const messageTextValue = customerMessage(order);
-  await copyText(messageTextValue);
-  const smsRes = await fetch(`/api/orders/${id}/sms`, { method:"POST" });
-
-  if(smsRes.ok){
-    alert("Text message sent to customer.");
-    await loadOrders();
-    return;
-  }
-
-  alert("Text message was not sent. Please check your SMS API key or credits.");
+  messageContact.innerText = `Customer mobile: ${order.customerContact || "No contact"}`;
+  messageText.value = messageTextValue;
+  messageModal.classList.add("show");
+  await loadOrders();
 }
 
 async function finishOrder(id){
@@ -258,28 +179,6 @@ async function finishOrder(id){
 function customerMessage(order){
   const orderNumber = String(order.orderNumber || 0).padStart(3, "0");
   return `Your order #${orderNumber} is ready for payment and pickup.`;
-}
-
-function canOpenWhatsApp(order){
-  return Boolean(normalizeWhatsAppNumber(order.customerContact || ""));
-}
-
-function normalizeWhatsAppNumber(value){
-  const cleaned = String(value || "").replace(/\D/g, "");
-
-  if(cleaned.startsWith("09") && cleaned.length === 11){
-    return `63${cleaned.slice(1)}`;
-  }
-
-  if(cleaned.startsWith("9") && cleaned.length === 10){
-    return `63${cleaned}`;
-  }
-
-  if(cleaned.startsWith("63") && cleaned.length >= 12){
-    return cleaned;
-  }
-
-  return "";
 }
 
 function closeMessageModal(){
@@ -306,5 +205,5 @@ async function copyText(text){
   }
 }
 
-loadConfig().then(loadOrders);
+loadOrders();
 setInterval(loadOrders, 5000);
