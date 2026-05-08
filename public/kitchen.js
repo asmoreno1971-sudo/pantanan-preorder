@@ -126,7 +126,7 @@ function emptyState(message){
 }
 
 async function markDone(id){
-  await fetch(`/api/orders/${id}/done`, { method:"POST" });
+  await finishOrder(id);
   await loadOrders();
 }
 
@@ -172,6 +172,7 @@ async function openWhatsAppCustomer(id){
 
   const messageTextValue = customerMessage(order);
   await copyText(messageTextValue);
+  await finishOrder(id);
   const message = encodeURIComponent(messageTextValue);
   window.location.href = `https://api.whatsapp.com/send?phone=${number}&text=${message}`;
 }
@@ -193,12 +194,17 @@ async function openViberCustomer(id){
   }
 
   await copyText(customerMessage(order));
+  await finishOrder(id);
   window.location.href = `viber://chat?number=%2B${number}`;
+}
+
+async function finishOrder(id){
+  await fetch(`/api/orders/${id}/done`, { method:"POST" });
 }
 
 function customerMessage(order){
   const orderNumber = String(order.orderNumber || 0).padStart(3, "0");
-  return `Your order #${orderNumber} is ready for payment and pickup.`;
+  return `Your order #${orderNumber} is ready for pickup and payment.`;
 }
 
 function canOpenWhatsApp(order){
