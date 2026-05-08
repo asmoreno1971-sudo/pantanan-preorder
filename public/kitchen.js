@@ -86,9 +86,8 @@ function orderCard(order){
     ? `
       <button class="kitchen-action-btn" onclick="openWhatsAppCustomer('${order.id}')">WhatsApp</button>
       <button class="kitchen-action-btn" onclick="openViberCustomer('${order.id}')">Viber</button>
-      <button class="kitchen-action-btn" onclick="messageCustomer('${order.id}')">Copy Message</button>
     `
-    : `<button class="kitchen-action-btn" onclick="messageCustomer('${order.id}')">Copy Message</button>`;
+    : `<button class="kitchen-action-btn" onclick="messageCustomer('${order.id}')">No Valid Number</button>`;
   const doneButton = order.status === "Ready for Payment and Pickup"
     ? `<div class="order-status">Ready for payment and pickup</div>`
     : `
@@ -145,8 +144,7 @@ async function messageCustomer(id){
   }
 
   const order = data.order;
-  const number = String(order.orderNumber || 0).padStart(3, "0");
-  const message = `Your order #${number} is ready for payment and pickup.`;
+  const message = customerMessage(order);
   const contact = order.customerContact || order.customerMessenger || order.customerPhone || "";
 
   messageContact.innerText = contact
@@ -154,7 +152,6 @@ async function messageCustomer(id){
     : "No contact was saved for this order.";
   messageText.value = message;
   messageModal.classList.add("show");
-  copyCustomerMessage();
 }
 
 async function openWhatsAppCustomer(id){
@@ -173,8 +170,9 @@ async function openWhatsAppCustomer(id){
     return;
   }
 
-  const orderNumber = String(order.orderNumber || 0).padStart(3, "0");
-  const message = encodeURIComponent(`Your order #${orderNumber} is ready for payment and pickup.`);
+  const messageTextValue = customerMessage(order);
+  await copyText(messageTextValue);
+  const message = encodeURIComponent(messageTextValue);
   window.location.href = `https://api.whatsapp.com/send?phone=${number}&text=${message}`;
 }
 
@@ -194,14 +192,13 @@ async function openViberCustomer(id){
     return;
   }
 
-  const orderNumber = String(order.orderNumber || 0).padStart(3, "0");
-  const message = `Your order #${orderNumber} is ready for payment and pickup.`;
-
-  if(navigator.clipboard){
-    await navigator.clipboard.writeText(message);
-  }
-
+  await copyText(customerMessage(order));
   window.location.href = `viber://chat?number=%2B${number}`;
+}
+
+function customerMessage(order){
+  const orderNumber = String(order.orderNumber || 0).padStart(3, "0");
+  return `Your order #${orderNumber} is ready for payment and pickup.`;
 }
 
 function canOpenWhatsApp(order){
@@ -232,11 +229,21 @@ function closeMessageModal(){
 
 async function copyCustomerMessage(){
   messageText.select();
+  await copyText(messageText.value);
+}
 
+async function copyText(text){
   if(navigator.clipboard){
-    await navigator.clipboard.writeText(messageText.value);
+    await navigator.clipboard.writeText(text);
   }else{
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
     document.execCommand("copy");
+    textarea.remove();
   }
 }
 
