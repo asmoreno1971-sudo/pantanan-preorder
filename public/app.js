@@ -1,6 +1,7 @@
 let menu = [];
 const quantities = {};
 const categories = ["Sandwiches", "Drinks", "Cookies", "Others"];
+const openCategories = new Set(categories);
 const nameInput = document.getElementById("name");
 const contactInput = document.getElementById("contact");
 const timeDropdown = document.getElementById("timeSelect");
@@ -131,10 +132,18 @@ function renderMenu(){
       return;
     }
 
+    const isOpen = openCategories.has(category);
     const section = document.createElement("div");
     section.className = "category-section";
-    section.innerHTML = `<h4 class="category-title">${category}</h4>`;
+    section.innerHTML = `
+      <button class="category-toggle" onclick="toggleCategory('${category}')">
+        <span>${category}</span>
+        <span>${isOpen ? "Hide" : "Show"}</span>
+      </button>
+      <div class="category-items ${isOpen ? "" : "hidden"}"></div>
+    `;
     menuList.appendChild(section);
+    const categoryItems = section.querySelector(".category-items");
 
     items.forEach(item=>{
       if(quantities[item.id] === undefined){
@@ -162,9 +171,19 @@ function renderMenu(){
         </div>
       `;
 
-      section.appendChild(row);
+      categoryItems.appendChild(row);
     });
   });
+}
+
+function toggleCategory(category){
+  if(openCategories.has(category)){
+    openCategories.delete(category);
+  }else{
+    openCategories.add(category);
+  }
+
+  renderMenu();
 }
 
 function overlayClass(category){

@@ -166,14 +166,29 @@ select:focus{
   margin-top:0;
 }
 
-.category-title{
+.category-toggle{
+  width:100%;
   margin:0;
-  padding:10px 0 4px;
+  padding:10px 12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-radius:6px;
+  background:#dfe9d6;
   color:#7a5a43;
   font-size:15px;
+  font-weight:bold;
   letter-spacing:.02em;
   text-transform:uppercase;
-  border-bottom:1px solid #dccfc3;
+}
+
+.category-toggle span:last-child{
+  color:#2b6340;
+  font-size:12px;
+}
+
+.category-items{
+  border-top:1px solid #dccfc3;
 }
 
 .img-wrap{
