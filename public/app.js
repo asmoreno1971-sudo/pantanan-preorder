@@ -23,6 +23,16 @@ let activeOrderId = localStorage.getItem("activeOrderId") || "";
 let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
 let orderSubmitted = false;
 
+function loadSavedCustomer(){
+  nameInput.value = localStorage.getItem("customerNickname") || "";
+  contactInput.value = localStorage.getItem("customerContact") || "";
+}
+
+function saveCustomer(){
+  localStorage.setItem("customerNickname", nameInput.value.trim());
+  localStorage.setItem("customerContact", contactInput.value.trim());
+}
+
 async function loadMenu(){
   const res = await fetch("/api/menu");
   menu = await res.json();
@@ -69,8 +79,15 @@ timeDropdown.onchange = function(){
   validate();
 };
 
-nameInput.addEventListener("input", validate);
-contactInput.addEventListener("input", validate);
+nameInput.addEventListener("input", function(){
+  validate();
+  saveCustomer();
+});
+
+contactInput.addEventListener("input", function(){
+  validate();
+  saveCustomer();
+});
 
 document.addEventListener("keydown", function(e){
   if(e.key !== "Enter"){
@@ -271,6 +288,7 @@ async function openSummary(){
     return;
   }
 
+  saveCustomer();
   activeOrderId = data.order.id;
   localStorage.setItem("activeOrderId", activeOrderId);
   showCustomerStatus(data.order);
@@ -381,6 +399,8 @@ setInterval(updateNowTime, 1000);
 setInterval(checkActiveOrder, 5000);
 updateNowTime();
 generateTimes();
+loadSavedCustomer();
 loadMenu();
 checkActiveOrder();
 updateNotifyButton();
+validate();
