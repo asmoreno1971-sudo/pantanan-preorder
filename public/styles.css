@@ -503,90 +503,92 @@ button:disabled{
   font-size:13px;
 }
 
-.orders-list{
-  display:grid;
-  gap:12px;
-}
-
-.order-card{
+.orders-table-wrap{
+  overflow-x:auto;
   border:1px solid #dccfc3;
   border-radius:8px;
-  padding:18px;
   background:#fffaf4;
   box-shadow:0 10px 24px rgba(74,47,28,.07);
 }
 
-.order-head{
-  display:flex;
-  justify-content:space-between;
-  gap:12px;
-  align-items:flex-start;
-}
-
-.order-head strong{
-  display:block;
-  font-size:24px;
-}
-
-.order-head span,
-.order-meta{
-  color:#7a5a43;
+.orders-table{
+  width:100%;
+  min-width:780px;
+  border-collapse:collapse;
   font-size:14px;
+}
+
+.orders-table th,
+.orders-table td{
+  padding:12px;
+  border-bottom:1px solid #e4d8cd;
+  text-align:left;
+  vertical-align:top;
+}
+
+.orders-table th{
+  color:#7a5a43;
+  background:#f5eadf;
+  font-size:12px;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+}
+
+.orders-table tr:last-child td{
+  border-bottom:0;
+}
+
+.order-id{
+  display:block;
+  color:#b85c00;
+  font-weight:bold;
+  font-size:16px;
+}
+
+.order-meta{
+  display:block;
+  margin-top:4px;
+  color:#7a5a43;
+  font-size:12px;
+}
+
+.table-items{
+  display:grid;
+  gap:6px;
+}
+
+.table-item{
+  display:grid;
+  grid-template-columns:36px minmax(120px,1fr) 58px;
+  gap:8px;
+  align-items:start;
+}
+
+.table-item strong,
+.table-item span:last-child,
+.table-total{
+  color:#b85c00;
+  font-weight:bold;
+}
+
+.table-item span:last-child,
+.table-total{
+  text-align:right;
 }
 
 .order-status-line{
   display:inline-flex;
-  margin-top:10px;
   padding:6px 10px;
   border-radius:999px;
   background:#f5e3ca;
   color:#6f4e37;
-  font-size:13px;
-  font-weight:bold;
-}
-
-.order-id{
-  color:#b85c00;
-  font-weight:bold;
-  font-size:20px;
-}
-
-.kitchen-items{
-  margin-top:14px;
-  display:grid;
-  gap:10px;
-}
-
-.kitchen-item{
-  display:grid;
-  grid-template-columns:42px 1fr 56px 68px;
-  gap:10px;
-  align-items:center;
-  font-size:17px;
-}
-
-.kitchen-item strong{
-  color:#b85c00;
-}
-
-.kitchen-item span:nth-child(3),
-.kitchen-item strong:nth-child(4){
-  text-align:right;
-}
-
-.kitchen-total{
-  margin-top:12px;
-  padding-top:12px;
-  border-top:1px solid #e4d8cd;
-  text-align:right;
-  font-size:20px;
+  font-size:12px;
   font-weight:bold;
 }
 
 .kitchen-actions{
-  margin-top:14px;
   display:grid;
-  gap:12px;
+  gap:8px;
 }
 
 .workflow-actions,
@@ -596,7 +598,7 @@ button:disabled{
 }
 
 .notify-actions{
-  padding-top:12px;
+  padding-top:8px;
   border-top:1px solid #e4d8cd;
 }
 
@@ -617,12 +619,12 @@ button:disabled{
 
 .prepare-btn{
   width:100%;
-  min-height:46px;
+  min-height:38px;
 }
 
 .notify-btn{
   width:100%;
-  min-height:46px;
+  min-height:38px;
   background:#2f6f9f;
   color:#fff;
 }

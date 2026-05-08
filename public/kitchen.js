@@ -61,25 +61,51 @@ function renderOrders(orders){
   ordersContainer.innerHTML = `
     <section>
       <h4>Preparing <span>${activeOrders.length}</span></h4>
-      <div class="orders-list">${activeOrders.map(orderCard).join("") || emptyState("No active orders")}</div>
+      ${ordersTable(activeOrders, false)}
     </section>
 
     <section>
       <h4>Done <span>${doneOrders.length}</span></h4>
-      <div class="orders-list done-list">${doneOrders.map(orderCard).join("") || emptyState("No completed orders")}</div>
+      ${ordersTable(doneOrders, true)}
     </section>
   `;
 }
 
-function orderCard(order){
+function ordersTable(orders, done){
+  if(!orders.length){
+    return emptyState(done ? "No completed orders" : "No active orders");
+  }
+
+  return `
+    <div class="orders-table-wrap ${done ? "done-list" : ""}">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Customer</th>
+            <th>Pickup</th>
+            <th>Items</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${orders.map(order=>orderRow(order)).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function orderRow(order){
   const created = new Date(order.createdAt).toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
   const displayNumber = String(order.orderNumber || order.id.slice(-3)).padStart(3, "0");
   const items = order.items.map(item=>`
-    <div class="kitchen-item">
+    <div class="table-item">
       <strong>${item.qty}x</strong>
       <span>${item.name}</span>
-      <span>P${item.price}</span>
-      <strong>P${item.subtotal}</strong>
+      <span>P${item.subtotal}</span>
     </div>
   `).join("");
   const messageButton = order.customerContact
@@ -103,21 +129,15 @@ function orderCard(order){
     : order.status;
 
   return `
-    <article class="order-card">
-      <div class="order-head">
-        <div>
-          <strong>${order.customerName}</strong>
-          <span>Pickup ${order.pickupTime}</span>
-          <span>${order.customerContact || order.customerMessenger || order.customerPhone || "No contact"}</span>
-        </div>
-        <div class="order-id">#${displayNumber}</div>
-      </div>
-      <div class="order-meta">Sent ${created}</div>
-      <div class="order-status-line">${statusText}</div>
-      <div class="kitchen-items">${items}</div>
-      <div class="kitchen-total">Total P${order.total}</div>
-      ${doneButton}
-    </article>
+    <tr>
+      <td><strong class="order-id">#${displayNumber}</strong><span class="order-meta">Sent ${created}</span></td>
+      <td><strong>${order.customerName}</strong><span class="order-meta">${order.customerContact || order.customerMessenger || order.customerPhone || "No contact"}</span></td>
+      <td>${order.pickupTime}</td>
+      <td><div class="table-items">${items}</div></td>
+      <td class="table-total">P${order.total}</td>
+      <td><span class="order-status-line">${statusText}</span></td>
+      <td class="table-actions">${doneButton}</td>
+    </tr>
   `;
 }
 
