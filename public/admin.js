@@ -1,6 +1,6 @@
 let token = localStorage.getItem("adminToken") || "";
 let menu = [];
-const categories = ["Sandwiches", "Drinks", "Cookies", "Others"];
+const categories = ["Sandwiches", "Cookies", "Drinks"];
 const passwordInput = document.getElementById("password");
 const loginBox = document.getElementById("loginPanel");
 const editorBox = document.getElementById("editorPanel");
@@ -79,7 +79,7 @@ function addProduct(){
     name:`New Product ${nextNumber}`,
     price:0,
     theme:"latte",
-    category:"Others"
+    category:"Drinks"
   });
 
   renderEditor();
@@ -140,7 +140,8 @@ function statusText(message){
 }
 
 function normalizeCategory(category){
-  return category === "Sandwhich" || category === "Sandwich" ? "Sandwiches" : category || "Others";
+  const normalized = category === "Sandwhich" || category === "Sandwich" ? "Sandwiches" : category;
+  return categories.includes(normalized) ? normalized : "Drinks";
 }
 
 if(token){

@@ -168,13 +168,27 @@ select:focus{
 
 .category-title{
   margin:0;
-  padding:10px 0 4px;
-  color:#7a5a43;
+  padding:12px 14px;
+  color:#fff;
   font-size:15px;
   font-weight:bold;
   letter-spacing:.02em;
   text-transform:uppercase;
-  border-bottom:1px solid #dccfc3;
+  border-radius:8px;
+  border-bottom:0;
+  box-shadow:0 8px 18px rgba(74,47,28,.12);
+}
+
+.category-title-sandwiches{
+  background:#9b5a24;
+}
+
+.category-title-cookies{
+  background:#7e4880;
+}
+
+.category-title-drinks{
+  background:#2b6340;
 }
 
 .category-empty{

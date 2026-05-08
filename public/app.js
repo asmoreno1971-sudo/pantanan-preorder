@@ -1,6 +1,6 @@
 let menu = [];
 const quantities = {};
-const categories = ["Sandwiches", "Drinks", "Cookies", "Others"];
+const categories = ["Sandwiches", "Cookies", "Drinks"];
 const nameInput = document.getElementById("name");
 const contactInput = document.getElementById("contact");
 const timeDropdown = document.getElementById("timeSelect");
@@ -130,7 +130,7 @@ function renderMenu(){
     const section = document.createElement("div");
     section.className = "category-section";
     section.innerHTML = `
-      <h4 class="category-title">${category}</h4>
+      <h4 class="category-title ${categoryTitleClass(category)}">${category}</h4>
       <div class="category-items"></div>
     `;
     menuList.appendChild(section);
@@ -186,8 +186,14 @@ function overlayClass(category){
   return "";
 }
 
+function categoryTitleClass(category){
+  const normalized = normalizeCategory(category).toLowerCase();
+  return `category-title-${normalized}`;
+}
+
 function normalizeCategory(category){
-  return category === "Sandwhich" || category === "Sandwich" ? "Sandwiches" : category || "Others";
+  const normalized = category === "Sandwhich" || category === "Sandwich" ? "Sandwiches" : category;
+  return categories.includes(normalized) ? normalized : "Drinks";
 }
 
 function addFromImage(e,id){

@@ -137,7 +137,7 @@ async function handleApi(req, res){
       name: String(item.name || "Untitled Product").trim(),
       price: Math.max(0, Number(item.price) || 0),
       theme: String(item.theme || "latte"),
-      category: String(item.category || "Others"),
+      category: String(item.category || "Drinks"),
       image: String(item.image || "")
     }));
 
