@@ -400,7 +400,7 @@ function dismissCustomerStatus(){
 
 function showCustomerStatus(order){
   const message = {
-    "Order Sent":"Your order has been sent. Please wait for kitchen confirmation.",
+    "Order Sent":"Your order has been sent. Wait for confirmation.",
     "Preparing Order":"Your order is now being prepared.",
     "Ready for Payment and Pickup":"Your order is ready for payment and pickup."
   }[order.status] || order.status;
@@ -408,11 +408,25 @@ function showCustomerStatus(order){
   const displayNumber = String(order.orderNumber || order.id.slice(-3)).padStart(3, "0");
   customerStatusTitle.innerText = `Order #${displayNumber}`;
   customerStatusText.innerText = message;
+  customerStatus.classList.remove("status-sent", "status-preparing", "status-ready");
+  customerStatus.classList.add(statusClass(order.status));
   customerStatus.classList.remove("hidden");
 
   if(order.status === "Ready for Payment and Pickup"){
     notifyCustomer(order, "Pantanan order ready", "Your order is ready for payment and pickup.");
   }
+}
+
+function statusClass(status){
+  if(status === "Ready for Payment and Pickup"){
+    return "status-ready";
+  }
+
+  if(status === "Preparing Order"){
+    return "status-preparing";
+  }
+
+  return "status-sent";
 }
 
 function notifyCustomer(order,title,message){
