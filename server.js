@@ -23,6 +23,12 @@ const types = {
   ".json": "application/json; charset=utf-8"
 };
 
+function requestPath(req){
+  const url = new URL(req.url, "http://localhost");
+  const pathname = url.pathname;
+  return pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname;
+}
+
 function send(res, status, body, type = "application/json; charset=utf-8"){
   res.writeHead(status, {
     "Content-Type": type,
@@ -73,12 +79,14 @@ function isAdmin(req){
 }
 
 async function handleApi(req, res){
-  if(req.url === "/health" && req.method === "GET"){
+  const pathname = requestPath(req);
+
+  if(pathname === "/health" && req.method === "GET"){
     send(res, 200, JSON.stringify({ ok:true, service:"pantanan-preorder" }));
     return true;
   }
 
-  if(req.url === "/api/config" && req.method === "GET"){
+  if(pathname === "/api/config" && req.method === "GET"){
     send(res, 200, JSON.stringify({
       messengerLink:process.env.PANTANAN_MESSENGER_LINK || "https://facebook.com/alexander.moreno.2929",
       whatsappLink:process.env.PANTANAN_WHATSAPP_LINK || "https://wa.me/639695093050"
@@ -86,12 +94,12 @@ async function handleApi(req, res){
     return true;
   }
 
-  if(req.url === "/api/menu" && req.method === "GET"){
+  if(pathname === "/api/menu" && req.method === "GET"){
     send(res, 200, await fs.readFile(menuPath, "utf8"));
     return true;
   }
 
-  if(req.url === "/api/admin/login" && req.method === "POST"){
+  if(pathname === "/api/admin/login" && req.method === "POST"){
     const body = JSON.parse(await readBody(req) || "{}");
 
     if(body.password !== adminPassword){
@@ -105,7 +113,7 @@ async function handleApi(req, res){
     return true;
   }
 
-  if(req.url === "/api/menu" && req.method === "PUT"){
+  if(pathname === "/api/menu" && req.method === "PUT"){
     if(!isAdmin(req)){
       send(res, 401, JSON.stringify({ ok:false, message:"Admin login required" }));
       return true;
@@ -132,13 +140,13 @@ async function handleApi(req, res){
     return true;
   }
 
-  if(req.url === "/api/orders" && req.method === "GET"){
+  if(pathname === "/api/orders" && req.method === "GET"){
     send(res, 200, JSON.stringify(await readOrders()));
     return true;
   }
 
-  if(req.url.startsWith("/api/orders/") && req.method === "GET"){
-    const id = req.url.split("/")[3];
+  if(pathname.startsWith("/api/orders/") && req.method === "GET"){
+    const id = pathname.split("/")[3];
     const orders = await readOrders();
     const order = orders.find(item=>item.id === id);
 
@@ -151,7 +159,7 @@ async function handleApi(req, res){
     return true;
   }
 
-  if(req.url === "/api/orders" && req.method === "POST"){
+  if(pathname === "/api/orders" && req.method === "POST"){
     const body = JSON.parse(await readBody(req) || "{}");
     const menu = JSON.parse(await fs.readFile(menuPath, "utf8"));
     const orders = await readOrders();
@@ -203,8 +211,8 @@ async function handleApi(req, res){
     return true;
   }
 
-  if(req.url.startsWith("/api/orders/") && req.url.endsWith("/preparing") && req.method === "POST"){
-    const id = req.url.split("/")[3];
+  if(pathname.startsWith("/api/orders/") && pathname.endsWith("/preparing") && req.method === "POST"){
+    const id = pathname.split("/")[3];
     const orders = await readOrders();
     const order = orders.find(item=>item.id === id);
 
@@ -220,8 +228,8 @@ async function handleApi(req, res){
     return true;
   }
 
-  if(req.url.startsWith("/api/orders/") && req.url.endsWith("/done") && req.method === "POST"){
-    const id = req.url.split("/")[3];
+  if(pathname.startsWith("/api/orders/") && pathname.endsWith("/done") && req.method === "POST"){
+    const id = pathname.split("/")[3];
     const orders = await readOrders();
     const order = orders.find(item=>item.id === id);
 
@@ -241,6 +249,7 @@ async function handleApi(req, res){
 }
 
 async function serveStatic(req, res){
+  const pathname = requestPath(req);
   const routes = {
     "/": "index.html",
     "/admin": "admin.html",
@@ -248,7 +257,7 @@ async function serveStatic(req, res){
     "/qr": "qr.html"
   };
 
-  const requested = routes[req.url] || req.url.replace(/^\//, "");
+  const requested = routes[pathname] || pathname.replace(/^\//, "");
   const filePath = path.normalize(path.join(publicDir, requested));
 
   if(!filePath.startsWith(publicDir)){
