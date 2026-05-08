@@ -53,19 +53,23 @@ function generateTimes(){
   let hasAvailableSlot = false;
   const now = new Date();
   now.setMinutes(now.getMinutes() + 30);
+  const start = new Date();
+  start.setHours(8, 30, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  end.setHours(1, 0, 0, 0);
 
-  for(let i = 510; i <= 1260; i += 15){
-    const slot = new Date();
-    slot.setHours(Math.floor(i / 60), i % 60);
+  for(let slot = new Date(start); slot <= end; slot.setMinutes(slot.getMinutes() + 15)){
+    const slotTime = new Date(slot);
 
-    if(slot < now){
+    if(slotTime < now){
       continue;
     }
 
-    const h = slot.getHours();
+    const h = slotTime.getHours();
     const ap = h >= 12 ? "PM" : "AM";
     const dh = h % 12 || 12;
-    const dm = slot.getMinutes().toString().padStart(2,"0");
+    const dm = slotTime.getMinutes().toString().padStart(2,"0");
     const t = `${dh}:${dm} ${ap}`;
     const opt = document.createElement("option");
     opt.value = t;
