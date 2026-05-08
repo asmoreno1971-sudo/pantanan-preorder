@@ -50,6 +50,7 @@ function updateNowTime(){
 }
 
 function generateTimes(){
+  let hasAvailableSlot = false;
   const now = new Date();
   now.setMinutes(now.getMinutes() + 30);
 
@@ -69,6 +70,15 @@ function generateTimes(){
     const opt = document.createElement("option");
     opt.value = t;
     opt.textContent = t;
+    timeDropdown.appendChild(opt);
+    hasAvailableSlot = true;
+  }
+
+  if(!hasAvailableSlot){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "No more slots today";
+    opt.disabled = true;
     timeDropdown.appendChild(opt);
   }
 }
@@ -261,23 +271,49 @@ function validate(){
 
   const hasItem = Object.values(quantities).some(qty=>qty > 0);
   const contactVal = contactInput.value.trim();
-  const valid = nameVal && contactVal && hasItem && !orderSubmitted;
-  orderButton.disabled = !valid;
-  orderButton.style.background = valid ? "#6f4e37" : "#ccc";
+  const valid = nameVal && contactVal && hasItem && timeDropdown.value && !orderSubmitted;
+  orderButton.disabled = orderSubmitted;
+  orderButton.style.background = valid || !orderSubmitted ? "#6f4e37" : "#ccc";
 }
 
 async function openSummary(){
+  const nameVal = nameInput.value.trim();
+  const contactVal = contactInput.value.trim();
+  const pickupTime = timeDropdown.value || selectedTime.value;
   const items = menu
     .filter(item=>quantities[item.id] > 0)
     .map(item=>({ id:item.id, qty:quantities[item.id] }));
+
+  if(!nameVal){
+    alert("Please enter your nickname.");
+    nameInput.focus();
+    return;
+  }
+
+  if(!contactVal){
+    alert("Please enter your Viber/WhatsApp number.");
+    contactInput.focus();
+    return;
+  }
+
+  if(!pickupTime){
+    alert("Please select an available pickup time.");
+    timeDropdown.focus();
+    return;
+  }
+
+  if(!items.length){
+    alert("Please tap a product photo to add an item.");
+    return;
+  }
 
   const res = await fetch("/api/orders", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({
-      customerName:nameInput.value.trim(),
-      customerContact:contactInput.value.trim(),
-      pickupTime:selectedTime.value || "ASAP",
+      customerName:nameVal,
+      customerContact:contactVal,
+      pickupTime,
       items
     })
   });
