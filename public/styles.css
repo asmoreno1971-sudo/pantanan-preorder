@@ -151,7 +151,7 @@ select:focus{
 
 .menu-row{
   display:grid;
-  grid-template-columns:132px 120px minmax(260px,1fr);
+  grid-template-columns:132px minmax(230px,1fr) 82px;
   align-items:center;
   gap:14px;
   padding:12px 0;
@@ -242,12 +242,12 @@ select:focus{
   background:rgba(126,72,128,0.92);
 }
 
-.controls{
-  display:grid;
-  grid-template-columns:40px 72px;
+.order-line{
+  display:flex;
   align-items:center;
-  justify-content:start;
-  gap:6px;
+  justify-content:flex-start;
+  gap:12px;
+  min-width:0;
 }
 
 .cancel-btn{
@@ -274,7 +274,7 @@ select:focus{
 
 .price-group{
   display:flex;
-  justify-content:flex-end;
+  justify-content:flex-start;
   align-items:center;
   gap:6px;
   font-family:monospace;
@@ -283,8 +283,8 @@ select:focus{
 }
 
 .subtotal{
-  width:90px;
-  text-align:right;
+  min-width:54px;
+  text-align:left;
   color:#b85c00;
   font-weight:bold;
 }
@@ -792,7 +792,7 @@ button:disabled{
   }
 
   .menu-row{
-    grid-template-columns:96px 1fr;
+    grid-template-columns:96px 1fr 74px;
     gap:10px 12px;
     padding:10px 0;
   }
@@ -803,9 +803,12 @@ button:disabled{
     grid-row:span 2;
   }
 
-  .controls,
   .price-group{
     justify-content:flex-start;
+  }
+
+  .order-line{
+    gap:8px;
   }
 
   .price-group{
@@ -841,14 +844,8 @@ button:disabled{
   }
 
   .menu-row{
-    grid-template-columns:132px 120px;
+    grid-template-columns:132px minmax(230px,1fr) 82px;
     gap:4px 14px;
     padding:10px 0;
-  }
-
-  .price-group{
-    grid-column:1 / -1;
-    justify-content:flex-start;
-    padding-left:146px;
   }
 }

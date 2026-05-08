@@ -160,15 +160,15 @@ function renderMenu(){
           <div class="overlay-name ${overlayClass(item.category)}">${item.name}</div>
         </div>
 
-        <div class="controls">
+        <div class="order-line">
           <div id="q-${item.id}" class="qty">${quantities[item.id]}</div>
-          <button class="cancel-btn" onclick="changeQty('${item.id}',-1)">Cancel</button>
+          <div class="price-group">
+            x P${item.price} =
+            <span id="s-${item.id}" class="subtotal">P0</span>
+          </div>
         </div>
 
-        <div class="price-group">
-          x P${item.price} =
-          <span id="s-${item.id}" class="subtotal">P0</span>
-        </div>
+        <button class="cancel-btn" onclick="changeQty('${item.id}',-1)">Cancel</button>
       `;
 
       categoryItems.appendChild(row);
