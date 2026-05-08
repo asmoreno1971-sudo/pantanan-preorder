@@ -328,6 +328,7 @@ async function openSummary(){
   activeOrderId = data.order.id;
   localStorage.setItem("activeOrderId", activeOrderId);
   showCustomerStatus(data.order);
+  resetOrderForm();
 
   const displayNumber = String(data.order.orderNumber || data.order.id.slice(-3)).padStart(3, "0");
   successTitle.innerText = `Order #${displayNumber}`;
@@ -336,6 +337,21 @@ async function openSummary(){
   orderSubmitted = true;
   orderButton.innerText = "Order Sent";
   validate();
+}
+
+function resetOrderForm(){
+  nameInput.value = "";
+  contactInput.value = "";
+  timeDropdown.value = "";
+  selectedTime.value = "";
+  summaryTimeText.innerText = "--";
+
+  Object.keys(quantities).forEach(id=>{
+    quantities[id] = 0;
+  });
+
+  updateTotal();
+  summaryTitleText.innerHTML = "Order Summary";
 }
 
 function closeSuccessModal(){
