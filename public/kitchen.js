@@ -91,8 +91,8 @@ function orderCard(order){
   `).join("");
   const messageButton = canOpenWhatsApp(order)
     ? `
-      <button class="kitchen-action-btn" onclick="openWhatsAppCustomer('${order.id}')">Send WhatsApp</button>
-      <button class="kitchen-action-btn" onclick="openViberCustomer('${order.id}')">Send Viber</button>
+      <button class="kitchen-action-btn whatsapp-btn" onclick="openWhatsAppCustomer('${order.id}')">Send WhatsApp</button>
+      <button class="kitchen-action-btn viber-btn" onclick="openViberCustomer('${order.id}')">Send Viber</button>
       ${smsButton(order)}
     `
     : `<button class="kitchen-action-btn" onclick="messageCustomer('${order.id}')">No Valid Number</button>`;
@@ -100,9 +100,12 @@ function orderCard(order){
     ? `<div class="order-status">Ready for payment and pickup</div>`
     : `
       <div class="kitchen-actions">
-        <button class="kitchen-action-btn ${order.status === "Preparing Order" ? "active" : ""}" onclick="markPreparing('${order.id}')">Preparing Order</button>
-        <button class="kitchen-action-btn" onclick="markDone('${order.id}')">Mark Done</button>
-        ${messageButton}
+        <div class="workflow-actions">
+          <button class="kitchen-action-btn prepare-btn ${order.status === "Preparing Order" ? "active" : ""}" onclick="markPreparing('${order.id}')">Preparing Order</button>
+        </div>
+        <div class="notify-actions">
+          ${messageButton}
+        </div>
       </div>
     `;
 
@@ -138,7 +141,7 @@ function smsButton(order){
     return "";
   }
 
-  return `<button class="kitchen-action-btn" onclick="openSmsCustomer('${order.id}')">Text Customer</button>`;
+  return `<button class="kitchen-action-btn sms-btn" onclick="openSmsCustomer('${order.id}')">Text Customer</button>`;
 }
 
 async function markDone(id){
