@@ -309,6 +309,10 @@ function validate(){
 }
 
 async function openSummary(){
+  if(orderSubmitted){
+    return;
+  }
+
   const nameVal = nameInput.value.trim();
   const contactVal = contactInput.value.trim();
   const pickupTime = timeDropdown.value || selectedTime.value;
@@ -339,20 +343,39 @@ async function openSummary(){
     return;
   }
 
-  const res = await fetch("/api/orders", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      customerName:nameVal,
-      customerContact:contactVal,
-      pickupTime,
-      items
-    })
-  });
-  const data = await res.json();
+  orderSubmitted = true;
+  orderButton.disabled = true;
+  orderButton.innerText = "Sending...";
+
+  let data;
+
+  try{
+    const res = await fetch("/api/orders", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({
+        customerName:nameVal,
+        customerContact:contactVal,
+        pickupTime,
+        items
+      })
+    });
+    data = await res.json();
+  }catch{
+    orderSubmitted = false;
+    orderButton.disabled = false;
+    orderButton.innerText = "Place Order";
+    alert("Unable to send order. Please check your internet connection and try again.");
+    validate();
+    return;
+  }
 
   if(!data.ok){
+    orderSubmitted = false;
+    orderButton.disabled = false;
+    orderButton.innerText = "Place Order";
     alert(data.message || "Unable to send order");
+    validate();
     return;
   }
 
@@ -366,7 +389,6 @@ async function openSummary(){
   successTitle.innerText = `Order #${displayNumber}`;
   successText.innerText = "Your order has been sent. Please wait for kitchen confirmation.";
   modal.classList.add("show");
-  orderSubmitted = true;
   orderButton.innerText = "Order Sent";
   validate();
 }
