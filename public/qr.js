@@ -1,12 +1,10 @@
 loadQr();
 
 async function loadQr(){
-  const res = await fetch("/api/config");
-  const config = await res.json();
-  const pantananContactLink = config.whatsappLink || config.messengerLink;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=14&data=${encodeURIComponent(pantananContactLink)}`;
+  const orderMenuLink = `${window.location.origin}/`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=14&data=${encodeURIComponent(orderMenuLink)}`;
 
-  messengerQr.src = qrUrl;
-  messengerLink.href = pantananContactLink;
-  qrTarget.innerText = pantananContactLink;
+  orderQr.src = qrUrl;
+  orderLink.href = orderMenuLink;
+  qrTarget.innerText = orderMenuLink;
 }
