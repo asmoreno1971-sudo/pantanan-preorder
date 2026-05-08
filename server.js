@@ -102,7 +102,7 @@ function normalizePhilippineMobileNumber(value){
     return `63${cleaned}`;
   }
 
-  if(cleaned.startsWith("63") && cleaned.length >= 12){
+  if(cleaned.startsWith("639") && cleaned.length === 12){
     return cleaned;
   }
 
@@ -295,9 +295,15 @@ async function handleApi(req, res){
       .filter(Boolean);
 
     const customerContact = String(body.customerContact || body.customerMessenger || "").trim();
+    const normalizedContact = normalizePhilippineMobileNumber(customerContact);
 
     if(!body.customerName || !customerContact || !body.pickupTime || cleanItems.length === 0){
       send(res, 400, JSON.stringify({ ok:false, message:"Order is incomplete" }));
+      return true;
+    }
+
+    if(!normalizedContact){
+      send(res, 400, JSON.stringify({ ok:false, message:"Please enter a valid Philippine mobile number." }));
       return true;
     }
 
@@ -308,7 +314,7 @@ async function handleApi(req, res){
       orderNumber,
       orderDate: localOrderDate(),
       customerName: String(body.customerName).trim().toUpperCase(),
-      customerContact,
+      customerContact:normalizedContact,
       pickupTime: String(body.pickupTime),
       status: "Order Sent",
       createdAt: new Date().toISOString(),

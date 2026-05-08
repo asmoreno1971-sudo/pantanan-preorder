@@ -332,6 +332,12 @@ async function openSummary(){
     return;
   }
 
+  if(!normalizeMobileNumber(contactVal)){
+    alert("Please enter a valid Philippine mobile number.");
+    contactInput.focus();
+    return;
+  }
+
   if(!pickupTime){
     alert("Please select an available pickup time.");
     timeDropdown.focus();
@@ -391,6 +397,24 @@ async function openSummary(){
   modal.classList.add("show");
   orderButton.innerText = "Order Sent";
   validate();
+}
+
+function normalizeMobileNumber(value){
+  const cleaned = String(value || "").replace(/\D/g, "");
+
+  if(cleaned.startsWith("09") && cleaned.length === 11){
+    return `63${cleaned.slice(1)}`;
+  }
+
+  if(cleaned.startsWith("9") && cleaned.length === 10){
+    return `63${cleaned}`;
+  }
+
+  if(cleaned.startsWith("639") && cleaned.length === 12){
+    return cleaned;
+  }
+
+  return "";
 }
 
 function resetOrderForm(){
