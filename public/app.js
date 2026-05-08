@@ -40,14 +40,10 @@ function updateNowTime(){
 }
 
 function generateTimes(){
-  selectedTime.value = "ASAP";
-  summaryTimeText.innerHTML = "<strong>ASAP</strong>";
-  timeDropdown.disabled = true;
-
   const now = new Date();
   now.setMinutes(now.getMinutes() + 30);
 
-  for(let i = 510; i <= 1320; i += 15){
+  for(let i = 510; i <= 990; i += 15){
     const slot = new Date();
     slot.setHours(Math.floor(i / 60), i % 60);
 
