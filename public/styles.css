@@ -166,29 +166,15 @@ select:focus{
   margin-top:0;
 }
 
-.category-toggle{
-  width:100%;
+.category-title{
   margin:0;
-  padding:10px 12px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  border-radius:6px;
-  background:#dfe9d6;
+  padding:10px 0 4px;
   color:#7a5a43;
   font-size:15px;
   font-weight:bold;
   letter-spacing:.02em;
   text-transform:uppercase;
-}
-
-.category-toggle span:last-child{
-  color:#2b6340;
-  font-size:12px;
-}
-
-.category-items{
-  border-top:1px solid #dccfc3;
+  border-bottom:1px solid #dccfc3;
 }
 
 .category-empty{
