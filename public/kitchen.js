@@ -86,6 +86,7 @@ function orderCard(order){
     ? `
       <button class="kitchen-action-btn" onclick="openWhatsAppCustomer('${order.id}')">Send WhatsApp</button>
       <button class="kitchen-action-btn" onclick="openViberCustomer('${order.id}')">Send Viber</button>
+      <button class="kitchen-action-btn" onclick="openSmsCustomer('${order.id}')">Text Customer</button>
     `
     : `<button class="kitchen-action-btn" onclick="messageCustomer('${order.id}')">No Valid Number</button>`;
   const doneButton = order.status === "Ready for Payment and Pickup"
@@ -196,6 +197,29 @@ async function openViberCustomer(id){
   await copyText(customerMessage(order));
   await finishOrder(id);
   window.location.href = `viber://chat?number=%2B${number}`;
+}
+
+async function openSmsCustomer(id){
+  const res = await fetch(`/api/orders/${id}`);
+  const data = await res.json();
+
+  if(!data.ok){
+    return;
+  }
+
+  const order = data.order;
+  const number = normalizeWhatsAppNumber(order.customerContact || "");
+
+  if(!number){
+    await messageCustomer(id);
+    return;
+  }
+
+  const messageTextValue = customerMessage(order);
+  await copyText(messageTextValue);
+  await finishOrder(id);
+  const message = encodeURIComponent(messageTextValue);
+  window.location.href = `sms:+${number}?body=${message}`;
 }
 
 async function finishOrder(id){
