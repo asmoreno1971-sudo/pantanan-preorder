@@ -1,6 +1,6 @@
 let token = localStorage.getItem("adminToken") || "";
 let menu = [];
-const categories = ["Sandwich", "Drinks", "Cookies", "Others"];
+const categories = ["Sandwiches", "Drinks", "Cookies", "Others"];
 const passwordInput = document.getElementById("password");
 const loginBox = document.getElementById("loginPanel");
 const editorBox = document.getElementById("editorPanel");
@@ -59,7 +59,7 @@ function renderEditor(){
       <button class="danger-btn" onclick="removeProduct(${index})">Remove</button>
     `;
     editorList.appendChild(row);
-    row.querySelector("select").value = item.category || "Others";
+    row.querySelector("select").value = normalizeCategory(item.category);
   });
 }
 
@@ -137,6 +137,10 @@ async function exportCustomers(){
 
 function statusText(message){
   statusLabel.innerText = message;
+}
+
+function normalizeCategory(category){
+  return category === "Sandwhich" || category === "Sandwich" ? "Sandwiches" : category || "Others";
 }
 
 if(token){
