@@ -50,6 +50,16 @@ select{
   outline:none;
 }
 
+.field-label{
+  display:block;
+  max-width:330px;
+  margin:4px 0 6px;
+  color:#6f4e37;
+  font-size:13px;
+  font-weight:bold;
+  text-transform:uppercase;
+}
+
 input:focus,
 select:focus{
   border-color:#8d684f;

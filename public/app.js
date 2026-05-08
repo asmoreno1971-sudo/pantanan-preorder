@@ -252,7 +252,7 @@ function updateSummary(total){
 }
 
 function validate(){
-  nameInput.value = nameInput.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 10);
+  nameInput.value = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
   const nameVal = nameInput.value.trim();
 
   summaryTitleText.innerHTML = nameVal
