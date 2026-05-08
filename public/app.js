@@ -13,12 +13,15 @@ const currentTimeText = document.getElementById("nowTime");
 const summaryItems = document.getElementById("liveSummary");
 const totalText = document.getElementById("liveTotal");
 const modal = document.getElementById("successModal");
+const successTitle = document.getElementById("successTitle");
+const successText = document.getElementById("successText");
 const customerStatus = document.getElementById("customerStatus");
 const customerStatusTitle = document.getElementById("customerStatusTitle");
 const customerStatusText = document.getElementById("customerStatusText");
 const notifyButton = document.getElementById("notifyBtn");
 let activeOrderId = localStorage.getItem("activeOrderId") || "";
 let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
+let orderSubmitted = false;
 
 async function loadMenu(){
   const res = await fetch("/api/menu");
@@ -245,7 +248,7 @@ function validate(){
 
   const hasItem = Object.values(quantities).some(qty=>qty > 0);
   const contactVal = contactInput.value.trim();
-  const valid = nameVal && contactVal && hasItem;
+  const valid = nameVal && contactVal && hasItem && !orderSubmitted;
   orderButton.disabled = !valid;
   orderButton.style.background = valid ? "#6f4e37" : "#ccc";
 }
@@ -275,7 +278,14 @@ async function openSummary(){
   activeOrderId = data.order.id;
   localStorage.setItem("activeOrderId", activeOrderId);
   showCustomerStatus(data.order);
-  window.location.href = "/kitchen";
+
+  const displayNumber = String(data.order.orderNumber || data.order.id.slice(-3)).padStart(3, "0");
+  successTitle.innerText = `Order #${displayNumber}`;
+  successText.innerText = "Your order has been sent. Please wait for kitchen confirmation.";
+  modal.classList.add("show");
+  orderSubmitted = true;
+  orderButton.innerText = "Order Sent";
+  validate();
 }
 
 function closeSuccessModal(){
