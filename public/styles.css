@@ -648,7 +648,7 @@ button:disabled{
   background:#fffaf4;
   box-shadow:0 16px 35px rgba(74,47,28,.16);
   z-index:9;
-  animation:status-pop .42s ease-out, status-breathe 2.6s ease-in-out infinite;
+  animation:status-pop .42s ease-out, status-alert-pulse 1.25s ease-in-out infinite;
   transform-origin:bottom right;
 }
 
@@ -667,7 +667,6 @@ button:disabled{
 .customer-status.status-ready{
   border-color:#78a66d;
   background:#e6f7e7;
-  animation:status-pop .42s ease-out, status-ready-pulse 1.25s ease-in-out infinite;
   box-shadow:0 16px 35px rgba(34,89,45,.2);
 }
 
@@ -683,27 +682,16 @@ button:disabled{
   }
 }
 
-@keyframes status-breathe{
-  0%,
-  100%{
-    transform:translateY(0);
-  }
-
-  50%{
-    transform:translateY(-3px);
-  }
-}
-
-@keyframes status-ready-pulse{
+@keyframes status-alert-pulse{
   0%,
   100%{
     transform:translateY(0) scale(1);
-    box-shadow:0 16px 35px rgba(34,89,45,.2);
+    filter:brightness(1);
   }
 
   50%{
     transform:translateY(-4px) scale(1.02);
-    box-shadow:0 18px 42px rgba(34,89,45,.34);
+    filter:brightness(1.04);
   }
 }
 
