@@ -1,6 +1,6 @@
 let menu = [];
 const quantities = {};
-const categories = ["Sandwhich", "Drinks", "Cookies", "Others"];
+const categories = ["Sandwich", "Drinks", "Cookies", "Others"];
 const nameInput = document.getElementById("name");
 const contactInput = document.getElementById("contact");
 const timeDropdown = document.getElementById("timeSelect");
@@ -125,7 +125,7 @@ function renderMenu(){
   menuList.innerHTML = "";
 
   categories.forEach(category=>{
-    const items = menu.filter(item=>(item.category || "Others") === category);
+    const items = menu.filter(item=>normalizeCategory(item.category) === category);
 
     if(!items.length){
       return;
@@ -168,9 +168,9 @@ function renderMenu(){
 }
 
 function overlayClass(category){
-  const normalized = category || "Others";
+  const normalized = normalizeCategory(category);
 
-  if(normalized === "Sandwhich"){
+  if(normalized === "Sandwich"){
     return "sandwich-overlay";
   }
 
@@ -179,6 +179,10 @@ function overlayClass(category){
   }
 
   return "";
+}
+
+function normalizeCategory(category){
+  return category === "Sandwhich" ? "Sandwich" : category || "Others";
 }
 
 function addFromImage(e,id){
@@ -191,15 +195,15 @@ function addFromImage(e,id){
 }
 
 function productImage(item){
-  const category = item.category || "Others";
+  const category = normalizeCategory(item.category);
   const palettes = {
-    Sandwhich:["#efc486", "#8a5530", "#fff2c7", "#72a35b"],
+    Sandwich:["#efc486", "#8a5530", "#fff2c7", "#72a35b"],
     Drinks:["#dcae73", "#5b3322", "#fff2dd", "#b78052"],
     Cookies:["#c9854d", "#5f341f", "#f5c982", "#3f2418"],
     Others:["#c8d6c3", "#4d6048", "#f2ead8", "#829b7a"]
   };
   const [bg, dark, light, accent] = palettes[category] || palettes.Others;
-  const art = category === "Sandwhich"
+  const art = category === "Sandwich"
     ? `<path d="M34 88 L110 24 L186 88 Z" fill="${light}"/>
        <path d="M48 86 L110 39 L172 86 Z" fill="${accent}"/>
        <path d="M58 88 L110 51 L162 88 Z" fill="${dark}" opacity=".8"/>

@@ -1,6 +1,6 @@
 let token = localStorage.getItem("adminToken") || "";
 let menu = [];
-const categories = ["Sandwhich", "Drinks", "Cookies", "Others"];
+const categories = ["Sandwich", "Drinks", "Cookies", "Others"];
 const passwordInput = document.getElementById("password");
 const loginBox = document.getElementById("loginPanel");
 const editorBox = document.getElementById("editorPanel");
