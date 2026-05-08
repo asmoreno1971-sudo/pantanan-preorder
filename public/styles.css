@@ -212,6 +212,14 @@ select:focus{
   padding:6px;
 }
 
+.sandwich-overlay{
+  background:rgba(151,91,35,0.92);
+}
+
+.cookie-overlay{
+  background:rgba(126,72,128,0.92);
+}
+
 .controls{
   display:grid;
   grid-template-columns:40px 72px;

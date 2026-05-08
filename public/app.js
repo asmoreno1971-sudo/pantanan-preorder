@@ -148,7 +148,7 @@ function renderMenu(){
       row.innerHTML = `
         <div class="img-wrap" role="button" tabindex="0" onclick="changeQty('${item.id}',1)" onkeydown="addFromImage(event,'${item.id}')">
           <img class="product-img" src="${image}" alt="${item.name}" onerror="this.onerror=null;this.src='${fallback}'">
-          <div class="overlay-name">${item.name}</div>
+          <div class="overlay-name ${overlayClass(item.category)}">${item.name}</div>
         </div>
 
         <div class="controls">
@@ -165,6 +165,20 @@ function renderMenu(){
       section.appendChild(row);
     });
   });
+}
+
+function overlayClass(category){
+  const normalized = category || "Others";
+
+  if(normalized === "Sandwhich"){
+    return "sandwich-overlay";
+  }
+
+  if(normalized === "Cookies"){
+    return "cookie-overlay";
+  }
+
+  return "";
 }
 
 function addFromImage(e,id){
