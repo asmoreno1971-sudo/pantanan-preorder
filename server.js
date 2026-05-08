@@ -10,6 +10,8 @@ const ordersPath = path.join(root, "orders.json");
 const port = Number(process.env.PORT) || 3001;
 const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
 const fallbackAdminPassword = "2929";
+const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
+const semaphoreSenderName = process.env.SEMAPHORE_SENDER_NAME || "";
 const sessions = new Set();
 
 if(process.env.NODE_ENV === "production" && adminPassword === "admin123"){
@@ -82,6 +84,58 @@ function isAdmin(req){
 function csvCell(value){
   const text = String(value ?? "");
   return `"${text.replace(/"/g, '""')}"`;
+}
+
+function customerReadyMessage(order){
+  const orderNumber = String(order.orderNumber || 0).padStart(3, "0");
+  return `Your order #${orderNumber} is ready for payment and pickup.`;
+}
+
+function normalizePhilippineMobileNumber(value){
+  const cleaned = String(value || "").replace(/\D/g, "");
+
+  if(cleaned.startsWith("09") && cleaned.length === 11){
+    return `63${cleaned.slice(1)}`;
+  }
+
+  if(cleaned.startsWith("9") && cleaned.length === 10){
+    return `63${cleaned}`;
+  }
+
+  if(cleaned.startsWith("63") && cleaned.length >= 12){
+    return cleaned;
+  }
+
+  return "";
+}
+
+async function sendSms(number, message){
+  if(!semaphoreApiKey){
+    return { ok:false, fallback:true, message:"SMS gateway is not configured yet." };
+  }
+
+  const body = new URLSearchParams({
+    apikey:semaphoreApiKey,
+    number,
+    message
+  });
+
+  if(semaphoreSenderName){
+    body.set("sendername", semaphoreSenderName);
+  }
+
+  const response = await fetch("https://api.semaphore.co/api/v4/messages", {
+    method:"POST",
+    headers:{ "Content-Type":"application/x-www-form-urlencoded" },
+    body
+  });
+  const text = await response.text();
+
+  if(!response.ok){
+    return { ok:false, message:`SMS send failed: ${text}` };
+  }
+
+  return { ok:true, response:text };
 }
 
 async function handleApi(req, res){
@@ -296,6 +350,40 @@ async function handleApi(req, res){
 
     order.status = "Ready for Payment and Pickup";
     order.doneAt = new Date().toISOString();
+    await writeOrders(orders);
+    send(res, 200, JSON.stringify({ ok:true, order }));
+    return true;
+  }
+
+  if(pathname.startsWith("/api/orders/") && pathname.endsWith("/sms") && req.method === "POST"){
+    const id = pathname.split("/")[3];
+    const orders = await readOrders();
+    const order = orders.find(item=>item.id === id);
+
+    if(!order){
+      send(res, 404, JSON.stringify({ ok:false, message:"Order not found" }));
+      return true;
+    }
+
+    const number = normalizePhilippineMobileNumber(order.customerContact || "");
+
+    if(!number){
+      send(res, 400, JSON.stringify({ ok:false, message:"Customer number is not a valid mobile number." }));
+      return true;
+    }
+
+    const message = customerReadyMessage(order);
+    const smsResult = await sendSms(number, message);
+
+    if(!smsResult.ok){
+      send(res, smsResult.fallback ? 503 : 502, JSON.stringify(smsResult));
+      return true;
+    }
+
+    order.status = "Ready for Payment and Pickup";
+    order.doneAt = new Date().toISOString();
+    order.smsSentAt = order.doneAt;
+    order.smsRecipient = number;
     await writeOrders(orders);
     send(res, 200, JSON.stringify({ ok:true, order }));
     return true;

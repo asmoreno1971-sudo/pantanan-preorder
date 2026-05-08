@@ -217,8 +217,16 @@ async function openSmsCustomer(id){
 
   const messageTextValue = customerMessage(order);
   await copyText(messageTextValue);
-  await finishOrder(id);
+  const smsRes = await fetch(`/api/orders/${id}/sms`, { method:"POST" });
+
+  if(smsRes.ok){
+    alert("Text message sent to customer.");
+    await loadOrders();
+    return;
+  }
+
   const message = encodeURIComponent(messageTextValue);
+  await finishOrder(id);
   window.location.href = `sms:+${number}?body=${message}`;
 }
 
