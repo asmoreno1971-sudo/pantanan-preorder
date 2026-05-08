@@ -678,16 +678,6 @@ button:disabled{
   color:#5a4334;
 }
 
-.notify-btn{
-  width:100%;
-  margin-top:12px;
-  background:#b85c00;
-}
-
-.notify-btn.enabled{
-  background:#6f4e37;
-}
-
 .order-status,
 .empty-state{
   margin-top:14px;

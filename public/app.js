@@ -18,7 +18,6 @@ const successText = document.getElementById("successText");
 const customerStatus = document.getElementById("customerStatus");
 const customerStatusTitle = document.getElementById("customerStatusTitle");
 const customerStatusText = document.getElementById("customerStatusText");
-const notifyButton = document.getElementById("notifyBtn");
 let activeOrderId = localStorage.getItem("activeOrderId") || "";
 let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
 let orderSubmitted = false;
@@ -410,33 +409,9 @@ function showCustomerStatus(order){
   customerStatusTitle.innerText = `Order #${displayNumber}`;
   customerStatusText.innerText = message;
   customerStatus.classList.remove("hidden");
-  updateNotifyButton();
 
   if(order.status === "Ready for Payment and Pickup"){
     notifyCustomer(order, "Pantanan order ready", "Your order is ready for payment and pickup.");
-  }
-}
-
-function enableCustomerNotifications(){
-  if(!("Notification" in window)){
-    alert("Notifications are not supported on this browser.");
-    return;
-  }
-
-  Notification.requestPermission().then(updateNotifyButton);
-}
-
-function updateNotifyButton(){
-  if(!notifyButton || !("Notification" in window)){
-    return;
-  }
-
-  if(Notification.permission === "granted"){
-    notifyButton.innerText = "Phone Alert Enabled";
-    notifyButton.classList.add("enabled");
-  }else{
-    notifyButton.innerText = "Enable Phone Alert";
-    notifyButton.classList.remove("enabled");
   }
 }
 
@@ -487,5 +462,4 @@ generateTimes();
 loadSavedCustomer();
 loadMenu();
 checkActiveOrder();
-updateNotifyButton();
 validate();
