@@ -51,17 +51,16 @@ function updateNowTime(){
 function generateTimes(){
   let hasAvailableSlot = false;
   const now = new Date();
-  now.setMinutes(now.getMinutes() + 30);
+  const earliest = nextQuarterHour(new Date(now.getTime() + 15 * 60 * 1000));
   const start = new Date();
-  start.setHours(8, 30, 0, 0);
+  start.setHours(8, 0, 0, 0);
   const end = new Date(start);
-  end.setDate(end.getDate() + 1);
-  end.setHours(1, 0, 0, 0);
+  end.setHours(16, 30, 0, 0);
 
   for(let slot = new Date(start); slot <= end; slot.setMinutes(slot.getMinutes() + 15)){
     const slotTime = new Date(slot);
 
-    if(slotTime < now){
+    if(slotTime < earliest){
       continue;
     }
 
@@ -463,6 +462,14 @@ function showCustomerStatus(order){
   if(order.status === "Ready for Payment and Pickup"){
     notifyCustomer(order, "Pantanan order ready", "Your order is ready for payment and pickup.");
   }
+}
+
+function nextQuarterHour(date){
+  const rounded = new Date(date);
+  const minutes = rounded.getMinutes();
+  const nextMinutes = Math.ceil(minutes / 15) * 15;
+  rounded.setMinutes(nextMinutes, 0, 0);
+  return rounded;
 }
 
 function statusClass(status){
