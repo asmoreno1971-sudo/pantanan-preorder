@@ -303,7 +303,7 @@ function validate(){
 
   const hasItem = Object.values(quantities).some(qty=>qty > 0);
   const contactVal = contactInput.value.trim();
-  const valid = nameVal && contactVal && hasItem && timeDropdown.value && !orderSubmitted;
+  const valid = nameVal && contactVal && hasItem && timeDropdown.value;
   orderButton.disabled = orderSubmitted;
   orderButton.style.background = valid || !orderSubmitted ? "#6f4e37" : "#ccc";
 }
@@ -393,9 +393,11 @@ async function openSummary(){
 
   const displayNumber = String(data.order.orderNumber || data.order.id.slice(-3)).padStart(3, "0");
   successTitle.innerText = `Order #${displayNumber}`;
-  successText.innerText = "Your order has been sent. Please wait for kitchen confirmation.";
+  successText.innerText = "Your order has been sent. Wait for confirmation.";
   modal.classList.add("show");
-  orderButton.innerText = "Order Sent";
+  orderSubmitted = false;
+  orderButton.disabled = false;
+  orderButton.innerText = "Place Order";
   validate();
 }
 
