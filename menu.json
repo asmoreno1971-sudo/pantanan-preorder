@@ -1,0 +1,66 @@
+[
+  {
+    "id": "iced-latte",
+    "name": "Iced Latte R",
+    "price": 70,
+    "theme": "latte",
+    "category": "Drinks",
+    "image": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=420&q=80"
+  },
+  {
+    "id": "spanish-latte",
+    "name": "Iced Latte L",
+    "price": 80,
+    "theme": "spanish",
+    "category": "Drinks",
+    "image": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=420&q=80"
+  },
+  {
+    "id": "americano",
+    "name": "Biscoff",
+    "price": 60,
+    "theme": "americano",
+    "category": "Cookies",
+    "image": "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=420&q=80"
+  },
+  {
+    "id": "matcha",
+    "name": "Matcha Cream",
+    "price": 145,
+    "theme": "matcha",
+    "category": "Drinks",
+    "image": "https://images.unsplash.com/photo-1515823064-d6e0c04616a7?auto=format&fit=crop&w=420&q=80"
+  },
+  {
+    "id": "new-product-1778125887567",
+    "name": "Iced Spanish Latte R",
+    "price": 70,
+    "theme": "latte",
+    "category": "Drinks",
+    "image": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=420&q=80"
+  },
+  {
+    "id": "new-product-1778125921250",
+    "name": "Iced Spanish Latte L",
+    "price": 80,
+    "theme": "latte",
+    "category": "Drinks",
+    "image": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=420&q=80"
+  },
+  {
+    "id": "new-product-1778125974124",
+    "name": "Nutella",
+    "price": 60,
+    "theme": "latte",
+    "category": "Cookies",
+    "image": "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=420&q=80"
+  },
+  {
+    "id": "new-product-1778126157710",
+    "name": "Cookies & Cream Cookie1",
+    "price": 60,
+    "theme": "latte",
+    "category": "Cookies",
+    "image": "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=420&q=80"
+  }
+]

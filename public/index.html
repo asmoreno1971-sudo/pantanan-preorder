@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Preorder Menu</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="page">
+<div class="main">
+<h3>Preorder Menu</h3>
+
+<input id="name" placeholder="Your Name" style="text-transform:uppercase;">
+
+<input id="contact" placeholder="Contact Number or Messenger Name">
+
+<h4>Available Time</h4>
+<select id="timeSelect">
+<option value="ASAP">ASAP</option>
+</select>
+<input type="hidden" id="time">
+
+<div id="menuContainer"></div>
+</div>
+
+<div class="summary-panel">
+<div class="summary-brand">Pantanan</div>
+<div id="nowTime" class="current-time"></div>
+<h3 id="summaryTitle">Order Summary</h3>
+
+<div class="summary-time">
+Order available at:
+<br><strong><span id="summaryTime">--</span></strong>
+</div>
+
+<div id="liveSummary">No items yet</div>
+
+<div class="summary-total">
+Total P<span id="liveTotal">0</span>
+</div>
+
+<button id="orderBtn" disabled onclick="openSummary()">Place Order</button>
+</div>
+</div>
+
+<div id="customerStatus" class="customer-status hidden">
+<button class="status-close" onclick="dismissCustomerStatus()" aria-label="Close order status">x</button>
+<strong id="customerStatusTitle">Order status</strong>
+<p id="customerStatusText"></p>
+<button id="notifyBtn" class="notify-btn" onclick="enableCustomerNotifications()">Enable Phone Alert</button>
+</div>
+
+<div id="successModal" class="modal-backdrop">
+<div class="modal">
+<h3>Order sent</h3>
+<p>Successfully sent. Kindly wait for your order status.</p>
+<div class="modal-actions">
+<button class="secondary-btn" onclick="closeSuccessModal()">Keep Editing</button>
+<button onclick="location.reload()">Start New Order</button>
+</div>
+</div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

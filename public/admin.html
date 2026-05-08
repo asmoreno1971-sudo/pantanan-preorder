@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Products</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="admin-shell">
+<h3>Admin Products</h3>
+
+<div id="loginPanel" class="admin-panel">
+<h4>Admin Login</h4>
+<input id="password" type="password" placeholder="Admin password">
+<button onclick="login()">Login</button>
+</div>
+
+<div id="editorPanel" class="admin-panel hidden">
+<h4>Edit Products</h4>
+<div id="productEditor"></div>
+<div class="admin-actions">
+<button class="secondary-btn" onclick="addProduct()">Add Product</button>
+<button onclick="saveMenu()">Save Products</button>
+<a href="/">Customer Page</a>
+<span id="status" class="status"></span>
+</div>
+</div>
+</div>
+
+<script src="/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Kitchen Orders</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="kitchen-shell">
+<div class="kitchen-top">
+<h3>Kitchen Orders</h3>
+<div class="sound-control">
+<button id="soundBtn" onclick="enableSound()">Enable Sound</button>
+<span id="soundStatus">Click once to allow alerts</span>
+</div>
+<a href="/qr">Messenger QR</a>
+<a href="/">Customer Page</a>
+</div>
+<div id="ordersContainer" class="orders-grid"></div>
+</div>
+
+<div id="messageModal" class="modal-backdrop">
+<div class="modal">
+<h3>Pantanan Kiosk</h3>
+<p id="messageContact"></p>
+<textarea id="messageText" class="message-text" readonly></textarea>
+<div class="modal-actions">
+<button class="secondary-btn" onclick="closeMessageModal()">Close</button>
+</div>
+</div>
+</div>
+
+<script src="/kitchen.js"></script>
+</body>
+</html>
