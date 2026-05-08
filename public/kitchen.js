@@ -225,9 +225,7 @@ async function openSmsCustomer(id){
     return;
   }
 
-  const message = encodeURIComponent(messageTextValue);
-  await finishOrder(id);
-  window.location.href = `sms:+${number}?body=${message}`;
+  alert("Automatic SMS is not connected yet. Add your SMS API key in Render first.");
 }
 
 async function finishOrder(id){
