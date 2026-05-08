@@ -128,10 +128,6 @@ function renderMenu(){
   categories.forEach(category=>{
     const items = menu.filter(item=>normalizeCategory(item.category) === category);
 
-    if(!items.length){
-      return;
-    }
-
     const isOpen = openCategories.has(category);
     const section = document.createElement("div");
     section.className = "category-section";
@@ -144,6 +140,11 @@ function renderMenu(){
     `;
     menuList.appendChild(section);
     const categoryItems = section.querySelector(".category-items");
+
+    if(!items.length){
+      categoryItems.innerHTML = `<div class="category-empty">No products yet</div>`;
+      return;
+    }
 
     items.forEach(item=>{
       if(quantities[item.id] === undefined){

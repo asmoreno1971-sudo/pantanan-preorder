@@ -191,6 +191,13 @@ select:focus{
   border-top:1px solid #dccfc3;
 }
 
+.category-empty{
+  padding:12px;
+  color:#7a5a43;
+  font-size:14px;
+  font-style:italic;
+}
+
 .img-wrap{
   position:relative;
   width:132px;
