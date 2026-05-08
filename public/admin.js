@@ -113,6 +113,28 @@ async function saveMenu(){
   statusText("Saved");
 }
 
+async function exportCustomers(){
+  const res = await fetch("/api/customers.csv", {
+    headers:{ "Authorization":`Bearer ${token}` }
+  });
+
+  if(!res.ok){
+    statusText("Export failed");
+    return;
+  }
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "pantanan-customers.csv";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  statusText("Customer list exported");
+}
+
 function statusText(message){
   statusLabel.innerText = message;
 }

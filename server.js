@@ -78,6 +78,11 @@ function isAdmin(req){
   return sessions.has(token);
 }
 
+function csvCell(value){
+  const text = String(value ?? "");
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
 async function handleApi(req, res){
   const pathname = requestPath(req);
 
@@ -142,6 +147,56 @@ async function handleApi(req, res){
 
   if(pathname === "/api/orders" && req.method === "GET"){
     send(res, 200, JSON.stringify(await readOrders()));
+    return true;
+  }
+
+  if(pathname === "/api/customers.csv" && req.method === "GET"){
+    if(!isAdmin(req)){
+      send(res, 401, "Admin login required", "text/plain; charset=utf-8");
+      return true;
+    }
+
+    const orders = await readOrders();
+    const seen = new Map();
+
+    orders.forEach(order=>{
+      const contact = String(order.customerContact || "").trim();
+
+      if(!contact){
+        return;
+      }
+
+      const key = contact.toLowerCase();
+      const previous = seen.get(key);
+
+      if(!previous || String(order.createdAt || "") > String(previous.createdAt || "")){
+        seen.set(key, order);
+      }
+    });
+
+    const rows = [
+      ["Nickname", "Contact", "Last Order Number", "Last Pickup Time", "Last Order Date"]
+    ];
+
+    [...seen.values()]
+      .sort((a, b)=>String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
+      .forEach(order=>{
+        rows.push([
+          order.customerName || "",
+          order.customerContact || "",
+          String(order.orderNumber || "").padStart(3, "0"),
+          order.pickupTime || "",
+          order.createdAt || ""
+        ]);
+      });
+
+    const csv = rows.map(row=>row.map(csvCell).join(",")).join("\n");
+    res.writeHead(200, {
+      "Content-Type":"text/csv; charset=utf-8",
+      "Content-Disposition":"attachment; filename=\"pantanan-customers.csv\"",
+      "Cache-Control":"no-store"
+    });
+    res.end(csv);
     return true;
   }
 
