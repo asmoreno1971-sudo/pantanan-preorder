@@ -10,10 +10,23 @@
 <div class="main">
 <h3>Preorder Menu</h3>
 
-<input id="name" placeholder="Your Nickname" maxlength="10" style="text-transform:uppercase;">
+<input
+id="name"
+name="nickname"
+placeholder="Your Nickname"
+maxlength="10"
+autocomplete="nickname"
+autocapitalize="characters"
+style="text-transform:uppercase;">
 
 <label class="field-label" for="contact">WhatsApp / Viber No.</label>
-<input id="contact" placeholder="Contact Number">
+<input
+id="contact"
+name="tel"
+type="tel"
+inputmode="tel"
+autocomplete="tel"
+placeholder="Contact Number">
 
 <h4>Available Time</h4>
 <select id="timeSelect">
@@ -61,6 +74,6 @@ Total P<span id="liveTotal">0</span>
 </div>
 </div>
 
-<script src="/app.js?v=20260509-phone-order-fix"></script>
+<script src="/app.js?v=20260509-mobile-autofill"></script>
 </body>
 </html>
