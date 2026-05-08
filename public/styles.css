@@ -206,7 +206,7 @@ select:focus{
   position:absolute;
   bottom:0;
   width:100%;
-  background:rgba(0,0,0,0.58);
+  background:rgba(43,99,64,0.9);
   color:#fff;
   font-size:13px;
   padding:6px;
