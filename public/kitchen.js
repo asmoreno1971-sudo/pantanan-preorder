@@ -1,6 +1,13 @@
 let seenOrderIds = new Set();
 let soundEnabled = false;
 let audioContext;
+let smsConfigured = false;
+
+async function loadConfig(){
+  const res = await fetch("/api/config");
+  const config = await res.json();
+  smsConfigured = Boolean(config.smsConfigured);
+}
 
 async function loadOrders(){
   const res = await fetch("/api/orders");
@@ -86,7 +93,7 @@ function orderCard(order){
     ? `
       <button class="kitchen-action-btn" onclick="openWhatsAppCustomer('${order.id}')">Send WhatsApp</button>
       <button class="kitchen-action-btn" onclick="openViberCustomer('${order.id}')">Send Viber</button>
-      <button class="kitchen-action-btn" onclick="openSmsCustomer('${order.id}')">Text Customer</button>
+      ${smsButton(order)}
     `
     : `<button class="kitchen-action-btn" onclick="messageCustomer('${order.id}')">No Valid Number</button>`;
   const doneButton = order.status === "Ready for Payment and Pickup"
@@ -124,6 +131,14 @@ function orderCard(order){
 
 function emptyState(message){
   return `<div class="empty-state">${message}</div>`;
+}
+
+function smsButton(order){
+  if(!smsConfigured){
+    return "";
+  }
+
+  return `<button class="kitchen-action-btn" onclick="openSmsCustomer('${order.id}')">Text Customer</button>`;
 }
 
 async function markDone(id){
@@ -200,6 +215,11 @@ async function openViberCustomer(id){
 }
 
 async function openSmsCustomer(id){
+  if(!smsConfigured){
+    alert("Automatic SMS is not connected yet. Add your SMS API key in Render first.");
+    return;
+  }
+
   const res = await fetch(`/api/orders/${id}`);
   const data = await res.json();
 
@@ -225,7 +245,7 @@ async function openSmsCustomer(id){
     return;
   }
 
-  alert("Automatic SMS is not connected yet. Add your SMS API key in Render first.");
+  alert("Text message was not sent. Please check your SMS API key or credits.");
 }
 
 async function finishOrder(id){
@@ -283,5 +303,5 @@ async function copyText(text){
   }
 }
 
-loadOrders();
+loadConfig().then(loadOrders);
 setInterval(loadOrders, 5000);

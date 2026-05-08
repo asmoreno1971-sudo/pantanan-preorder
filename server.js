@@ -149,7 +149,8 @@ async function handleApi(req, res){
   if(pathname === "/api/config" && req.method === "GET"){
     send(res, 200, JSON.stringify({
       messengerLink:process.env.PANTANAN_MESSENGER_LINK || "https://facebook.com/alexander.moreno.2929",
-      whatsappLink:process.env.PANTANAN_WHATSAPP_LINK || "https://wa.me/639695093050"
+      whatsappLink:process.env.PANTANAN_WHATSAPP_LINK || "https://wa.me/639695093050",
+      smsConfigured:Boolean(semaphoreApiKey)
     }));
     return true;
   }
