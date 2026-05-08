@@ -84,8 +84,8 @@ function orderCard(order){
   `).join("");
   const messageButton = canOpenWhatsApp(order)
     ? `
-      <button class="kitchen-action-btn" onclick="openWhatsAppCustomer('${order.id}')">WhatsApp</button>
-      <button class="kitchen-action-btn" onclick="openViberCustomer('${order.id}')">Viber</button>
+      <button class="kitchen-action-btn" onclick="openWhatsAppCustomer('${order.id}')">Send WhatsApp</button>
+      <button class="kitchen-action-btn" onclick="openViberCustomer('${order.id}')">Send Viber</button>
     `
     : `<button class="kitchen-action-btn" onclick="messageCustomer('${order.id}')">No Valid Number</button>`;
   const doneButton = order.status === "Ready for Payment and Pickup"
