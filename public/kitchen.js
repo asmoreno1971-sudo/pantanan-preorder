@@ -204,7 +204,7 @@ async function finishOrder(id){
 
 function customerMessage(order){
   const orderNumber = String(order.orderNumber || 0).padStart(3, "0");
-  return `Your order #${orderNumber} is ready for pickup and payment.`;
+  return `Your order #${orderNumber} is ready for payment and pickup.`;
 }
 
 function canOpenWhatsApp(order){
