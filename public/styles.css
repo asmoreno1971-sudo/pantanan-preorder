@@ -648,21 +648,63 @@ button:disabled{
   background:#fffaf4;
   box-shadow:0 16px 35px rgba(74,47,28,.16);
   z-index:9;
+  animation:status-pop .42s ease-out, status-breathe 2.6s ease-in-out infinite;
+  transform-origin:bottom right;
 }
 
 .customer-status.status-sent{
   border-color:#dcbf7b;
   background:#fff4d6;
+  box-shadow:0 16px 35px rgba(122,85,0,.18);
 }
 
 .customer-status.status-preparing{
   border-color:#87a6cf;
   background:#eaf2ff;
+  box-shadow:0 16px 35px rgba(38,73,111,.18);
 }
 
 .customer-status.status-ready{
   border-color:#78a66d;
   background:#e6f7e7;
+  animation:status-pop .42s ease-out, status-ready-pulse 1.25s ease-in-out infinite;
+  box-shadow:0 16px 35px rgba(34,89,45,.2);
+}
+
+@keyframes status-pop{
+  0%{
+    opacity:0;
+    transform:translateY(18px) scale(.96);
+  }
+
+  100%{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+@keyframes status-breathe{
+  0%,
+  100%{
+    transform:translateY(0);
+  }
+
+  50%{
+    transform:translateY(-3px);
+  }
+}
+
+@keyframes status-ready-pulse{
+  0%,
+  100%{
+    transform:translateY(0) scale(1);
+    box-shadow:0 16px 35px rgba(34,89,45,.2);
+  }
+
+  50%{
+    transform:translateY(-4px) scale(1.02);
+    box-shadow:0 18px 42px rgba(34,89,45,.34);
+  }
 }
 
 .status-close{
