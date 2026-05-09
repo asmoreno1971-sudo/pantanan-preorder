@@ -616,9 +616,10 @@ button:disabled{
 }
 
 .kitchen-action-btn.active{
-  background:linear-gradient(135deg, #d97706, #9b4a12);
+  background:linear-gradient(135deg, #22c55e, #15803d);
   color:#fff;
-  box-shadow:0 0 0 3px rgba(217,119,6,.18), 0 10px 22px rgba(155,74,18,.24);
+  box-shadow:0 0 0 3px rgba(34,197,94,.2), 0 10px 22px rgba(21,128,61,.26);
+  animation:preparing-pulse 1.25s ease-in-out infinite;
 }
 
 .prepare-btn{
@@ -636,6 +637,19 @@ button:disabled{
   background:linear-gradient(135deg, #14b8a6, #0f766e);
   color:#fff;
   box-shadow:0 6px 14px rgba(15,118,110,.18);
+}
+
+@keyframes preparing-pulse{
+  0%,
+  100%{
+    transform:translateY(0) scale(1);
+    filter:brightness(1);
+  }
+
+  50%{
+    transform:translateY(-2px) scale(1.03);
+    filter:brightness(1.08);
+  }
 }
 
 .customer-status{
