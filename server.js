@@ -338,8 +338,10 @@ async function handleApi(req, res){
       return true;
     }
 
-    order.status = "Preparing Order";
-    order.preparingAt = new Date().toISOString();
+    if(order.status !== "Preparing Order"){
+      order.status = "Preparing Order";
+      order.preparingAt = new Date().toISOString();
+    }
     await writeOrders(orders);
     send(res, 200, JSON.stringify({ ok:true, order }));
     return true;

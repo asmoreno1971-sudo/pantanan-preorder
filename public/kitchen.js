@@ -244,6 +244,12 @@ async function markDone(id){
 }
 
 async function markPreparing(id){
+  const order = currentOrders.find(item=>item.id === id);
+
+  if(order && order.status === "Preparing Order"){
+    return;
+  }
+
   await fetch(`/api/orders/${id}/preparing`, { method:"POST" });
   await loadOrders();
 }
