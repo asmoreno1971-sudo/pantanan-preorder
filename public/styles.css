@@ -307,6 +307,8 @@ button:disabled{
 
 #orderBtn{
   width:100%;
+  background:linear-gradient(135deg, #2bbf6a, #1f8f4d);
+  box-shadow:0 8px 18px rgba(31,143,77,.18);
 }
 
 .modal-backdrop{

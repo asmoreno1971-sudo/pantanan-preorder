@@ -305,7 +305,7 @@ function validate(){
   const contactVal = contactInput.value.trim();
   const valid = nameVal && contactVal && hasItem && timeDropdown.value;
   orderButton.disabled = orderSubmitted;
-  orderButton.style.background = valid || !orderSubmitted ? "#6f4e37" : "#ccc";
+  orderButton.style.background = valid || !orderSubmitted ? "#1f8f4d" : "#ccc";
 }
 
 async function openSummary(){
