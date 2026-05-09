@@ -159,33 +159,54 @@ function uploadImage(index, fileInput, imageInput, img){
 
   const reader = new FileReader();
   reader.onload = ()=>{
-    menu[index].image = String(reader.result || "");
-    imageInput.value = menu[index].image;
-    img.src = menu[index].image;
-    statusText("Picture added. Save products to publish it.");
+    resizeImage(String(reader.result || ""), 900, .82)
+      .then(image=>{
+        menu[index].image = image;
+        imageInput.value = image;
+        img.src = image;
+        statusText("Picture added. Save products to publish it.");
+      })
+      .catch(()=>{
+        statusText("Could not read that picture.");
+      });
   };
   reader.readAsDataURL(file);
 }
 
 async function saveMenu(){
-  const res = await fetch("/api/menu", {
-    method:"PUT",
-    headers:{
-      "Content-Type":"application/json",
-      "Authorization":`Bearer ${token}`
-    },
-    body:JSON.stringify(menu)
-  });
-  const data = await res.json();
+  statusText("Saving...");
 
-  if(!data.ok){
-    statusText(data.message || "Save failed");
-    return;
+  try{
+    const res = await fetch("/api/menu", {
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":`Bearer ${token}`
+      },
+      body:JSON.stringify(menu)
+    });
+    const data = await res.json().catch(()=>({ ok:false, message:"Server did not return JSON." }));
+
+    if(res.status === 401){
+      token = "";
+      localStorage.removeItem("adminToken");
+      loginBox.classList.remove("hidden");
+      editorBox.classList.add("hidden");
+      statusText("Login expired. Please log in again.");
+      return;
+    }
+
+    if(!res.ok || !data.ok){
+      statusText(data.message || `Save failed (${res.status})`);
+      return;
+    }
+
+    menu = data.menu;
+    renderEditor();
+    statusText("Saved");
+  }catch{
+    statusText("Save failed. Check connection and picture size.");
   }
-
-  menu = data.menu;
-  renderEditor();
-  statusText("Saved");
 }
 
 async function exportCustomers(){
@@ -239,6 +260,26 @@ function productFallback(item){
   `;
 
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+function resizeImage(src, maxSize, quality){
+  return new Promise((resolve, reject)=>{
+    const image = new Image();
+
+    image.onload = ()=>{
+      const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+
+      const context = canvas.getContext("2d");
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+
+    image.onerror = reject;
+    image.src = src;
+  });
 }
 
 if(token){
