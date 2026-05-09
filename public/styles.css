@@ -641,6 +641,14 @@ button:disabled{
   box-shadow:0 6px 14px rgba(168,81,0,.14);
 }
 
+.notify-btn:disabled{
+  border-color:#ded3c7;
+  background:#eee3d9;
+  color:#8a7565;
+  box-shadow:none;
+  opacity:.72;
+}
+
 .done-list .notify-btn,
 .done-list .order-status{
   opacity:.62;

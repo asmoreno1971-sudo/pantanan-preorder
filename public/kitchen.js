@@ -108,7 +108,7 @@ function orderRow(order){
     </div>
   `).join("");
   const messageButton = order.customerContact
-    ? `<button class="kitchen-action-btn notify-btn" onclick="notifyCustomerReady('${order.id}')">Notify Customer</button>`
+    ? notifyButton(order)
     : `<button class="kitchen-action-btn" onclick="messageCustomer('${order.id}')">No Valid Number</button>`;
   const doneButton = order.status === "Ready for Payment and Pickup"
     ? `<div class="order-status">Ready for payment and pickup</div>`
@@ -137,6 +137,14 @@ function orderRow(order){
 
 function emptyState(message){
   return `<div class="empty-state">${message}</div>`;
+}
+
+function notifyButton(order){
+  const canNotify = order.status === "Preparing Order";
+  const disabled = canNotify ? "" : "disabled";
+  const label = canNotify ? "Notify Customer" : "Prepare First";
+
+  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="notifyCustomerReady('${order.id}')">${label}</button>`;
 }
 
 async function markDone(id){
