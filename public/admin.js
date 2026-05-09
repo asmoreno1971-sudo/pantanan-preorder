@@ -34,13 +34,15 @@ async function loadMenu(){
   const res = await fetch("/api/menu");
   const serverMenu = await res.json();
   const draft = loadMenuDraft();
-  menu = draft && draft.items && draft.savedAt > Number(localStorage.getItem("adminMenuServerSavedAt") || 0)
+  menu = draft && draft.items.length > 0 && draft.savedAt > Number(localStorage.getItem("adminMenuServerSavedAt") || 0)
     ? draft.items
     : serverMenu;
   renderEditor();
 
   if(draft && menu === draft.items){
     statusText("Restored your latest edits from this browser. Press Save Products.");
+  }else if(menu.length === 0){
+    statusText("No products loaded. Do not save yet. Refresh after deploy finishes.");
   }
 }
 
@@ -189,6 +191,11 @@ function uploadImage(index, fileInput, imageInput, img){
 }
 
 async function saveMenu(){
+  if(menu.length === 0){
+    statusText("Save blocked: product list is empty. Refresh the page first.");
+    return;
+  }
+
   statusText("Saving...");
 
   try{

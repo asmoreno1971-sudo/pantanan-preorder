@@ -210,6 +210,11 @@ async function handleApi(req, res){
       return true;
     }
 
+    if(menu.length === 0){
+      send(res, 400, JSON.stringify({ ok:false, message:"Save blocked: product list is empty." }));
+      return true;
+    }
+
     const cleanMenu = menu.map((item, index)=>({
       id: String(item.id || `item-${index + 1}`).replace(/[^a-z0-9-]/gi, "-").toLowerCase(),
       name: String(item.name || "Untitled Product").trim(),
