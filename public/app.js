@@ -20,6 +20,7 @@ const customerStatusTitle = document.getElementById("customerStatusTitle");
 const customerStatusText = document.getElementById("customerStatusText");
 let activeOrderId = localStorage.getItem("activeOrderId") || "";
 let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
+let activeOrderVisible = false;
 let orderSubmitted = false;
 
 function loadSavedCustomer(){
@@ -387,6 +388,7 @@ async function openSummary(){
   saveCustomer();
   activeOrderId = data.order.id;
   localStorage.setItem("activeOrderId", activeOrderId);
+  activeOrderVisible = true;
   showCustomerStatus(data.order);
   resetOrderForm();
 
@@ -442,10 +444,15 @@ function dismissCustomerStatus(){
   localStorage.removeItem("activeOrderId");
   localStorage.removeItem("lastNotifiedStatus");
   lastNotifiedStatus = "";
+  activeOrderVisible = false;
   customerStatus.classList.add("hidden");
 }
 
 function showCustomerStatus(order){
+  if(!activeOrderVisible){
+    return;
+  }
+
   const message = {
     "Order Sent":"Your order has been sent. Wait for confirmation.",
     "Preparing Order":"Your order is now being prepared.",
@@ -507,7 +514,7 @@ function notifyCustomer(order,title,message){
 }
 
 async function checkActiveOrder(){
-  if(!activeOrderId){
+  if(!activeOrderId || !activeOrderVisible){
     return;
   }
 
