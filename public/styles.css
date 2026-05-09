@@ -603,28 +603,39 @@ button:disabled{
 }
 
 .kitchen-action-btn{
-  background:#eee3d9;
-  color:#4a3224;
+  background:#efe3d7;
+  color:#3e2a1e;
+  box-shadow:0 6px 14px rgba(74,47,28,.1);
+  transition:transform .16s ease, box-shadow .16s ease, filter .16s ease;
+}
+
+.kitchen-action-btn:hover{
+  filter:brightness(1.04);
+  transform:translateY(-1px);
+  box-shadow:0 9px 18px rgba(74,47,28,.16);
 }
 
 .kitchen-action-btn.active{
-  background:#b85c00;
+  background:linear-gradient(135deg, #d97706, #9b4a12);
   color:#fff;
-  box-shadow:0 0 0 3px rgba(184,92,0,.18);
+  box-shadow:0 0 0 3px rgba(217,119,6,.18), 0 10px 22px rgba(155,74,18,.24);
 }
 
 .prepare-btn{
   width:100%;
   min-height:38px;
   padding:8px 10px;
+  background:linear-gradient(135deg, #f3b35f, #c56a19);
+  color:#2f1a08;
 }
 
 .notify-btn{
   width:100%;
   min-height:38px;
   padding:8px 10px;
-  background:#2f6f9f;
+  background:linear-gradient(135deg, #14b8a6, #0f766e);
   color:#fff;
+  box-shadow:0 6px 14px rgba(15,118,110,.18);
 }
 
 .customer-status{
