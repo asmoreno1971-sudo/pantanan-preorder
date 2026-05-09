@@ -201,6 +201,24 @@ select:focus{
   color:#1f8f4d;
 }
 
+.cash-presets{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.cash-presets button{
+  margin-top:0;
+  padding:10px 12px;
+  background:#eee3d9;
+  color:#4a3224;
+  box-shadow:none;
+}
+
+.cash-presets button:active{
+  transform:translateY(1px);
+}
+
 .menu-row{
   display:grid;
   grid-template-columns:132px minmax(230px,1fr) 82px;

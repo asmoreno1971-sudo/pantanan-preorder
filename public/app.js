@@ -374,6 +374,16 @@ function updateChange(){
   changeOutput.value = `P${change}`;
 }
 
+function setCashAmount(amount){
+  if(!cashInput){
+    return;
+  }
+
+  cashInput.value = amount;
+  updateChange();
+  validate();
+}
+
 async function openSummary(){
   if(orderSubmitted){
     return;
