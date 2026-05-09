@@ -92,6 +92,18 @@ function isAdmin(req){
   return sessions.has(token);
 }
 
+function normalizeMenuCategory(category){
+  const value = String(category || "Drinks").trim();
+  const normalized = value === "Sandwhich" || value === "Sandwich" ? "Sandwiches" : value;
+  const allowed = new Set(["Sandwiches", "Drinks", "Dimsum", "Noodle", "Other"]);
+
+  if(normalized === "Cookies"){
+    return "Other";
+  }
+
+  return allowed.has(normalized) ? normalized : "Drinks";
+}
+
 function csvCell(value){
   const text = String(value ?? "");
   return `"${text.replace(/"/g, '""')}"`;
@@ -220,7 +232,7 @@ async function handleApi(req, res){
       name: String(item.name || "Untitled Product").trim(),
       price: Math.max(0, Number(item.price) || 0),
       theme: String(item.theme || "latte"),
-      category: String(item.category || "Drinks"),
+      category: normalizeMenuCategory(item.category),
       image: String(item.image || "")
     }));
 

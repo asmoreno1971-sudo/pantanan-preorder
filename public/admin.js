@@ -1,5 +1,7 @@
 let token = localStorage.getItem("adminToken") || "";
 let menu = [];
+let autoSaveTimer = null;
+let isSaving = false;
 
 const menuDraftKey = "adminMenuDraft";
 const categories = ["Sandwiches", "Drinks", "Dimsum", "Noodle", "Other"];
@@ -37,6 +39,9 @@ async function loadMenu(){
   menu = draft && draft.items.length > 0 && draft.savedAt > Number(localStorage.getItem("adminMenuServerSavedAt") || 0)
     ? draft.items
     : serverMenu;
+  menu.forEach(item=>{
+    item.category = normalizeCategory(item.category);
+  });
   renderEditor();
 
   if(draft && menu === draft.items){
@@ -196,16 +201,22 @@ async function saveMenu(){
     return;
   }
 
+  if(isSaving){
+    return;
+  }
+
+  isSaving = true;
   statusText("Saving...");
 
   try{
+    const cleanMenu = prepareMenuForSave();
     const res = await fetch("/api/menu", {
       method:"PUT",
       headers:{
         "Content-Type":"application/json",
         "Authorization":`Bearer ${token}`
       },
-      body:JSON.stringify(menu)
+      body:JSON.stringify(cleanMenu)
     });
     const data = await res.json().catch(()=>({ ok:false, message:"Server did not return JSON." }));
 
@@ -215,11 +226,13 @@ async function saveMenu(){
       loginBox.classList.remove("hidden");
       editorBox.classList.add("hidden");
       statusText("Login expired. Please log in again.");
+      isSaving = false;
       return;
     }
 
     if(!res.ok || !data.ok){
       statusText(data.message || `Save failed (${res.status})`);
+      isSaving = false;
       return;
     }
 
@@ -231,6 +244,8 @@ async function saveMenu(){
   }catch{
     saveMenuDraft();
     statusText("Save failed, but your edits are backed up in this browser. Try Save Products again.");
+  }finally{
+    isSaving = false;
   }
 }
 
@@ -280,9 +295,28 @@ function saveMenuDraft(){
       savedAt:Date.now(),
       items:menu
     }));
+    scheduleAutoSave();
   }catch{
     statusText("Browser backup is full. Save Products now, or use smaller pictures.");
   }
+}
+
+function scheduleAutoSave(){
+  if(!token || menu.length === 0){
+    return;
+  }
+
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(()=>{
+    saveMenu();
+  }, 900);
+}
+
+function prepareMenuForSave(){
+  return menu.map(item=>({
+    ...item,
+    category:normalizeCategory(item.category)
+  }));
 }
 
 function normalizeCategory(category){
