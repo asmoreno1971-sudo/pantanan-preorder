@@ -7,7 +7,7 @@ const totalNode = document.getElementById("total");
 const statusNode = document.getElementById("status");
 const saveBtn = document.getElementById("saveBtn");
 
-const categoryOrder = ["Drinks", "Dimsum", "Sandwich", "Other"];
+const categoryOrder = ["Drinks", "Dimsum", "Noodle", "Sandwich", "Other"];
 
 function peso(value){
   return `₱${Number(value) || 0}`;
@@ -45,6 +45,14 @@ function normalizeCategory(name){
   if(
     n.includes("canton") ||
     n.includes("noodle") ||
+    n.includes("mami") ||
+    n.includes("ramen") ||
+    n.includes("pancit")
+  ){
+    return "Noodle";
+  }
+
+  if(
     n.includes("siomai") ||
     n.includes("siopao")
   ){
@@ -131,6 +139,7 @@ function productImage(product){
     Sandwich:["#efc486", "#8a5530", "#fff2c7", "#72a35b"],
     Drinks:["#dcae73", "#5b3322", "#fff2dd", "#b78052"],
     Dimsum:["#f2c98f", "#8d5c2f", "#fff3d8", "#c6783d"],
+    Noodle:["#f0d17d", "#73502a", "#fff0b8", "#b56b38"],
     Other:["#c8d6c3", "#4d6048", "#f2ead8", "#829b7a"]
   };
   const [bg, dark, light, accent] = palettes[category] || palettes.Other;
@@ -145,6 +154,13 @@ function productImage(product){
          <path d="M62 92 C60 52 91 34 111 68 C130 34 160 53 158 92 Z" fill="${light}"/>
          <path d="M86 91 C88 61 102 51 111 70 C121 51 136 61 138 91" fill="none" stroke="${dark}" stroke-width="8" opacity=".65"/>
          <circle cx="110" cy="53" r="11" fill="${accent}"/>`
+      : category === "Noodle"
+        ? `<ellipse cx="110" cy="100" rx="76" ry="18" fill="${dark}" opacity=".2"/>
+           <path d="M54 86 C65 118 155 118 166 86 Z" fill="${light}"/>
+           <path d="M67 82 C90 66 123 99 153 78" fill="none" stroke="${accent}" stroke-width="8" stroke-linecap="round"/>
+           <path d="M66 92 C92 78 120 108 154 89" fill="none" stroke="${dark}" stroke-width="7" stroke-linecap="round" opacity=".72"/>
+           <rect x="138" y="36" width="8" height="56" rx="4" fill="${dark}" transform="rotate(20 142 64)"/>
+           <rect x="152" y="36" width="8" height="56" rx="4" fill="${dark}" transform="rotate(20 156 64)"/>`
       : category === "Drinks"
         ? `<rect x="72" y="20" width="76" height="98" rx="12" fill="${light}"/>
            <rect x="82" y="46" width="56" height="56" rx="6" fill="${dark}" opacity=".82"/>

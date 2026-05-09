@@ -1,7 +1,7 @@
 let token = localStorage.getItem("adminToken") || "";
 let menu = [];
 
-const categories = ["Sandwiches", "Cookies", "Drinks", "Dimsum", "Other"];
+const categories = ["Sandwiches", "Cookies", "Drinks", "Dimsum", "Noodle", "Other"];
 const passwordInput = document.getElementById("password");
 const loginBox = document.getElementById("loginPanel");
 const editorBox = document.getElementById("editorPanel");
@@ -247,6 +247,7 @@ function productFallback(item){
     Drinks:["#dcae73", "#5b3322", "#fff2dd", "#b78052"],
     Cookies:["#c9854d", "#5f341f", "#f5c982", "#3f2418"],
     Dimsum:["#f2c98f", "#8d5c2f", "#fff3d8", "#c6783d"],
+    Noodle:["#f0d17d", "#73502a", "#fff0b8", "#b56b38"],
     Other:["#c8d6c3", "#4d6048", "#f2ead8", "#829b7a"]
   };
   const [bg, dark, light, accent] = palettes[category] || palettes.Other;

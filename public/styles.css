@@ -191,6 +191,18 @@ select:focus{
   background:#bfe3c9;
 }
 
+.category-title-dimsum{
+  background:#f2c98f;
+}
+
+.category-title-noodle{
+  background:#f0d17d;
+}
+
+.category-title-other{
+  background:#c8d6c3;
+}
+
 .category-empty{
   padding:12px;
   color:#7a5a43;
@@ -242,6 +254,11 @@ select:focus{
 .cookie-overlay{
   background:rgba(224,194,225,0.88);
   color:#432447;
+}
+
+.noodle-overlay{
+  background:rgba(240,209,125,0.88);
+  color:#4d3214;
 }
 
 .order-line{

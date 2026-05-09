@@ -1,6 +1,6 @@
 let menu = [];
 const quantities = {};
-const categories = ["Sandwiches", "Cookies", "Drinks"];
+const categories = ["Sandwiches", "Cookies", "Drinks", "Dimsum", "Noodle", "Other"];
 const nameInput = document.getElementById("name");
 const contactInput = document.getElementById("contact");
 const timeDropdown = document.getElementById("timeSelect");
@@ -200,6 +200,10 @@ function overlayClass(category){
     return "cookie-overlay";
   }
 
+  if(normalized === "Noodle"){
+    return "noodle-overlay";
+  }
+
   return "";
 }
 
@@ -228,6 +232,8 @@ function productImage(item){
     Sandwiches:["#efc486", "#8a5530", "#fff2c7", "#72a35b"],
     Drinks:["#dcae73", "#5b3322", "#fff2dd", "#b78052"],
     Cookies:["#c9854d", "#5f341f", "#f5c982", "#3f2418"],
+    Dimsum:["#f2c98f", "#8d5c2f", "#fff3d8", "#c6783d"],
+    Noodle:["#f0d17d", "#73502a", "#fff0b8", "#b56b38"],
     Others:["#c8d6c3", "#4d6048", "#f2ead8", "#829b7a"]
   };
   const [bg, dark, light, accent] = palettes[category] || palettes.Others;
@@ -245,6 +251,18 @@ function productImage(item){
          <circle cx="125" cy="48" r="6" fill="${dark}"/>
          <circle cx="153" cy="74" r="7" fill="${dark}"/>
          <circle cx="139" cy="96" r="5" fill="${dark}"/>`
+      : category === "Dimsum"
+        ? `<ellipse cx="110" cy="102" rx="76" ry="18" fill="${dark}" opacity=".18"/>
+           <path d="M62 92 C60 52 91 34 111 68 C130 34 160 53 158 92 Z" fill="${light}"/>
+           <path d="M86 91 C88 61 102 51 111 70 C121 51 136 61 138 91" fill="none" stroke="${dark}" stroke-width="8" opacity=".65"/>
+           <circle cx="110" cy="53" r="11" fill="${accent}"/>`
+        : category === "Noodle"
+          ? `<ellipse cx="110" cy="100" rx="76" ry="18" fill="${dark}" opacity=".2"/>
+             <path d="M54 86 C65 118 155 118 166 86 Z" fill="${light}"/>
+             <path d="M67 82 C90 66 123 99 153 78" fill="none" stroke="${accent}" stroke-width="8" stroke-linecap="round"/>
+             <path d="M66 92 C92 78 120 108 154 89" fill="none" stroke="${dark}" stroke-width="7" stroke-linecap="round" opacity=".72"/>
+             <rect x="138" y="36" width="8" height="56" rx="4" fill="${dark}" transform="rotate(20 142 64)"/>
+             <rect x="152" y="36" width="8" height="56" rx="4" fill="${dark}" transform="rotate(20 156 64)"/>`
       : `<rect x="72" y="20" width="76" height="98" rx="12" fill="${light}"/>
          <rect x="82" y="46" width="56" height="56" rx="6" fill="${dark}" opacity=".82"/>
          <rect x="90" y="58" width="40" height="16" fill="#ffffff" opacity=".42"/>
