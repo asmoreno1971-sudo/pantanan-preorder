@@ -45,7 +45,8 @@ async function loadMenu(){
   renderEditor();
 
   if(draft && menu === draft.items){
-    statusText("Restored your latest edits from this browser. Press Save Products.");
+    statusText("Restored your latest edits from this browser. Saving them to the UI now...");
+    scheduleAutoSave();
   }else if(menu.length === 0){
     statusText("No products loaded. Do not save yet. Refresh after deploy finishes.");
   }
@@ -237,8 +238,9 @@ async function saveMenu(){
     }
 
     menu = data.menu;
-    localStorage.setItem("adminMenuServerSavedAt", String(Date.now()));
-    saveMenuDraft();
+    const savedAt = Date.now();
+    localStorage.setItem("adminMenuServerSavedAt", String(savedAt));
+    saveMenuDraft(false, savedAt);
     renderEditor();
     statusText(`Saved ${menu.length} products`);
   }catch{
@@ -289,13 +291,15 @@ function loadMenuDraft(){
   }
 }
 
-function saveMenuDraft(){
+function saveMenuDraft(autosave = true, savedAt = Date.now()){
   try{
     localStorage.setItem(menuDraftKey, JSON.stringify({
-      savedAt:Date.now(),
+      savedAt,
       items:menu
     }));
-    scheduleAutoSave();
+    if(autosave){
+      scheduleAutoSave();
+    }
   }catch{
     statusText("Browser backup is full. Save Products now, or use smaller pictures.");
   }
