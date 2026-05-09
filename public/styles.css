@@ -587,19 +587,15 @@ button:disabled{
 }
 
 .kitchen-actions{
-  display:grid;
+  display:flex;
   gap:8px;
+  align-items:stretch;
 }
 
 .workflow-actions,
 .notify-actions{
-  display:grid;
-  gap:10px;
-}
-
-.notify-actions{
-  padding-top:8px;
-  border-top:1px solid #e4d8cd;
+  flex:1;
+  min-width:0;
 }
 
 .kitchen-actions button{
@@ -620,11 +616,13 @@ button:disabled{
 .prepare-btn{
   width:100%;
   min-height:38px;
+  padding:8px 10px;
 }
 
 .notify-btn{
   width:100%;
   min-height:38px;
+  padding:8px 10px;
   background:#2f6f9f;
   color:#fff;
 }
