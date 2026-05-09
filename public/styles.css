@@ -176,6 +176,31 @@ select:focus{
   margin-left:4px;
 }
 
+.cash-panel{
+  display:grid;
+  gap:8px;
+  margin-top:10px;
+}
+
+.cash-field{
+  display:grid;
+  gap:4px;
+  color:var(--brand-strong);
+  font-weight:850;
+}
+
+.cash-field input{
+  max-width:none;
+  margin-bottom:0;
+  text-align:right;
+  font-weight:850;
+}
+
+.cash-field input[readonly]{
+  background:#eee3d9;
+  color:#1f8f4d;
+}
+
 .menu-row{
   display:grid;
   grid-template-columns:132px minmax(230px,1fr) 82px;

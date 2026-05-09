@@ -22,10 +22,21 @@
 Total P<span id="liveTotal">0</span>
 </div>
 
-<button id="orderBtn" disabled onclick="openSummary()">Place Order</button>
+<div class="cash-panel">
+<label class="cash-field">
+Cash
+<input id="cashInput" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+</label>
+<label class="cash-field">
+Change
+<input id="changeOutput" type="text" value="P0" readonly>
+</label>
+</div>
+
+<button id="orderBtn" disabled onclick="openSummary()">Pay</button>
 </div>
 </div>
 
-<script src="/app.js?v=20260509-pos-order-taker"></script>
+<script src="/app.js?v=20260509-pay-cash-change"></script>
 </body>
 </html>

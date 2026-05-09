@@ -12,6 +12,8 @@ const orderButton = document.getElementById("orderBtn");
 const currentTimeText = document.getElementById("nowTime");
 const summaryItems = document.getElementById("liveSummary");
 const totalText = document.getElementById("liveTotal");
+const cashInput = document.getElementById("cashInput");
+const changeOutput = document.getElementById("changeOutput");
 const modal = document.getElementById("successModal");
 const successTitle = document.getElementById("successTitle");
 const successText = document.getElementById("successText");
@@ -23,6 +25,7 @@ let activeOrderId = localStorage.getItem("activeOrderId") || "";
 let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
 let activeOrderVisible = false;
 let orderSubmitted = false;
+let currentTotal = 0;
 
 function loadSavedCustomer(){
   localStorage.removeItem("customerNickname");
@@ -125,6 +128,13 @@ if(contactInput){
   contactInput.addEventListener("input", function(){
     validate();
     saveCustomer();
+  });
+}
+
+if(cashInput){
+  cashInput.addEventListener("input", function(){
+    updateChange();
+    validate();
   });
 }
 
@@ -306,7 +316,9 @@ function updateTotal(){
     document.getElementById(`s-${item.id}`).innerText = `P${sub}`;
   });
 
+  currentTotal = total;
   updateSummary(total);
+  updateChange();
 }
 
 function updateSummary(total){
@@ -344,11 +356,22 @@ function validate(){
   const hasItem = Object.values(quantities).some(qty=>qty > 0);
   const contactVal = contactInput ? contactInput.value.trim() : "";
   const needsCustomerFields = Boolean(nameInput || contactInput || timeDropdown);
+  const cashValid = !cashInput || Number(cashInput.value || 0) >= currentTotal;
   const valid = needsCustomerFields
     ? nameVal && normalizeMobileNumber(contactVal) && hasItem && timeDropdown.value
-    : hasItem;
+    : hasItem && cashValid;
   orderButton.disabled = orderSubmitted || !valid;
   orderButton.style.background = valid && !orderSubmitted ? "#1f8f4d" : "#ccc";
+}
+
+function updateChange(){
+  if(!changeOutput){
+    return;
+  }
+
+  const cash = Number(cashInput ? cashInput.value || 0 : 0);
+  const change = Math.max(0, cash - currentTotal);
+  changeOutput.value = `P${change}`;
 }
 
 async function openSummary(){
@@ -394,7 +417,7 @@ async function openSummary(){
 
   orderSubmitted = true;
   orderButton.disabled = true;
-  orderButton.innerText = "Sending...";
+  orderButton.innerText = "Processing...";
 
   let data;
 
@@ -415,7 +438,7 @@ async function openSummary(){
   }catch{
     orderSubmitted = false;
     orderButton.disabled = false;
-    orderButton.innerText = "Place Order";
+    orderButton.innerText = "Pay";
     alert("Unable to send order. Please check your internet connection and try again.");
     validate();
     return;
@@ -424,7 +447,7 @@ async function openSummary(){
   if(!data.ok){
     orderSubmitted = false;
     orderButton.disabled = false;
-    orderButton.innerText = "Place Order";
+    orderButton.innerText = "Pay";
     alert(data.message || "Unable to send order");
     await generateTimes();
     validate();
@@ -439,7 +462,7 @@ async function openSummary(){
 
   orderSubmitted = false;
   orderButton.disabled = false;
-  orderButton.innerText = "Place Order";
+  orderButton.innerText = "Pay";
   validate();
 }
 
@@ -467,6 +490,7 @@ function resetOrderForm(){
   if(timeDropdown) timeDropdown.value = "";
   if(selectedTime) selectedTime.value = "";
   if(summaryTimeText) summaryTimeText.innerText = "--";
+  if(cashInput) cashInput.value = "";
 
   Object.keys(quantities).forEach(id=>{
     quantities[id] = 0;
