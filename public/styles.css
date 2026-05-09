@@ -431,6 +431,15 @@ button:disabled{
   margin:0 auto;
 }
 
+.kitchen-login-panel{
+  max-width:360px;
+  margin:60px auto 0;
+}
+
+.kitchen-login-panel input{
+  max-width:none;
+}
+
 .kitchen-top{
   display:flex;
   justify-content:space-between;

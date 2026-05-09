@@ -6,7 +6,14 @@
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<div class="kitchen-shell">
+<div id="kitchenLoginPanel" class="admin-panel kitchen-login-panel">
+<h4>Kitchen Login</h4>
+<input id="kitchenPassword" type="password" placeholder="Kitchen password">
+<button onclick="loginKitchen()">Login</button>
+<span id="kitchenLoginStatus" class="status"></span>
+</div>
+
+<div id="kitchenPanel" class="kitchen-shell hidden">
 <div class="kitchen-top">
 <h3>Kitchen Orders</h3>
 <div class="sound-control">
@@ -30,6 +37,6 @@
 </div>
 </div>
 
-<script src="/kitchen.js?v=20260509-enter-closes-message"></script>
+<script src="/kitchen.js?v=20260509-kitchen-password"></script>
 </body>
 </html>

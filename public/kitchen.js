@@ -2,8 +2,41 @@ let seenOrderIds = new Set();
 let soundEnabled = false;
 let audioContext;
 let currentOrders = [];
+let kitchenToken = localStorage.getItem("kitchenToken") || "";
+const kitchenLoginPanel = document.getElementById("kitchenLoginPanel");
+const kitchenPanel = document.getElementById("kitchenPanel");
+const kitchenPassword = document.getElementById("kitchenPassword");
+const kitchenLoginStatus = document.getElementById("kitchenLoginStatus");
+
+async function loginKitchen(){
+  const res = await fetch("/api/admin/login", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ password:kitchenPassword.value })
+  });
+  const data = await res.json();
+
+  if(!data.ok){
+    kitchenLoginStatus.innerText = "Wrong password";
+    return;
+  }
+
+  kitchenToken = data.token;
+  localStorage.setItem("kitchenToken", kitchenToken);
+  showKitchen();
+  await loadOrders();
+}
+
+function showKitchen(){
+  kitchenLoginPanel.classList.add("hidden");
+  kitchenPanel.classList.remove("hidden");
+}
 
 async function loadOrders(){
+  if(!kitchenToken){
+    return;
+  }
+
   const res = await fetch("/api/orders");
   const orders = await res.json();
   currentOrders = orders;
@@ -280,6 +313,16 @@ async function copyText(text){
   }
 }
 
-loadOrders();
+kitchenPassword.addEventListener("keydown", function(e){
+  if(e.key === "Enter"){
+    loginKitchen();
+  }
+});
+
+if(kitchenToken){
+  showKitchen();
+  loadOrders();
+}
+
 setInterval(loadOrders, 5000);
 setInterval(updatePreparingTimers, 1000);
