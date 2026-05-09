@@ -380,12 +380,112 @@ button:disabled{
 }
 
 .admin-shell{
-  max-width:760px;
+  max-width:1040px;
   margin:0 auto;
 }
 
 .admin-panel{
   margin-bottom:16px;
+}
+
+.admin-title-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:16px;
+}
+
+.admin-help{
+  margin:4px 0 0;
+  color:#6f5a4a;
+  font-size:14px;
+}
+
+.product-card-editor{
+  display:grid;
+  grid-template-columns:168px minmax(0, 1fr);
+  gap:16px;
+  padding:14px 0;
+  border-bottom:1px solid #e6ddd5;
+}
+
+.product-card-editor:first-child{
+  padding-top:0;
+}
+
+.product-card-editor:last-child{
+  border-bottom:0;
+  padding-bottom:0;
+}
+
+.product-image-editor{
+  width:168px;
+  aspect-ratio:4 / 3;
+  overflow:hidden;
+  border-radius:8px;
+  background:#eadbcf;
+  border:1px solid #dccfc3;
+}
+
+.product-image-editor img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+}
+
+.product-fields-editor{
+  display:grid;
+  grid-template-columns:minmax(180px, 1.3fr) 110px 150px;
+  gap:10px;
+  align-items:end;
+}
+
+.product-fields-editor label{
+  display:grid;
+  gap:6px;
+  color:#6f4e37;
+  font-size:12px;
+  font-weight:bold;
+  text-transform:uppercase;
+}
+
+.product-fields-editor input,
+.product-fields-editor select{
+  max-width:none;
+  margin:0;
+}
+
+.image-url-field{
+  grid-column:1 / -1;
+}
+
+.picture-actions{
+  grid-column:1 / -1;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.upload-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:40px;
+  padding:10px 12px;
+  border-radius:8px;
+  background:#6f4e37;
+  color:#fff;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:bold;
+  text-transform:none;
+}
+
+.upload-btn input{
+  display:none;
 }
 
 .admin-row{
@@ -906,6 +1006,22 @@ button:disabled{
   }
 
   .admin-row{
+    grid-template-columns:1fr;
+  }
+
+  .admin-title-row{
+    display:grid;
+  }
+
+  .product-card-editor{
+    grid-template-columns:1fr;
+  }
+
+  .product-image-editor{
+    width:100%;
+  }
+
+  .product-fields-editor{
     grid-template-columns:1fr;
   }
 
