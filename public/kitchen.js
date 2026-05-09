@@ -1,5 +1,5 @@
 let seenOrderIds = new Set();
-let soundEnabled = false;
+let soundEnabled = localStorage.getItem("kitchenSoundEnabled") === "true";
 let audioContext;
 let currentOrders = [];
 let kitchenToken = localStorage.getItem("kitchenToken") || "";
@@ -24,6 +24,7 @@ async function loginKitchen(){
   kitchenToken = data.token;
   localStorage.setItem("kitchenToken", kitchenToken);
   showKitchen();
+  await enableSound();
   await loadOrders();
 }
 
@@ -46,13 +47,24 @@ async function loadOrders(){
 
 function enableSound(){
   audioContext = audioContext || new AudioContext();
-  audioContext.resume().then(()=>{
+  return audioContext.resume().then(()=>{
     soundEnabled = true;
+    localStorage.setItem("kitchenSoundEnabled", "true");
     soundBtn.innerText = "Sound On";
     soundBtn.classList.add("sound-on");
     soundStatus.innerText = "Alerts enabled";
     playAlertSound();
+  }).catch(()=>{
+    soundStatus.innerText = "Tap Enable Sound once";
   });
+}
+
+function showSavedSoundState(){
+  if(soundEnabled){
+    soundBtn.innerText = "Sound On";
+    soundBtn.classList.add("sound-on");
+    soundStatus.innerText = "Alerts enabled";
+  }
 }
 
 function notifyNewOrders(orders){
@@ -321,6 +333,8 @@ kitchenPassword.addEventListener("keydown", function(e){
 
 if(kitchenToken){
   showKitchen();
+  showSavedSoundState();
+  enableSound();
   loadOrders();
 }
 
