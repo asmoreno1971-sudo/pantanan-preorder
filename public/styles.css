@@ -251,8 +251,7 @@ select:focus{
   transition:max-height .16s ease, opacity .16s ease, transform .16s ease;
 }
 
-.cash-panel:hover .cash-presets,
-.cash-panel:focus-within .cash-presets{
+.cash-panel:focus-within:hover .cash-presets{
   max-height:46px;
   opacity:1;
   pointer-events:auto;
