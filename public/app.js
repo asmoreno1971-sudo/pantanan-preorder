@@ -27,8 +27,8 @@ let orderSubmitted = false;
 function loadSavedCustomer(){
   localStorage.removeItem("customerNickname");
   localStorage.removeItem("customerContact");
-  nameInput.value = "";
-  contactInput.value = "";
+  if(nameInput) nameInput.value = "";
+  if(contactInput) contactInput.value = "";
 }
 
 function saveCustomer(){
@@ -53,6 +53,10 @@ function updateNowTime(){
 }
 
 async function generateTimes(){
+  if(!timeDropdown || !selectedTime || !summaryTimeText){
+    return;
+  }
+
   let hasAvailableSlot = false;
   timeDropdown.innerHTML = "";
   const placeholder = document.createElement("option");
@@ -102,21 +106,27 @@ async function generateTimes(){
   }
 }
 
-timeDropdown.onchange = function(){
-  selectedTime.value = this.value;
-  summaryTimeText.innerHTML = this.value ? `<strong>${this.value}</strong>` : "--";
-  validate();
-};
+if(timeDropdown){
+  timeDropdown.onchange = function(){
+    selectedTime.value = this.value;
+    summaryTimeText.innerHTML = this.value ? `<strong>${this.value}</strong>` : "--";
+    validate();
+  };
+}
 
-nameInput.addEventListener("input", function(){
-  validate();
-  saveCustomer();
-});
+if(nameInput){
+  nameInput.addEventListener("input", function(){
+    validate();
+    saveCustomer();
+  });
+}
 
-contactInput.addEventListener("input", function(){
-  validate();
-  saveCustomer();
-});
+if(contactInput){
+  contactInput.addEventListener("input", function(){
+    validate();
+    saveCustomer();
+  });
+}
 
 document.addEventListener("keydown", function(e){
   if(e.key !== "Enter"){
@@ -129,7 +139,7 @@ document.addEventListener("keydown", function(e){
     timeDropdown,
     ...document.querySelectorAll(".img-wrap, .cancel-btn"),
     orderButton
-  ];
+  ].filter(Boolean);
   const currentIndex = focusOrder.indexOf(document.activeElement);
 
   if(currentIndex === -1 || currentIndex === focusOrder.length - 1){
@@ -328,16 +338,22 @@ function updateSummary(total){
 }
 
 function validate(){
-  nameInput.value = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
-  const nameVal = nameInput.value.trim();
+  const nameVal = nameInput ? nameInput.value.trim() : "";
+
+  if(nameInput){
+    nameInput.value = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
+  }
 
   summaryTitleText.innerHTML = nameVal
     ? `Order Summary for:<strong>${nameVal}</strong>`
     : "Order Summary";
 
   const hasItem = Object.values(quantities).some(qty=>qty > 0);
-  const contactVal = contactInput.value.trim();
-  const valid = nameVal && normalizeMobileNumber(contactVal) && hasItem && timeDropdown.value;
+  const contactVal = contactInput ? contactInput.value.trim() : "";
+  const needsCustomerFields = Boolean(nameInput || contactInput || timeDropdown);
+  const valid = needsCustomerFields
+    ? nameVal && normalizeMobileNumber(contactVal) && hasItem && timeDropdown.value
+    : hasItem;
   orderButton.disabled = orderSubmitted || !valid;
   orderButton.style.background = valid && !orderSubmitted ? "#1f8f4d" : "#ccc";
 }
@@ -347,32 +363,32 @@ async function openSummary(){
     return;
   }
 
-  const nameVal = nameInput.value.trim();
-  const contactVal = contactInput.value.trim();
-  const pickupTime = timeDropdown.value || selectedTime.value;
+  const nameVal = nameInput ? nameInput.value.trim() : "WALK-IN";
+  const contactVal = contactInput ? contactInput.value.trim() : "";
+  const pickupTime = timeDropdown ? (timeDropdown.value || selectedTime.value) : "POS RW";
   const items = menu
     .filter(item=>quantities[item.id] > 0)
     .map(item=>({ id:item.id, qty:quantities[item.id] }));
 
-  if(!nameVal){
+  if(nameInput && !nameVal){
     alert("Please enter your nickname.");
     nameInput.focus();
     return;
   }
 
-  if(!contactVal){
+  if(contactInput && !contactVal){
     alert("Please enter your mobile number.");
     contactInput.focus();
     return;
   }
 
-  if(!normalizeMobileNumber(contactVal)){
+  if(contactInput && !normalizeMobileNumber(contactVal)){
     alert("Please enter a valid Philippine mobile number.");
     contactInput.focus();
     return;
   }
 
-  if(!pickupTime){
+  if(timeDropdown && !pickupTime){
     alert("Please select an available pickup time.");
     timeDropdown.focus();
     return;
@@ -390,15 +406,17 @@ async function openSummary(){
   let data;
 
   try{
-    const res = await fetch("/api/orders", {
+    const res = await fetch(timeDropdown ? "/api/orders" : "/api/pos/transactions", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({
-        customerName:nameVal,
-        customerContact:contactVal,
-        pickupTime,
-        items
-      })
+      body:JSON.stringify(timeDropdown
+        ? {
+          customerName:nameVal,
+          customerContact:contactVal,
+          pickupTime,
+          items
+        }
+        : { items })
     });
     data = await res.json();
   }catch{
@@ -456,11 +474,11 @@ function normalizeMobileNumber(value){
 }
 
 function resetOrderForm(){
-  nameInput.value = "";
-  contactInput.value = "";
-  timeDropdown.value = "";
-  selectedTime.value = "";
-  summaryTimeText.innerText = "--";
+  if(nameInput) nameInput.value = "";
+  if(contactInput) contactInput.value = "";
+  if(timeDropdown) timeDropdown.value = "";
+  if(selectedTime) selectedTime.value = "";
+  if(summaryTimeText) summaryTimeText.innerText = "--";
 
   Object.keys(quantities).forEach(id=>{
     quantities[id] = 0;

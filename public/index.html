@@ -8,33 +8,6 @@
 <body>
 <div class="page">
 <div class="main">
-<h3>Preorder Menu</h3>
-
-<input
-id="name"
-name="nickname"
-placeholder="Your Nickname"
-maxlength="10"
-autocomplete="nickname"
-autocapitalize="characters"
-style="text-transform:uppercase;">
-
-<label class="field-label" for="contact">Mobile #</label>
-<input
-id="contact"
-name="tel"
-type="tel"
-inputmode="tel"
-autocomplete="tel"
-maxlength="13"
-placeholder="Contact Number">
-
-<h4>Available Time</h4>
-<select id="timeSelect">
-<option value="">-- Select Time --</option>
-</select>
-<input type="hidden" id="time">
-
 <div id="menuContainer"></div>
 </div>
 
@@ -42,11 +15,6 @@ placeholder="Contact Number">
 <div class="summary-brand">Pantanan</div>
 <div id="nowTime" class="current-time"></div>
 <h3 id="summaryTitle">Order Summary</h3>
-
-<div class="summary-time">
-Order available at:
-<br><strong><span id="summaryTime">--</span></strong>
-</div>
 
 <div id="liveSummary">No items yet</div>
 
@@ -75,6 +43,6 @@ Total P<span id="liveTotal">0</span>
 </div>
 </div>
 
-<script src="/app.js?v=20260509-light-overlays"></script>
+<script src="/app.js?v=20260509-pos-order-taker"></script>
 </body>
 </html>
