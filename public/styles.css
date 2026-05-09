@@ -169,7 +169,7 @@ select:focus{
 .category-title{
   margin:0;
   padding:12px 14px;
-  color:#fff;
+  color:#3f281c;
   font-size:15px;
   font-weight:bold;
   letter-spacing:.02em;
@@ -180,15 +180,15 @@ select:focus{
 }
 
 .category-title-sandwiches{
-  background:#9b5a24;
+  background:#f2c892;
 }
 
 .category-title-cookies{
-  background:#7e4880;
+  background:#e0c2e1;
 }
 
 .category-title-drinks{
-  background:#2b6340;
+  background:#bfe3c9;
 }
 
 .category-empty{
@@ -228,18 +228,20 @@ select:focus{
   position:absolute;
   bottom:0;
   width:100%;
-  background:rgba(43,99,64,0.9);
-  color:#fff;
+  background:rgba(191,227,201,0.88);
+  color:#183b25;
   font-size:13px;
   padding:6px;
 }
 
 .sandwich-overlay{
-  background:rgba(151,91,35,0.92);
+  background:rgba(242,200,146,0.88);
+  color:#4b2c14;
 }
 
 .cookie-overlay{
-  background:rgba(126,72,128,0.92);
+  background:rgba(224,194,225,0.88);
+  color:#432447;
 }
 
 .order-line{
