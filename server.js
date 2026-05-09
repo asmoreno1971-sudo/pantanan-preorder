@@ -5,7 +5,7 @@ const crypto = require("node:crypto");
 
 const root = __dirname;
 const publicDir = path.join(root, "public");
-const menuPath = path.join(root, "menu.json");
+const menuPath = process.env.MENU_PATH || path.join(root, "menu.json");
 const ordersPath = path.join(root, "orders.json");
 const port = Number(process.env.PORT) || 3001;
 const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
@@ -58,6 +58,12 @@ async function readOrders(){
 
 async function writeOrders(orders){
   await fs.writeFile(ordersPath, JSON.stringify(orders, null, 2));
+}
+
+async function writeJsonFile(filePath, value){
+  const tempPath = `${filePath}.tmp`;
+  await fs.writeFile(tempPath, JSON.stringify(value, null, 2));
+  await fs.rename(tempPath, filePath);
 }
 
 function localOrderDate(){
@@ -190,7 +196,14 @@ async function handleApi(req, res){
       return true;
     }
 
-    const menu = JSON.parse(await readBody(req) || "[]");
+    let menu;
+
+    try{
+      menu = JSON.parse(await readBody(req) || "[]");
+    }catch{
+      send(res, 400, JSON.stringify({ ok:false, message:"Products could not be read. Try smaller pictures." }));
+      return true;
+    }
 
     if(!Array.isArray(menu)){
       send(res, 400, JSON.stringify({ ok:false, message:"Menu must be an array" }));
@@ -206,7 +219,13 @@ async function handleApi(req, res){
       image: String(item.image || "")
     }));
 
-    await fs.writeFile(menuPath, JSON.stringify(cleanMenu, null, 2));
+    try{
+      await writeJsonFile(menuPath, cleanMenu);
+    }catch{
+      send(res, 500, JSON.stringify({ ok:false, message:"Server could not save products. Your browser backup is still available." }));
+      return true;
+    }
+
     send(res, 200, JSON.stringify({ ok:true, menu:cleanMenu }));
     return true;
   }

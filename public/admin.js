@@ -1,6 +1,7 @@
 let token = localStorage.getItem("adminToken") || "";
 let menu = [];
 
+const menuDraftKey = "adminMenuDraft";
 const categories = ["Sandwiches", "Cookies", "Drinks", "Dimsum", "Noodle", "Other"];
 const passwordInput = document.getElementById("password");
 const loginBox = document.getElementById("loginPanel");
@@ -31,8 +32,16 @@ async function login(){
 
 async function loadMenu(){
   const res = await fetch("/api/menu");
-  menu = await res.json();
+  const serverMenu = await res.json();
+  const draft = loadMenuDraft();
+  menu = draft && draft.items && draft.savedAt > Number(localStorage.getItem("adminMenuServerSavedAt") || 0)
+    ? draft.items
+    : serverMenu;
   renderEditor();
+
+  if(draft && menu === draft.items){
+    statusText("Restored your latest edits from this browser. Press Save Products.");
+  }
 }
 
 function renderEditor(){
@@ -110,6 +119,7 @@ function renderEditor(){
       menu[index].image = "";
       imageInput.value = "";
       img.src = productFallback(menu[index]);
+      saveMenuDraft();
       statusText("Picture cleared");
     });
     card.querySelector(".remove-btn").addEventListener("click", ()=>removeProduct(index));
@@ -126,6 +136,8 @@ function updateItem(index, field, value){
   }else{
     menu[index][field] = value.trim();
   }
+
+  saveMenuDraft();
 }
 
 function addProduct(){
@@ -141,12 +153,14 @@ function addProduct(){
   });
 
   renderEditor();
+  saveMenuDraft();
   statusText("New product added");
 }
 
 function removeProduct(index){
   menu.splice(index, 1);
   renderEditor();
+  saveMenuDraft();
   statusText("Product removed");
 }
 
@@ -164,6 +178,7 @@ function uploadImage(index, fileInput, imageInput, img){
         menu[index].image = image;
         imageInput.value = image;
         img.src = image;
+        saveMenuDraft();
         statusText("Picture added. Save products to publish it.");
       })
       .catch(()=>{
@@ -202,10 +217,13 @@ async function saveMenu(){
     }
 
     menu = data.menu;
+    localStorage.setItem("adminMenuServerSavedAt", String(Date.now()));
+    saveMenuDraft();
     renderEditor();
-    statusText("Saved");
+    statusText(`Saved ${menu.length} products`);
   }catch{
-    statusText("Save failed. Check connection and picture size.");
+    saveMenuDraft();
+    statusText("Save failed, but your edits are backed up in this browser. Try Save Products again.");
   }
 }
 
@@ -233,6 +251,31 @@ async function exportCustomers(){
 
 function statusText(message){
   statusLabel.innerText = message;
+}
+
+function loadMenuDraft(){
+  try{
+    const draft = JSON.parse(localStorage.getItem(menuDraftKey) || "null");
+
+    if(!draft || !Array.isArray(draft.items)){
+      return null;
+    }
+
+    return draft;
+  }catch{
+    return null;
+  }
+}
+
+function saveMenuDraft(){
+  try{
+    localStorage.setItem(menuDraftKey, JSON.stringify({
+      savedAt:Date.now(),
+      items:menu
+    }));
+  }catch{
+    statusText("Browser backup is full. Save Products now, or use smaller pictures.");
+  }
 }
 
 function normalizeCategory(category){
