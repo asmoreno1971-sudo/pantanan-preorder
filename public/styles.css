@@ -193,7 +193,7 @@ select:focus{
   padding:8px 14px;
   border:1px solid #d7c8bb;
   border-radius:8px;
-  background:#fff;
+  background:#eee3d9;
   color:var(--brand-strong);
   font-weight:850;
 }
@@ -243,6 +243,20 @@ select:focus{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:8px;
+  max-height:0;
+  opacity:0;
+  overflow:hidden;
+  pointer-events:none;
+  transform:translateY(-4px);
+  transition:max-height .16s ease, opacity .16s ease, transform .16s ease;
+}
+
+.cash-panel:hover .cash-presets,
+.cash-panel:focus-within .cash-presets{
+  max-height:46px;
+  opacity:1;
+  pointer-events:auto;
+  transform:translateY(0);
 }
 
 .cash-presets button{

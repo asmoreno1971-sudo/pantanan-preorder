@@ -448,7 +448,7 @@ async function openSummary(){
   }catch{
     orderSubmitted = false;
     orderButton.disabled = false;
-    orderButton.innerText = "Pay";
+    orderButton.innerText = "Process / New Sale";
     alert("Unable to send order. Please check your internet connection and try again.");
     validate();
     return;
@@ -457,7 +457,7 @@ async function openSummary(){
   if(!data.ok){
     orderSubmitted = false;
     orderButton.disabled = false;
-    orderButton.innerText = "Pay";
+    orderButton.innerText = "Process / New Sale";
     alert(data.message || "Unable to send order");
     await generateTimes();
     validate();
@@ -472,7 +472,7 @@ async function openSummary(){
 
   orderSubmitted = false;
   orderButton.disabled = false;
-  orderButton.innerText = "Pay";
+  orderButton.innerText = "Process / New Sale";
   validate();
 }
 
