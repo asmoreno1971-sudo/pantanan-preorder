@@ -28,6 +28,7 @@ Total P<span id="liveTotal">0</span>
 <input id="cashInput" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
 </label>
 <div class="cash-presets" aria-label="Cash presets">
+<button id="exactCashBtn" type="button" onclick="setCashAmount(currentTotal)" disabled>P0</button>
 <button type="button" onclick="setCashAmount(500)">P500</button>
 <button type="button" onclick="setCashAmount(1000)">P1000</button>
 </div>
@@ -41,6 +42,6 @@ Total P<span id="liveTotal">0</span>
 </div>
 </div>
 
-<script src="/app.js?v=20260509-process-new-sale"></script>
+<script src="/app.js?v=20260509-exact-cash-preset"></script>
 </body>
 </html>

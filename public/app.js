@@ -14,6 +14,7 @@ const summaryItems = document.getElementById("liveSummary");
 const totalText = document.getElementById("liveTotal");
 const cashInput = document.getElementById("cashInput");
 const changeOutput = document.getElementById("changeOutput");
+const exactCashButton = document.getElementById("exactCashBtn");
 const modal = document.getElementById("successModal");
 const successTitle = document.getElementById("successTitle");
 const successText = document.getElementById("successText");
@@ -317,6 +318,7 @@ function updateTotal(){
   });
 
   currentTotal = total;
+  updateExactCashButton();
   updateSummary(total);
   updateChange();
 }
@@ -372,6 +374,15 @@ function updateChange(){
   const cash = Number(cashInput ? cashInput.value || 0 : 0);
   const change = Math.max(0, cash - currentTotal);
   changeOutput.value = `P${change}`;
+}
+
+function updateExactCashButton(){
+  if(!exactCashButton){
+    return;
+  }
+
+  exactCashButton.innerText = `P${currentTotal}`;
+  exactCashButton.disabled = currentTotal <= 0;
 }
 
 function setCashAmount(amount){
