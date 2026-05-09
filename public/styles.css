@@ -634,9 +634,10 @@ button:disabled{
   width:100%;
   min-height:38px;
   padding:8px 10px;
-  background:linear-gradient(135deg, #d9a05b, #94602d);
-  color:#fff9f0;
-  box-shadow:0 6px 14px rgba(148,96,45,.22);
+  border:1px solid #f0b05f;
+  background:linear-gradient(135deg, #fff3df, #f8d7a8);
+  color:#b85c00;
+  box-shadow:0 6px 14px rgba(184,92,0,.16);
 }
 
 .done-list .notify-btn,
