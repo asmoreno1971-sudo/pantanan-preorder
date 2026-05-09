@@ -86,7 +86,6 @@ function ordersTable(orders, done){
             <th>Pickup</th>
             <th>Items</th>
             <th>Total</th>
-            <th>Status</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -124,10 +123,6 @@ function orderRow(order){
       </div>
     `;
 
-  const statusText = order.status === "Ready for Payment and Pickup"
-    ? "Ready for payment and pickup"
-    : order.status;
-
   return `
     <tr>
       <td><strong class="order-id">#${displayNumber}</strong><span class="order-meta">Sent ${created}</span></td>
@@ -135,7 +130,6 @@ function orderRow(order){
       <td>${order.pickupTime}</td>
       <td><div class="table-items">${items}</div></td>
       <td class="table-total">P${order.total}</td>
-      <td><span class="order-status-line">${statusText}</span></td>
       <td class="table-actions">${doneButton}</td>
     </tr>
   `;
