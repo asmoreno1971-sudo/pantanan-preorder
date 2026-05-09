@@ -205,7 +205,7 @@ function emptyState(message){
 function notifyButton(order){
   const canNotify = order.status === "Preparing Order";
   const disabled = canNotify ? "" : "disabled";
-  const label = canNotify ? "Notify Customer" : "Prepare First";
+  const label = canNotify ? "DONE. Notify Customer." : "Prepare First";
 
   return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="notifyCustomerReady('${order.id}')">${label}</button>`;
 }
