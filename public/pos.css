@@ -423,3 +423,13 @@ h2{
     grid-template-columns:1fr;
   }
 }
+
+body,
+body *,
+button,
+input,
+select,
+textarea{
+  font-family:Arial, sans-serif !important;
+  font-size:14px !important;
+}
