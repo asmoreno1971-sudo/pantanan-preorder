@@ -432,14 +432,9 @@ async function openSummary(){
   saveCustomer();
   activeOrderId = data.order.id;
   localStorage.setItem("activeOrderId", activeOrderId);
-  activeOrderVisible = true;
-  showCustomerStatus(data.order);
+  activeOrderVisible = false;
   resetOrderForm();
 
-  const displayNumber = String(data.order.orderNumber || data.order.id.slice(-3)).padStart(3, "0");
-  successTitle.innerText = `Order #${displayNumber}`;
-  successText.innerText = "Your order has been sent. Wait for confirmation.";
-  modal.classList.add("show");
   orderSubmitted = false;
   orderButton.disabled = false;
   orderButton.innerText = "Place Order";
@@ -480,7 +475,9 @@ function resetOrderForm(){
 }
 
 function closeSuccessModal(){
-  modal.classList.remove("show");
+  if(modal){
+    modal.classList.remove("show");
+  }
 }
 
 function dismissCustomerStatus(){
