@@ -626,18 +626,19 @@ button:disabled{
   width:100%;
   min-height:38px;
   padding:8px 10px;
-  background:linear-gradient(135deg, #f3b35f, #c56a19);
-  color:#2f1a08;
+  border:1px solid #f2a6a6;
+  background:linear-gradient(135deg, #ffe2e2, #f6b3b3);
+  color:#8f2f2f;
 }
 
 .notify-btn{
   width:100%;
   min-height:38px;
   padding:8px 10px;
-  border:1px solid #f0b05f;
-  background:linear-gradient(135deg, #fff3df, #f8d7a8);
-  color:#b85c00;
-  box-shadow:0 6px 14px rgba(184,92,0,.16);
+  border:1px solid #f1c85e;
+  background:linear-gradient(135deg, #fff8d7, #ffe89b);
+  color:#a85100;
+  box-shadow:0 6px 14px rgba(168,81,0,.14);
 }
 
 .done-list .notify-btn,
