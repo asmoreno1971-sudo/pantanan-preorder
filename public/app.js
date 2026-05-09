@@ -55,7 +55,7 @@ async function generateTimes(){
   timeDropdown.innerHTML = "";
   const placeholder = document.createElement("option");
   placeholder.value = "";
-  placeholder.textContent = "10 minutes from now";
+  placeholder.textContent = "-- Select Time --";
   timeDropdown.appendChild(placeholder);
   selectedTime.value = "";
   summaryTimeText.innerHTML = "--";
