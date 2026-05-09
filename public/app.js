@@ -303,9 +303,9 @@ function validate(){
 
   const hasItem = Object.values(quantities).some(qty=>qty > 0);
   const contactVal = contactInput.value.trim();
-  const valid = nameVal && contactVal && hasItem && timeDropdown.value;
-  orderButton.disabled = orderSubmitted;
-  orderButton.style.background = valid || !orderSubmitted ? "#1f8f4d" : "#ccc";
+  const valid = nameVal && normalizeMobileNumber(contactVal) && hasItem && timeDropdown.value;
+  orderButton.disabled = orderSubmitted || !valid;
+  orderButton.style.background = valid && !orderSubmitted ? "#1f8f4d" : "#ccc";
 }
 
 async function openSummary(){
