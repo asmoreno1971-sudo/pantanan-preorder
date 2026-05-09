@@ -634,9 +634,14 @@ button:disabled{
   width:100%;
   min-height:38px;
   padding:8px 10px;
-  background:linear-gradient(135deg, #14b8a6, #0f766e);
-  color:#fff;
-  box-shadow:0 6px 14px rgba(15,118,110,.18);
+  background:linear-gradient(135deg, #d9a05b, #94602d);
+  color:#fff9f0;
+  box-shadow:0 6px 14px rgba(148,96,45,.22);
+}
+
+.done-list .notify-btn,
+.done-list .order-status{
+  opacity:.62;
 }
 
 @keyframes preparing-pulse{
