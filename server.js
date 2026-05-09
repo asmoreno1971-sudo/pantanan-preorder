@@ -75,6 +75,11 @@ function nextDailyOrderNumber(orders){
   return highest + 1;
 }
 
+function pickupSlotCount(orders, pickupTime){
+  const today = localOrderDate();
+  return orders.filter(order=>order.orderDate === today && order.pickupTime === pickupTime).length;
+}
+
 function isAdmin(req){
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
@@ -307,6 +312,13 @@ async function handleApi(req, res){
       return true;
     }
 
+    const pickupTime = String(body.pickupTime);
+
+    if(pickupSlotCount(orders, pickupTime) >= 5){
+      send(res, 400, JSON.stringify({ ok:false, message:"That pickup time is already full. Please select the next available time." }));
+      return true;
+    }
+
     const total = cleanItems.reduce((sum, item)=>sum + item.subtotal, 0);
     const orderNumber = nextDailyOrderNumber(orders);
     const order = {
@@ -315,7 +327,7 @@ async function handleApi(req, res){
       orderDate: localOrderDate(),
       customerName: String(body.customerName).trim().toUpperCase(),
       customerContact:normalizedContact,
-      pickupTime: String(body.pickupTime),
+      pickupTime,
       status: "Order Sent",
       createdAt: new Date().toISOString(),
       items: cleanItems,

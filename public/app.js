@@ -18,6 +18,7 @@ const successText = document.getElementById("successText");
 const customerStatus = document.getElementById("customerStatus");
 const customerStatusTitle = document.getElementById("customerStatusTitle");
 const customerStatusText = document.getElementById("customerStatusText");
+const maxOrdersPerSlot = 5;
 let activeOrderId = localStorage.getItem("activeOrderId") || "";
 let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
 let activeOrderVisible = false;
@@ -49,8 +50,16 @@ function updateNowTime(){
   currentTimeText.innerText = `${date} ${dh}:${m} ${ap}`;
 }
 
-function generateTimes(){
+async function generateTimes(){
   let hasAvailableSlot = false;
+  timeDropdown.innerHTML = "";
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "10 minutes from now";
+  timeDropdown.appendChild(placeholder);
+  selectedTime.value = "";
+  summaryTimeText.innerHTML = "--";
+  const slotCounts = await loadSlotCounts();
   const now = new Date();
   const earliest = nextQuarterHour(new Date(now.getTime() + 8 * 60 * 1000));
   const start = new Date();
@@ -70,6 +79,11 @@ function generateTimes(){
     const dh = h % 12 || 12;
     const dm = slotTime.getMinutes().toString().padStart(2,"0");
     const t = `${dh}:${dm} ${ap}`;
+
+    if((slotCounts[t] || 0) >= maxOrdersPerSlot){
+      continue;
+    }
+
     const opt = document.createElement("option");
     opt.value = t;
     opt.textContent = t;
@@ -381,6 +395,7 @@ async function openSummary(){
     orderButton.disabled = false;
     orderButton.innerText = "Place Order";
     alert(data.message || "Unable to send order");
+    await generateTimes();
     validate();
     return;
   }
@@ -471,12 +486,38 @@ function showCustomerStatus(order){
   }
 }
 
+async function loadSlotCounts(){
+  try{
+    const res = await fetch("/api/orders");
+    const orders = await res.json();
+    const today = localOrderDate();
+
+    return orders.reduce((counts, order)=>{
+      if(order.orderDate === today && order.pickupTime){
+        counts[order.pickupTime] = (counts[order.pickupTime] || 0) + 1;
+      }
+
+      return counts;
+    }, {});
+  }catch{
+    return {};
+  }
+}
+
 function nextQuarterHour(date){
   const rounded = new Date(date);
   const minutes = rounded.getMinutes();
   const nextMinutes = Math.ceil(minutes / 15) * 15;
   rounded.setMinutes(nextMinutes, 0, 0);
   return rounded;
+}
+
+function localOrderDate(){
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function statusClass(status){
