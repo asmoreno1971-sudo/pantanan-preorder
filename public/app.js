@@ -327,7 +327,7 @@ async function openSummary(){
   }
 
   if(!contactVal){
-    alert("Please enter your Viber/WhatsApp number.");
+    alert("Please enter your mobile number.");
     contactInput.focus();
     return;
   }
