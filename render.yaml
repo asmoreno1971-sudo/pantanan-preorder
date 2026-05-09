@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: pantanan-preorder
+    name: pos-roadworthy
     env: node
     plan: free
     buildCommand: npm install
