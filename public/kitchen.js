@@ -253,6 +253,13 @@ function closeMessageModal(){
   messageModal.classList.remove("show");
 }
 
+document.addEventListener("keydown", function(e){
+  if(e.key === "Enter" && messageModal.classList.contains("show")){
+    e.preventDefault();
+    closeMessageModal();
+  }
+});
+
 async function copyCustomerMessage(){
   messageText.select();
   await copyText(messageText.value);
