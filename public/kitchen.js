@@ -1,10 +1,12 @@
 let seenOrderIds = new Set();
 let soundEnabled = false;
 let audioContext;
+let currentOrders = [];
 
 async function loadOrders(){
   const res = await fetch("/api/orders");
   const orders = await res.json();
+  currentOrders = orders;
   notifyNewOrders(orders);
   renderOrders(orders);
 }
@@ -115,7 +117,7 @@ function orderRow(order){
     : `
       <div class="kitchen-actions">
         <div class="workflow-actions">
-          <button class="kitchen-action-btn prepare-btn ${order.status === "Preparing Order" ? "active" : ""}" onclick="markPreparing('${order.id}')">Preparing Order</button>
+          <button class="kitchen-action-btn prepare-btn ${order.status === "Preparing Order" ? "active" : ""}" data-prepare-id="${order.id}" onclick="markPreparing('${order.id}')">${preparingLabel(order)}</button>
         </div>
         <div class="notify-actions">
           ${messageButton}
@@ -145,6 +147,34 @@ function notifyButton(order){
   const label = canNotify ? "Notify Customer" : "Prepare First";
 
   return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="notifyCustomerReady('${order.id}')">${label}</button>`;
+}
+
+function preparingLabel(order){
+  if(order.status !== "Preparing Order"){
+    return "Preparing Order";
+  }
+
+  return `Preparing Order: ${elapsedPreparingTime(order)}`;
+}
+
+function elapsedPreparingTime(order){
+  const startedAt = new Date(order.preparingAt || order.createdAt).getTime();
+  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+  const minutes = String(Math.floor(elapsedSeconds / 60)).padStart(2, "0");
+  const seconds = String(elapsedSeconds % 60).padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
+function updatePreparingTimers(){
+  currentOrders
+    .filter(order=>order.status === "Preparing Order")
+    .forEach(order=>{
+      const button = document.querySelector(`[data-prepare-id="${order.id}"]`);
+
+      if(button){
+        button.innerText = preparingLabel(order);
+      }
+    });
 }
 
 async function markDone(id){
@@ -229,3 +259,4 @@ async function copyText(text){
 
 loadOrders();
 setInterval(loadOrders, 5000);
+setInterval(updatePreparingTimers, 1000);
