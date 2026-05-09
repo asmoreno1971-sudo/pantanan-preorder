@@ -212,7 +212,7 @@ function notifyButton(order){
 
 function preparingLabel(order){
   if(order.status !== "Preparing Order"){
-    return "Preparing Order";
+    return "Prepare Order";
   }
 
   return `Preparing Order: ${elapsedPreparingTime(order)}`;
