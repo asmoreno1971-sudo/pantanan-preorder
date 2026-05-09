@@ -154,7 +154,9 @@ function renderMenu(){
   menuList.innerHTML = "";
 
   categories.forEach(category=>{
-    const items = menu.filter(item=>normalizeCategory(item.category) === category);
+    const items = menu
+      .filter(item=>normalizeCategory(item.category) === category)
+      .sort((a, b)=>String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity:"base" }));
 
     const section = document.createElement("div");
     section.className = "category-section";
