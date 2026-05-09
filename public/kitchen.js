@@ -39,20 +39,28 @@ function playAlertSound(){
   }
 
   const now = audioContext.currentTime;
-  [0, .18, .36].forEach((offset, index)=>{
+  const compressor = audioContext.createDynamicsCompressor();
+  compressor.threshold.setValueAtTime(-24, now);
+  compressor.knee.setValueAtTime(20, now);
+  compressor.ratio.setValueAtTime(8, now);
+  compressor.attack.setValueAtTime(.003, now);
+  compressor.release.setValueAtTime(.18, now);
+  compressor.connect(audioContext.destination);
+
+  [0, .16, .32, .62, .78, .94].forEach((offset, index)=>{
     const oscillator = audioContext.createOscillator();
     const gain = audioContext.createGain();
 
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(index === 1 ? 880 : 660, now + offset);
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(index % 2 ? 1040 : 760, now + offset);
     gain.gain.setValueAtTime(.0001, now + offset);
-    gain.gain.exponentialRampToValueAtTime(.28, now + offset + .02);
-    gain.gain.exponentialRampToValueAtTime(.0001, now + offset + .12);
+    gain.gain.exponentialRampToValueAtTime(.95, now + offset + .015);
+    gain.gain.exponentialRampToValueAtTime(.0001, now + offset + .16);
 
     oscillator.connect(gain);
-    gain.connect(audioContext.destination);
+    gain.connect(compressor);
     oscillator.start(now + offset);
-    oscillator.stop(now + offset + .14);
+    oscillator.stop(now + offset + .18);
   });
 }
 
