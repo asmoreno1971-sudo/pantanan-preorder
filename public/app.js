@@ -1,6 +1,6 @@
 let menu = [];
 const quantities = {};
-const categories = ["Sandwiches", "Cookies", "Drinks", "Dimsum", "Noodle", "Other"];
+const categories = ["Sandwiches", "Drinks", "Dimsum", "Noodle", "Other"];
 const nameInput = document.getElementById("name");
 const contactInput = document.getElementById("contact");
 const timeDropdown = document.getElementById("timeSelect");
@@ -208,10 +208,6 @@ function overlayClass(category){
     return "sandwich-overlay";
   }
 
-  if(normalized === "Cookies"){
-    return "cookie-overlay";
-  }
-
   if(normalized === "Noodle"){
     return "noodle-overlay";
   }
@@ -226,6 +222,10 @@ function categoryTitleClass(category){
 
 function normalizeCategory(category){
   const normalized = category === "Sandwhich" || category === "Sandwich" ? "Sandwiches" : category;
+  if(normalized === "Cookies"){
+    return "Other";
+  }
+
   return categories.includes(normalized) ? normalized : "Drinks";
 }
 
@@ -243,7 +243,6 @@ function productImage(item){
   const palettes = {
     Sandwiches:["#efc486", "#8a5530", "#fff2c7", "#72a35b"],
     Drinks:["#dcae73", "#5b3322", "#fff2dd", "#b78052"],
-    Cookies:["#c9854d", "#5f341f", "#f5c982", "#3f2418"],
     Dimsum:["#f2c98f", "#8d5c2f", "#fff3d8", "#c6783d"],
     Noodle:["#f0d17d", "#73502a", "#fff0b8", "#b56b38"],
     Others:["#c8d6c3", "#4d6048", "#f2ead8", "#829b7a"]
@@ -255,14 +254,6 @@ function productImage(item){
        <path d="M58 88 L110 51 L162 88 Z" fill="${dark}" opacity=".8"/>
        <rect x="46" y="86" width="128" height="20" rx="8" fill="${light}"/>
        <circle cx="68" cy="36" r="12" fill="#fff7dc" opacity=".8"/>`
-    : category === "Cookies"
-      ? `<circle cx="78" cy="76" r="42" fill="${light}"/>
-         <circle cx="138" cy="68" r="44" fill="${light}"/>
-         <circle cx="66" cy="61" r="6" fill="${dark}"/>
-         <circle cx="91" cy="86" r="7" fill="${dark}"/>
-         <circle cx="125" cy="48" r="6" fill="${dark}"/>
-         <circle cx="153" cy="74" r="7" fill="${dark}"/>
-         <circle cx="139" cy="96" r="5" fill="${dark}"/>`
       : category === "Dimsum"
         ? `<ellipse cx="110" cy="102" rx="76" ry="18" fill="${dark}" opacity=".18"/>
            <path d="M62 92 C60 52 91 34 111 68 C130 34 160 53 158 92 Z" fill="${light}"/>
