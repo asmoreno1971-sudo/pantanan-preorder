@@ -52,7 +52,7 @@ function updateNowTime(){
 function generateTimes(){
   let hasAvailableSlot = false;
   const now = new Date();
-  const earliest = nextQuarterHour(new Date(now.getTime() + 15 * 60 * 1000));
+  const earliest = nextQuarterHour(new Date(now.getTime() + 12 * 60 * 1000));
   const start = new Date();
   start.setHours(8, 0, 0, 0);
   const end = new Date(start);
