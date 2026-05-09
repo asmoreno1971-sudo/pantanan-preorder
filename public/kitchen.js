@@ -47,21 +47,29 @@ function playAlertSound(){
   compressor.release.setValueAtTime(.18, now);
   compressor.connect(audioContext.destination);
 
-  [0, .16, .32, .62, .78, .94].forEach((offset, index)=>{
+  const pattern = [0, .16, .32, .62, .78, .94];
+
+  for(let repeat = 0; repeat < 8; repeat += 1){
+    pattern.forEach((patternOffset, index)=>{
+      playAlertTone(now + repeat * 1.25 + patternOffset, index, compressor);
+    });
+  }
+}
+
+function playAlertTone(startTime, index, destination){
     const oscillator = audioContext.createOscillator();
     const gain = audioContext.createGain();
 
     oscillator.type = "square";
-    oscillator.frequency.setValueAtTime(index % 2 ? 1040 : 760, now + offset);
-    gain.gain.setValueAtTime(.0001, now + offset);
-    gain.gain.exponentialRampToValueAtTime(.95, now + offset + .015);
-    gain.gain.exponentialRampToValueAtTime(.0001, now + offset + .16);
+    oscillator.frequency.setValueAtTime(index % 2 ? 1040 : 760, startTime);
+    gain.gain.setValueAtTime(.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(.95, startTime + .015);
+    gain.gain.exponentialRampToValueAtTime(.0001, startTime + .16);
 
     oscillator.connect(gain);
-    gain.connect(compressor);
-    oscillator.start(now + offset);
-    oscillator.stop(now + offset + .18);
-  });
+    gain.connect(destination);
+    oscillator.start(startTime);
+    oscillator.stop(startTime + .18);
 }
 
 function renderOrders(orders){
