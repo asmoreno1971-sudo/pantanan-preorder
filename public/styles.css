@@ -186,20 +186,38 @@ select:focus{
 
 .cash-field{
   display:grid;
-  grid-template-columns:82px 1fr;
+  grid-template-columns:auto 1fr;
   align-items:center;
-  gap:10px;
+  gap:12px;
+  min-height:54px;
+  padding:8px 14px;
+  border:1px solid #d7c8bb;
+  border-radius:8px;
+  background:#fff;
+  color:var(--brand-strong);
+  font-weight:850;
+}
+
+.cash-field span{
   color:var(--brand-strong);
   font-weight:850;
 }
 
 .cash-field input{
   max-width:none;
-  height:44px;
-  padding:8px 14px;
+  height:auto;
+  padding:0;
+  border:0;
+  border-radius:0;
   margin-bottom:0;
+  background:transparent;
   text-align:right;
   font-weight:850;
+  box-shadow:none;
+}
+
+.cash-field input:focus{
+  box-shadow:none;
 }
 
 .cash-field input[type=number]{
@@ -214,15 +232,17 @@ select:focus{
 }
 
 .cash-field input[readonly]{
-  background:#eee3d9;
   color:#1f8f4d;
+}
+
+.cash-field:has(input[readonly]){
+  background:#eee3d9;
 }
 
 .cash-presets{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:8px;
-  padding-left:92px;
 }
 
 .cash-presets button{
