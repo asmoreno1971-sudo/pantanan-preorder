@@ -1,6 +1,7 @@
 let menu = [];
 const quantities = {};
 const categories = ["Sandwiches", "Drinks", "Dimsum", "Noodle", "Other"];
+const menuDraftKey = "adminMenuDraft";
 const nameInput = document.getElementById("name");
 const contactInput = document.getElementById("contact");
 const timeDropdown = document.getElementById("timeSelect");
@@ -42,8 +43,26 @@ function saveCustomer(){
 
 async function loadMenu(){
   const res = await fetch("/api/menu");
-  menu = await res.json();
+  const serverMenu = await res.json();
+  const draft = loadMenuDraft();
+  menu = draft && draft.items.length > 0 && draft.savedAt > Number(localStorage.getItem("adminMenuServerSavedAt") || 0)
+    ? draft.items
+    : serverMenu;
   renderMenu();
+}
+
+function loadMenuDraft(){
+  try{
+    const draft = JSON.parse(localStorage.getItem(menuDraftKey) || "null");
+
+    if(!draft || !Array.isArray(draft.items)){
+      return null;
+    }
+
+    return draft;
+  }catch{
+    return null;
+  }
 }
 
 function updateNowTime(){
@@ -405,7 +424,13 @@ async function openSummary(){
   const pickupTime = timeDropdown ? (timeDropdown.value || selectedTime.value) : "POS RW";
   const items = menu
     .filter(item=>quantities[item.id] > 0)
-    .map(item=>({ id:item.id, qty:quantities[item.id] }));
+    .map(item=>({
+      id:item.id,
+      name:item.name,
+      product:item.name,
+      price:item.price,
+      qty:quantities[item.id]
+    }));
 
   if(nameInput && !nameVal){
     alert("Please enter your nickname.");

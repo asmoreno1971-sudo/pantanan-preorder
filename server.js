@@ -390,17 +390,19 @@ async function handleApi(req, res){
       .map(item=>{
         const product = menu.find(menuItem=>menuItem.id === item.id || menuItem.name === item.product || menuItem.name === item.name);
         const qty = Math.max(0, Number(item.qty) || 0);
+        const fallbackName = String(item.product || item.name || "").trim();
+        const fallbackPrice = Math.max(0, Number(item.price) || 0);
 
-        if(!product || qty === 0){
+        if(qty === 0 || (!product && (!fallbackName || fallbackPrice === 0))){
           return null;
         }
 
         return {
-          id: product.id,
-          name: product.name,
+          id: product ? product.id : String(item.id || fallbackName).replace(/[^a-z0-9-]/gi, "-").toLowerCase(),
+          name: product ? product.name : fallbackName,
           qty,
-          price: product.price,
-          subtotal: qty * product.price
+          price: product ? product.price : fallbackPrice,
+          subtotal: qty * (product ? product.price : fallbackPrice)
         };
       })
       .filter(Boolean);

@@ -235,6 +235,10 @@ select:focus{
   color:#1f8f4d;
 }
 
+#changeOutput{
+  font-size:28px !important;
+}
+
 .cash-field:has(input[readonly]){
   background:#eee3d9;
 }
