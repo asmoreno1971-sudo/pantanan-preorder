@@ -25,13 +25,15 @@ let activeOrderVisible = false;
 let orderSubmitted = false;
 
 function loadSavedCustomer(){
-  nameInput.value = localStorage.getItem("customerNickname") || "";
-  contactInput.value = localStorage.getItem("customerContact") || "";
+  localStorage.removeItem("customerNickname");
+  localStorage.removeItem("customerContact");
+  nameInput.value = "";
+  contactInput.value = "";
 }
 
 function saveCustomer(){
-  localStorage.setItem("customerNickname", nameInput.value.trim());
-  localStorage.setItem("customerContact", contactInput.value.trim());
+  localStorage.removeItem("customerNickname");
+  localStorage.removeItem("customerContact");
 }
 
 async function loadMenu(){
