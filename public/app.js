@@ -250,7 +250,7 @@ function renderMenu(){
             x P${item.price} =
             <span id="s-${item.id}" class="subtotal">P0</span>
           </div>
-          <button class="cancel-btn" aria-label="Remove one ${item.name}" title="Remove one" onclick="changeQty('${item.id}',-1)">x</button>
+          <button class="cancel-btn" aria-label="Remove one ${item.name}" title="Remove one" onclick="changeQty('${item.id}',-1)">−</button>
         </div>
       `;
 
