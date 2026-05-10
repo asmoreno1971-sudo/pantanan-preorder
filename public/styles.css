@@ -208,6 +208,8 @@ select:focus{
   align-items:center;
   justify-content:flex-end;
   gap:0;
+  justify-self:end;
+  width:max-content;
   min-width:0;
   color:#1f8f4d;
   font-weight:900;
@@ -234,7 +236,8 @@ select:focus{
 }
 
 #cashInput{
-  width:5ch;
+  width:3ch;
+  flex:0 0 3ch;
   color:#1f8f4d;
   font-size:28px !important;
   font-weight:900;
