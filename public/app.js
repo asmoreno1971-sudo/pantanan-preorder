@@ -178,10 +178,23 @@ if(contactInput){
 }
 
 if(cashInput){
+  cashInput.addEventListener("focus", showCashPresets);
+  cashInput.addEventListener("click", showCashPresets);
   cashInput.addEventListener("input", function(){
     updateCashInputWidth();
     updateChange();
     validate();
+  });
+}
+
+if(cashPanel){
+  cashPanel.addEventListener("mouseenter", showCashPresets);
+  cashPanel.addEventListener("mouseleave", hideCashPresets);
+  cashPanel.addEventListener("focusin", showCashPresets);
+  document.addEventListener("pointerdown", function(event){
+    if(!cashPanel.contains(event.target)){
+      hideCashPresets();
+    }
   });
 }
 
@@ -459,6 +472,19 @@ function setCashAmount(amount){
   updateCashInputWidth();
   updateChange();
   validate();
+  hideCashPresets();
+}
+
+function showCashPresets(){
+  if(cashPanel && currentTotal > 0){
+    cashPanel.classList.add("cash-presets-open");
+  }
+}
+
+function hideCashPresets(){
+  if(cashPanel){
+    cashPanel.classList.remove("cash-presets-open");
+  }
 }
 
 async function openSummary(){
