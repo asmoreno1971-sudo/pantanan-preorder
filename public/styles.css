@@ -203,6 +203,23 @@ select:focus{
   font-weight:850;
 }
 
+.cash-value{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:2px;
+  min-width:0;
+  color:#1f8f4d;
+  font-weight:900;
+}
+
+.currency-prefix{
+  color:#1f8f4d !important;
+  font-size:28px !important;
+  font-weight:900 !important;
+  line-height:1;
+}
+
 .cash-field input{
   max-width:none;
   height:auto;
@@ -214,6 +231,13 @@ select:focus{
   text-align:right;
   font-weight:850;
   box-shadow:none;
+}
+
+#cashInput{
+  width:7ch;
+  color:#1f8f4d;
+  font-size:28px !important;
+  font-weight:900;
 }
 
 .cash-field input:focus{
