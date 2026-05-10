@@ -218,7 +218,7 @@ select:focus{
 .currency-prefix{
   color:#1f8f4d !important;
   font-size:28px !important;
-  font-weight:900 !important;
+  font-weight:750 !important;
   line-height:1;
 }
 
@@ -240,7 +240,7 @@ select:focus{
   flex:0 0 3ch;
   color:#1f8f4d;
   font-size:28px !important;
-  font-weight:900;
+  font-weight:750;
 }
 
 .cash-field input:focus{
@@ -264,6 +264,7 @@ select:focus{
 
 #changeOutput{
   font-size:28px !important;
+  font-weight:750;
 }
 
 .cash-field:has(input[readonly]){
