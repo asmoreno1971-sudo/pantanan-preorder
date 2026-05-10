@@ -16,6 +16,7 @@ const totalText = document.getElementById("liveTotal");
 const cashInput = document.getElementById("cashInput");
 const changeOutput = document.getElementById("changeOutput");
 const exactCashButton = document.getElementById("exactCashBtn");
+const cashPanel = document.querySelector(".cash-panel");
 const modal = document.getElementById("successModal");
 const successTitle = document.getElementById("successTitle");
 const successText = document.getElementById("successText");
@@ -178,6 +179,7 @@ if(contactInput){
 
 if(cashInput){
   cashInput.addEventListener("input", function(){
+    updateCashInputWidth();
     updateChange();
     validate();
   });
@@ -363,6 +365,7 @@ function updateTotal(){
   currentTotal = total;
   updateExactCashButton();
   updateSummary(total);
+  updatePaymentVisibility();
   updateChange();
 }
 
@@ -417,6 +420,25 @@ function updateChange(){
   const cash = Number(cashInput ? cashInput.value || 0 : 0);
   const change = Math.max(0, cash - currentTotal);
   changeOutput.value = `P${change}`;
+  updateCashInputWidth();
+}
+
+function updatePaymentVisibility(){
+  if(!cashPanel){
+    return;
+  }
+
+  cashPanel.classList.toggle("hidden", currentTotal <= 0);
+}
+
+function updateCashInputWidth(){
+  if(!cashInput){
+    return;
+  }
+
+  const digits = String(cashInput.value || "0").length;
+  cashInput.style.width = `${Math.max(1, digits)}ch`;
+  cashInput.style.flexBasis = `${Math.max(1, digits)}ch`;
 }
 
 function updateExactCashButton(){
@@ -434,6 +456,7 @@ function setCashAmount(amount){
   }
 
   cashInput.value = amount;
+  updateCashInputWidth();
   updateChange();
   validate();
 }
@@ -699,6 +722,8 @@ setInterval(checkActiveOrder, 5000);
 updateNowTime();
 generateTimes();
 loadSavedCustomer();
+updatePaymentVisibility();
+updateCashInputWidth();
 loadMenu();
 checkActiveOrder();
 validate();

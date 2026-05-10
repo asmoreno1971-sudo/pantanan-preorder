@@ -236,8 +236,8 @@ select:focus{
 }
 
 #cashInput{
-  width:3ch;
-  flex:0 0 3ch;
+  width:1ch;
+  flex:0 0 1ch;
   color:#1f8f4d;
   font-size:28px !important;
   font-weight:750;
