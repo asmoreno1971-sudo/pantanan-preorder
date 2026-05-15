@@ -434,10 +434,12 @@ select:focus{
   max-width:none;
   background:rgba(255,250,244,.94);
   color:#4f3525;
-  font-size:clamp(8px, 1.45vw, 11px) !important;
+  font-size:clamp(9px, 1.45vw, 11px) !important;
   padding:clamp(3px, .7vw, 5px) clamp(4px, .8vw, 6px);
   font-weight:650;
   line-height:1.12;
+  overflow-wrap:anywhere;
+  text-align:left;
 }
 
 .overlay-price{
@@ -1186,14 +1188,18 @@ button:disabled{
   }
 
   .category-items{
-    grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
-    gap:clamp(3px, 1vw, 6px);
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:clamp(5px, 1.8vw, 10px);
   }
 
   .menu-row{
-    grid-template-columns:minmax(0, 1fr) clamp(54px, 43%, 82px);
-    gap:clamp(1px, .6vw, 3px);
-    padding:clamp(4px, 1vw, 6px);
+    grid-template-columns:minmax(0, 1fr) clamp(76px, 45%, 104px);
+    gap:clamp(3px, 1vw, 6px);
+    padding:clamp(5px, 1.4vw, 8px);
+  }
+
+  .overlay-name{
+    font-size:clamp(9px, 3.1vw, 12px) !important;
   }
 
   .order-line{
