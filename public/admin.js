@@ -34,22 +34,17 @@ async function login(){
 
 async function loadMenu(){
   const res = await fetch(`/api/menu?fresh=${Date.now()}`, { cache:"no-store" });
-  const serverMenu = await res.json();
-  const draft = loadMenuDraft();
-  const useDraft = shouldUseMenuDraft(draft, serverMenu);
-  menu = useDraft
-    ? draft.items
-    : serverMenu;
+  menu = await res.json();
+  localStorage.removeItem(menuDraftKey);
   menu.forEach(item=>{
     item.category = normalizeCategory(item.category);
   });
   renderEditor();
 
-  if(useDraft){
-    statusText("Restored your latest edits from this browser. Saving them to the UI now...");
-    scheduleAutoSave();
-  }else if(menu.length === 0){
+  if(menu.length === 0){
     statusText("No products loaded. Do not save yet. Refresh after deploy finishes.");
+  }else{
+    statusText("Loaded saved online products.");
   }
 }
 
@@ -242,7 +237,7 @@ async function saveMenu(){
     menu = data.menu;
     const savedAt = Date.now();
     localStorage.setItem("adminMenuServerSavedAt", String(savedAt));
-    saveMenuDraft(false, savedAt);
+    localStorage.removeItem(menuDraftKey);
     renderEditor();
     statusText(`Saved ${menu.length} products`);
   }catch{
@@ -277,45 +272,6 @@ async function exportCustomers(){
 
 function statusText(message){
   statusLabel.innerText = message;
-}
-
-function loadMenuDraft(){
-  try{
-    const draft = JSON.parse(localStorage.getItem(menuDraftKey) || "null");
-
-    if(!draft || !Array.isArray(draft.items)){
-      return null;
-    }
-
-    return draft;
-  }catch{
-    return null;
-  }
-}
-
-function shouldUseMenuDraft(draft, serverMenu){
-  if(!draft || !Array.isArray(draft.items) || draft.items.length === 0){
-    return false;
-  }
-
-  const serverSavedAt = Number(localStorage.getItem("adminMenuServerSavedAt") || 0);
-  return draft.savedAt > serverSavedAt || !menusMatch(draft.items, serverMenu);
-}
-
-function menusMatch(left, right){
-  return JSON.stringify(menuSignature(left)) === JSON.stringify(menuSignature(right));
-}
-
-function menuSignature(items){
-  return (Array.isArray(items) ? items : [])
-    .map(item=>({
-      id:String(item.id || ""),
-      name:String(item.name || ""),
-      price:Number(item.price) || 0,
-      category:normalizeCategory(item.category),
-      image:String(item.image || "")
-    }))
-    .sort((a, b)=>(a.id || a.name).localeCompare(b.id || b.name));
 }
 
 function saveMenuDraft(autosave = true, savedAt = Date.now()){
