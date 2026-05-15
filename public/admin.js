@@ -33,7 +33,7 @@ async function login(){
 }
 
 async function loadMenu(){
-  const res = await fetch("/api/menu");
+  const res = await fetch(`/api/menu?fresh=${Date.now()}`, { cache:"no-store" });
   const serverMenu = await res.json();
   const draft = loadMenuDraft();
   const useDraft = shouldUseMenuDraft(draft, serverMenu);
@@ -218,6 +218,7 @@ async function saveMenu(){
         "Content-Type":"application/json",
         "Authorization":`Bearer ${token}`
       },
+      cache:"no-store",
       body:JSON.stringify(cleanMenu)
     });
     const data = await res.json().catch(()=>({ ok:false, message:"Server did not return JSON." }));
@@ -336,6 +337,7 @@ function scheduleAutoSave(){
     return;
   }
 
+  statusText("Saving changes...");
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(()=>{
     saveMenu();
