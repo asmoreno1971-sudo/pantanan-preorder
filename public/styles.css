@@ -495,10 +495,6 @@ select:focus{
   background:#d95b56;
 }
 
-.qty-plus{
-  background:#4aa66a;
-}
-
 .qty{
   width:clamp(14px, 2.3vw, 22px);
   height:clamp(18px, 2.45vw, 24px);

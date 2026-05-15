@@ -261,7 +261,6 @@ function renderMenu(){
         <div class="order-line">
           <button class="qty-btn qty-minus" aria-label="Remove one ${item.name}" title="Remove one" onclick="changeQty('${item.id}',-1)">−</button>
           <div id="q-${item.id}" class="qty">${quantities[item.id]}</div>
-          <button class="qty-btn qty-plus" aria-label="Add one ${item.name}" title="Add one" onclick="changeQty('${item.id}',1)">+</button>
         </div>
       `;
 
