@@ -255,6 +255,7 @@ function renderMenu(){
         <div class="img-wrap" role="button" tabindex="0" onclick="changeQty('${item.id}',1)" onkeydown="addFromImage(event,'${item.id}')">
           <img class="product-img" src="${image}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallback}'">
           <div class="overlay-name ${overlayClass(item.category)}">${item.name}</div>
+          <div class="overlay-price">P${item.price}</div>
         </div>
 
         <div class="order-line">
