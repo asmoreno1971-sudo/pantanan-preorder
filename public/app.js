@@ -47,6 +47,16 @@ async function loadMenu(){
   renderMenu();
 }
 
+function hasSelectedItems(){
+  return Object.values(quantities).some(qty=>qty > 0);
+}
+
+function refreshMenuIfIdle(){
+  if(!orderSubmitted && !hasSelectedItems()){
+    loadMenu();
+  }
+}
+
 function updateNowTime(){
   const now = new Date();
   const date = now.toLocaleDateString();
@@ -699,6 +709,13 @@ async function checkActiveOrder(){
 
 setInterval(updateNowTime, 1000);
 setInterval(checkActiveOrder, 5000);
+setInterval(refreshMenuIfIdle, 15000);
+window.addEventListener("focus", refreshMenuIfIdle);
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "visible"){
+    refreshMenuIfIdle();
+  }
+});
 updateNowTime();
 generateTimes();
 loadSavedCustomer();
