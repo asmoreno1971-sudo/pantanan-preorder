@@ -208,7 +208,7 @@ function renderMenu(){
       const fallback = productImage(item);
       const image = item.image || fallback;
       row.innerHTML = `
-        <div class="img-wrap" aria-label="${item.name}">
+        <div class="img-wrap" role="button" tabindex="0" aria-label="Add one ${item.name}" onclick="changeQty('${item.id}',1)" onkeydown="addFromImage(event,'${item.id}')">
           <img class="product-img" src="${image}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallback}'">
           <div class="overlay-name">${item.name}</div>
           <div class="overlay-price">P${item.price}</div>
@@ -217,7 +217,6 @@ function renderMenu(){
         <div class="order-line">
           <button class="qty-btn qty-minus" aria-label="Remove one ${item.name}" title="Remove one" onclick="changeQty('${item.id}',-1)">−</button>
           <div id="q-${item.id}" class="qty">${quantities[item.id]}</div>
-          <button class="qty-btn qty-plus" aria-label="Add one ${item.name}" title="Add one" onclick="changeQty('${item.id}',1)">+</button>
         </div>
       `;
 
@@ -238,6 +237,15 @@ function normalizeCategory(category){
   }
 
   return categories.includes(normalized) ? normalized : "Drinks";
+}
+
+function addFromImage(e,id){
+  if(e.key !== "Enter" && e.key !== " "){
+    return;
+  }
+
+  e.preventDefault();
+  changeQty(id, 1);
 }
 
 function productImage(item){
