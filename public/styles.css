@@ -408,7 +408,9 @@ select:focus{
   overflow:hidden;
   border-radius:8px;
   background:#eadbcf;
-  cursor:pointer;
+  cursor:ew-resize;
+  touch-action:pan-y;
+  user-select:none;
 }
 
 .img-wrap:focus{
