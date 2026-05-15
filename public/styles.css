@@ -469,53 +469,44 @@ select:focus{
 .order-line{
   display:flex;
   align-items:center;
-  justify-content:flex-start;
-  gap:6px;
+  justify-content:center;
+  gap:8px;
   min-width:0;
 }
 
-.cancel-btn{
-  width:26px;
-  height:18px;
+.qty-btn{
+  width:32px;
+  height:28px;
   margin-top:0;
   padding:0;
   display:flex;
   align-items:center;
   justify-content:center;
-  flex:0 0 26px;
+  flex:0 0 32px;
   border-radius:4px;
-  background:#be2f2f;
   color:#fff;
-  font-size:17px;
+  font-size:18px !important;
   line-height:1;
   font-weight:900;
 }
 
+.qty-minus{
+  background:#be2f2f;
+}
+
+.qty-plus{
+  background:#1f8f4d;
+}
+
 .qty{
-  width:26px;
-  height:32px;
+  width:28px;
+  height:28px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:20px;
-}
-
-.price-group{
-  display:flex;
-  justify-content:flex-start;
-  align-items:center;
-  gap:4px;
   font-family:var(--font-number);
-  font-weight:750;
-  white-space:nowrap;
-  font-size:16px;
-}
-
-.subtotal{
-  min-width:34px;
-  text-align:left;
-  color:#b85c00;
-  font-weight:bold;
+  font-size:18px !important;
+  font-weight:850;
 }
 
 button{
@@ -1222,38 +1213,22 @@ button:disabled{
     padding:8px 0;
   }
 
-  .price-group{
-    justify-content:flex-start;
-  }
-
   .order-line{
-    display:grid;
-    grid-template-columns:18px minmax(0, 1fr) 22px;
-    gap:3px;
-  }
-
-  .price-group{
-    gap:2px;
-    min-width:0;
-    font-size:12px;
+    justify-content:center;
+    gap:4px;
   }
 
   .qty{
-    width:18px;
-    height:24px;
-    font-size:14px;
-  }
-
-  .cancel-btn{
     width:22px;
-    height:18px;
-    flex-basis:22px;
-    font-size:14px;
+    height:24px;
+    font-size:14px !important;
   }
 
-  .subtotal{
-    width:auto;
-    min-width:22px;
+  .qty-btn{
+    width:22px;
+    height:22px;
+    flex-basis:22px;
+    font-size:14px !important;
   }
 
   .admin-row{

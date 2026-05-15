@@ -207,7 +207,7 @@ document.addEventListener("keydown", function(e){
     nameInput,
     contactInput,
     timeDropdown,
-    ...document.querySelectorAll(".img-wrap, .cancel-btn"),
+    ...document.querySelectorAll(".img-wrap, .qty-btn"),
     orderButton
   ].filter(Boolean);
   const currentIndex = focusOrder.indexOf(document.activeElement);
@@ -259,12 +259,9 @@ function renderMenu(){
         </div>
 
         <div class="order-line">
+          <button class="qty-btn qty-minus" aria-label="Remove one ${item.name}" title="Remove one" onclick="changeQty('${item.id}',-1)">−</button>
           <div id="q-${item.id}" class="qty">${quantities[item.id]}</div>
-          <div class="price-group">
-            x P${item.price} =
-            <span id="s-${item.id}" class="subtotal">P0</span>
-          </div>
-          <button class="cancel-btn" aria-label="Remove one ${item.name}" title="Remove one" onclick="changeQty('${item.id}',-1)">−</button>
+          <button class="qty-btn qty-plus" aria-label="Add one ${item.name}" title="Add one" onclick="changeQty('${item.id}',1)">+</button>
         </div>
       `;
 
@@ -373,7 +370,6 @@ function updateTotal(){
   menu.forEach(item=>{
     const sub = quantities[item.id] * item.price;
     total += sub;
-    document.getElementById(`s-${item.id}`).innerText = `P${sub}`;
   });
 
   currentTotal = total;
