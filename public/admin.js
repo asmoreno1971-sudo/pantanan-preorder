@@ -2,6 +2,7 @@ let token = localStorage.getItem("adminToken") || "";
 let menu = [];
 let autoSaveTimer = null;
 let isSaving = false;
+let pendingSave = false;
 
 const menuDraftKey = "adminMenuDraft";
 const categories = ["Sandwiches", "Drinks", "Dimsum", "Noodle", "Other"];
@@ -199,6 +200,7 @@ async function saveMenu(){
   }
 
   if(isSaving){
+    pendingSave = true;
     return;
   }
 
@@ -239,12 +241,35 @@ async function saveMenu(){
     localStorage.setItem("adminMenuServerSavedAt", String(savedAt));
     localStorage.removeItem(menuDraftKey);
     renderEditor();
-    statusText(`Saved ${menu.length} products`);
+    await verifyCustomerMenuSync();
   }catch{
     saveMenuDraft();
     statusText("Save failed, but your edits are backed up in this browser. Try Save Products again.");
   }finally{
     isSaving = false;
+
+    if(pendingSave){
+      pendingSave = false;
+      saveMenu();
+    }
+  }
+}
+
+async function verifyCustomerMenuSync(){
+  try{
+    const res = await fetch(`/api/menu-lite?fresh=${Date.now()}`, { cache:"no-store" });
+    const customerMenu = await res.json();
+    const savedSignature = menu.map(item=>`${item.id}|${item.name}|${Number(item.price) || 0}`).join("\n");
+    const customerSignature = customerMenu.map(item=>`${item.id}|${item.name}|${Number(item.price) || 0}`).join("\n");
+
+    if(savedSignature !== customerSignature){
+      statusText("Saved, but customer menu is still refreshing. Check again in a few seconds.");
+      return;
+    }
+
+    statusText(`Saved ${menu.length} products. Customer page is updated.`);
+  }catch{
+    statusText(`Saved ${menu.length} products. Customer sync check unavailable.`);
   }
 }
 
