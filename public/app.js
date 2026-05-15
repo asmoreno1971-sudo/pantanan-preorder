@@ -1,7 +1,6 @@
 let menu = [];
 const quantities = {};
 const categories = ["Sandwiches", "Drinks", "Dimsum", "Noodle", "Other"];
-const menuDraftKey = "adminMenuDraft";
 const nameInput = document.getElementById("name");
 const contactInput = document.getElementById("contact");
 const timeDropdown = document.getElementById("timeSelect");
@@ -44,51 +43,8 @@ function saveCustomer(){
 
 async function loadMenu(){
   const res = await fetch("/api/menu-lite");
-  const serverMenu = await res.json();
-  const draft = loadMenuDraft();
-  menu = shouldUseMenuDraft(draft, serverMenu)
-    ? draft.items
-    : serverMenu;
+  menu = await res.json();
   renderMenu();
-}
-
-function loadMenuDraft(){
-  try{
-    const draft = JSON.parse(localStorage.getItem(menuDraftKey) || "null");
-
-    if(!draft || !Array.isArray(draft.items)){
-      return null;
-    }
-
-    return draft;
-  }catch{
-    return null;
-  }
-}
-
-function shouldUseMenuDraft(draft, serverMenu){
-  if(!draft || !Array.isArray(draft.items) || draft.items.length === 0){
-    return false;
-  }
-
-  const serverSavedAt = Number(localStorage.getItem("adminMenuServerSavedAt") || 0);
-  return draft.savedAt > serverSavedAt || !menusMatch(draft.items, serverMenu);
-}
-
-function menusMatch(left, right){
-  return JSON.stringify(menuSignature(left)) === JSON.stringify(menuSignature(right));
-}
-
-function menuSignature(items){
-  return (Array.isArray(items) ? items : [])
-    .map(item=>({
-      id:String(item.id || ""),
-      name:String(item.name || ""),
-      price:Number(item.price) || 0,
-      category:normalizeCategory(item.category),
-      image:String(item.image || "")
-    }))
-    .sort((a, b)=>(a.id || a.name).localeCompare(b.id || b.name));
 }
 
 function updateNowTime(){
