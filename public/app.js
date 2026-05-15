@@ -120,7 +120,7 @@ async function generateTimes(){
   const start = new Date();
   start.setHours(8, 0, 0, 0);
   const end = new Date(start);
-  end.setHours(16, 30, 0, 0);
+  end.setHours(21, 0, 0, 0);
 
   for(let slot = new Date(start); slot <= end; slot.setMinutes(slot.getMinutes() + 15)){
     const slotTime = new Date(slot);
