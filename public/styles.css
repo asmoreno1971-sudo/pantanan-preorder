@@ -328,12 +328,21 @@ select:focus{
 
 .menu-row{
   display:grid;
-  grid-template-columns:112px minmax(0,1fr);
+  grid-template-columns:minmax(0,1fr) 112px;
   align-items:center;
   gap:10px;
   min-width:0;
   padding:10px 0;
   border-bottom:1px solid #e6ddd5;
+}
+
+.menu-row .img-wrap{
+  grid-column:2;
+}
+
+.menu-row .order-line{
+  grid-column:1;
+  grid-row:1;
 }
 
 .category-section{
@@ -1208,7 +1217,7 @@ button:disabled{
   }
 
   .menu-row{
-    grid-template-columns:1fr;
+    grid-template-columns:minmax(0, 1fr) 92px;
     gap:6px;
     padding:8px 0;
   }
