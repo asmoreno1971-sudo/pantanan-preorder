@@ -427,9 +427,10 @@ select:focus{
 
 .overlay-name{
   position:absolute;
-  bottom:0;
+  top:0;
   left:0;
-  max-width:68%;
+  right:0;
+  max-width:none;
   background:rgba(255,250,244,.94);
   color:#4f3525;
   font-size:clamp(8px, 1.45vw, 11px) !important;
@@ -447,7 +448,7 @@ select:focus{
   background:rgba(255,250,244,.94);
   color:#4f3525;
   font-size:clamp(9px, 1.55vw, 12px) !important;
-  font-weight:850;
+  font-weight:650;
   line-height:1.12;
   text-align:right;
 }
