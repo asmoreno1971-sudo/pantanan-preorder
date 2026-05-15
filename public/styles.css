@@ -430,8 +430,8 @@ select:focus{
   bottom:0;
   left:0;
   max-width:68%;
-  background:rgba(191,227,201,0.88);
-  color:#183b25;
+  background:rgba(255,250,244,.94);
+  color:#4f3525;
   font-size:clamp(8px, 1.45vw, 11px) !important;
   padding:clamp(3px, .7vw, 5px) clamp(4px, .8vw, 6px);
   font-weight:650;
@@ -450,21 +450,6 @@ select:focus{
   font-weight:850;
   line-height:1.12;
   text-align:right;
-}
-
-.sandwich-overlay{
-  background:rgba(242,200,146,0.88);
-  color:#4b2c14;
-}
-
-.cookie-overlay{
-  background:rgba(224,194,225,0.88);
-  color:#432447;
-}
-
-.noodle-overlay{
-  background:rgba(240,209,125,0.88);
-  color:#4d3214;
 }
 
 .order-line{
