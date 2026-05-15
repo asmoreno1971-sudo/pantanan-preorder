@@ -347,6 +347,10 @@ select:focus{
   grid-row:1;
 }
 
+.menu-row.is-empty .order-line{
+  visibility:hidden;
+}
+
 .category-section{
   margin-top:18px;
 }

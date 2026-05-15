@@ -204,7 +204,7 @@ function renderMenu(){
       }
 
       const row = document.createElement("div");
-      row.className = "menu-row";
+      row.className = `menu-row ${quantities[item.id] > 0 ? "" : "is-empty"}`;
       const fallback = productImage(item);
       const image = item.image || fallback;
       row.innerHTML = `
@@ -301,6 +301,12 @@ function changeQty(id, delta){
   }
 
   document.getElementById(`q-${id}`).innerText = quantities[id];
+  const row = document.getElementById(`q-${id}`).closest(".menu-row");
+
+  if(row){
+    row.classList.toggle("is-empty", quantities[id] === 0);
+  }
+
   updateTotal();
   validate();
 }
@@ -555,6 +561,11 @@ function resetOrderForm(){
 
     if(quantityText){
       quantityText.innerText = "0";
+      const row = quantityText.closest(".menu-row");
+
+      if(row){
+        row.classList.add("is-empty");
+      }
     }
   });
 
