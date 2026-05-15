@@ -613,6 +613,11 @@ function resetOrderForm(){
 
   Object.keys(quantities).forEach(id=>{
     quantities[id] = 0;
+    const quantityText = document.getElementById(`q-${id}`);
+
+    if(quantityText){
+      quantityText.innerText = "0";
+    }
   });
 
   updateTotal();
