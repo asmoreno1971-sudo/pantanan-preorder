@@ -33,9 +33,15 @@ function requestPath(req){
 }
 
 function send(res, status, body, type = "application/json; charset=utf-8"){
+  const cacheControl = type.includes("application/json")
+    ? "no-store"
+    : type.includes("text/html")
+      ? "no-cache"
+      : "public, max-age=86400";
+
   res.writeHead(status, {
     "Content-Type": type,
-    "Cache-Control": type.includes("application/json") ? "no-store" : "public, max-age=60"
+    "Cache-Control": cacheControl
   });
   res.end(body);
 }
@@ -102,6 +108,21 @@ function normalizeMenuCategory(category){
   }
 
   return allowed.has(normalized) ? normalized : "Drinks";
+}
+
+function customerMenu(menu){
+  return (Array.isArray(menu) ? menu : []).map(item=>{
+    const image = String(item.image || "");
+
+    return {
+      id: String(item.id || ""),
+      name: String(item.name || "Untitled Product"),
+      price: Math.max(0, Number(item.price) || 0),
+      theme: String(item.theme || "latte"),
+      category: normalizeMenuCategory(item.category),
+      image: image.startsWith("http") && image.length < 300 ? image : ""
+    };
+  });
 }
 
 function csvCell(value){
@@ -180,6 +201,12 @@ async function handleApi(req, res){
 
   if(pathname === "/api/menu" && req.method === "GET"){
     send(res, 200, await fs.readFile(menuPath, "utf8"));
+    return true;
+  }
+
+  if(pathname === "/api/menu-lite" && req.method === "GET"){
+    const menu = JSON.parse(await fs.readFile(menuPath, "utf8"));
+    send(res, 200, JSON.stringify(customerMenu(menu)));
     return true;
   }
 
@@ -343,12 +370,12 @@ async function handleApi(req, res){
     const customerContact = String(body.customerContact || body.customerMessenger || "").trim();
     const normalizedContact = normalizePhilippineMobileNumber(customerContact);
 
-    if(!body.customerName || !customerContact || !body.pickupTime || cleanItems.length === 0){
+    if(!body.customerName || !body.pickupTime || cleanItems.length === 0){
       send(res, 400, JSON.stringify({ ok:false, message:"Order is incomplete" }));
       return true;
     }
 
-    if(!normalizedContact){
+    if(customerContact && !normalizedContact){
       send(res, 400, JSON.stringify({ ok:false, message:"Please enter a valid Philippine mobile number." }));
       return true;
     }

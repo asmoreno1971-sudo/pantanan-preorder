@@ -125,6 +125,20 @@ select:focus{
   margin-bottom:10px;
 }
 
+.customer-panel{
+  display:grid;
+  gap:6px;
+  margin-bottom:14px;
+  padding-bottom:14px;
+  border-bottom:1px solid #e4d8cd;
+}
+
+.customer-panel input,
+.customer-panel select{
+  max-width:none;
+  margin-bottom:4px;
+}
+
 #summaryTitle{
   color:var(--brand-strong);
   font-family:var(--font-display);

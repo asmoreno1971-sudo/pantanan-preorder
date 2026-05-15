@@ -43,7 +43,7 @@ function saveCustomer(){
 }
 
 async function loadMenu(){
-  const res = await fetch("/api/menu");
+  const res = await fetch("/api/menu-lite");
   const serverMenu = await res.json();
   const draft = loadMenuDraft();
   menu = shouldUseMenuDraft(draft, serverMenu)
@@ -116,7 +116,7 @@ async function generateTimes(){
   summaryTimeText.innerHTML = "--";
   const slotCounts = await loadSlotCounts();
   const now = new Date();
-  const earliest = nextQuarterHour(new Date(now.getTime() + 8 * 60 * 1000));
+  const earliest = nextQuarterHour(new Date(now.getTime() + 15 * 60 * 1000));
   const start = new Date();
   start.setHours(8, 0, 0, 0);
   const end = new Date(start);
@@ -253,7 +253,7 @@ function renderMenu(){
       const image = item.image || fallback;
       row.innerHTML = `
         <div class="img-wrap" role="button" tabindex="0" onclick="changeQty('${item.id}',1)" onkeydown="addFromImage(event,'${item.id}')">
-          <img class="product-img" src="${image}" alt="${item.name}" onerror="this.onerror=null;this.src='${fallback}'">
+          <img class="product-img" src="${image}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallback}'">
           <div class="overlay-name ${overlayClass(item.category)}">${item.name}</div>
         </div>
 
@@ -407,7 +407,7 @@ function validate(){
   const nameVal = nameInput ? nameInput.value.trim() : "";
 
   if(nameInput){
-    nameInput.value = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
+    nameInput.value = nameInput.value.toUpperCase().replace(/[^A-Z0-9 ]/g, "").replace(/\s+/g, " ").slice(0, 30);
   }
 
   summaryTitleText.innerHTML = nameVal
@@ -419,7 +419,7 @@ function validate(){
   const needsCustomerFields = Boolean(nameInput || contactInput || timeDropdown);
   const cashValid = !cashInput || Number(cashInput.value || 0) >= currentTotal;
   const valid = needsCustomerFields
-    ? nameVal && normalizeMobileNumber(contactVal) && hasItem && timeDropdown.value
+    ? nameVal && (!contactInput || normalizeMobileNumber(contactVal)) && hasItem && timeDropdown.value
     : hasItem && cashValid;
   orderButton.disabled = orderSubmitted || !valid;
   orderButton.style.background = valid && !orderSubmitted ? "#1f8f4d" : "#ccc";
@@ -506,7 +506,7 @@ async function openSummary(){
     }));
 
   if(nameInput && !nameVal){
-    alert("Please enter your nickname.");
+    alert("Please enter the customer name.");
     nameInput.focus();
     return;
   }
@@ -524,7 +524,7 @@ async function openSummary(){
   }
 
   if(timeDropdown && !pickupTime){
-    alert("Please select an available pickup time.");
+    alert("Please select an available delivery time.");
     timeDropdown.focus();
     return;
   }
