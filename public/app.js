@@ -29,10 +29,6 @@ let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
 let activeOrderVisible = false;
 let orderSubmitted = false;
 let currentTotal = 0;
-let swipeStartX = 0;
-let swipeStartY = 0;
-let swipeProductId = "";
-const swipeThreshold = 35;
 
 function loadSavedCustomer(){
   localStorage.removeItem("customerNickname");
@@ -256,7 +252,7 @@ function renderMenu(){
       const fallback = productImage(item);
       const image = item.image || fallback;
       row.innerHTML = `
-        <div class="img-wrap" role="button" tabindex="0" aria-label="Swipe right to add ${item.name}, swipe left to remove" onpointerdown="startImageSwipe(event,'${item.id}')" onpointerup="endImageSwipe(event,'${item.id}')" onpointercancel="cancelImageSwipe()" onkeydown="adjustFromImageKey(event,'${item.id}')">
+        <div class="img-wrap" aria-label="${item.name}">
           <img class="product-img" src="${image}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallback}'">
           <div class="overlay-name">${item.name}</div>
           <div class="overlay-price">P${item.price}</div>
@@ -265,6 +261,7 @@ function renderMenu(){
         <div class="order-line">
           <button class="qty-btn qty-minus" aria-label="Remove one ${item.name}" title="Remove one" onclick="changeQty('${item.id}',-1)">−</button>
           <div id="q-${item.id}" class="qty">${quantities[item.id]}</div>
+          <button class="qty-btn qty-plus" aria-label="Add one ${item.name}" title="Add one" onclick="changeQty('${item.id}',1)">+</button>
         </div>
       `;
 
@@ -285,44 +282,6 @@ function normalizeCategory(category){
   }
 
   return categories.includes(normalized) ? normalized : "Drinks";
-}
-
-function startImageSwipe(event, id){
-  swipeStartX = event.clientX;
-  swipeStartY = event.clientY;
-  swipeProductId = id;
-}
-
-function endImageSwipe(event, id){
-  if(swipeProductId !== id){
-    cancelImageSwipe();
-    return;
-  }
-
-  const deltaX = event.clientX - swipeStartX;
-  const deltaY = event.clientY - swipeStartY;
-  cancelImageSwipe();
-
-  if(Math.abs(deltaX) < swipeThreshold || Math.abs(deltaX) < Math.abs(deltaY) * 1.2){
-    return;
-  }
-
-  changeQty(id, deltaX > 0 ? 1 : -1);
-}
-
-function cancelImageSwipe(){
-  swipeStartX = 0;
-  swipeStartY = 0;
-  swipeProductId = "";
-}
-
-function adjustFromImageKey(e,id){
-  if(e.key !== "ArrowRight" && e.key !== "ArrowLeft"){
-    return;
-  }
-
-  e.preventDefault();
-  changeQty(id, e.key === "ArrowRight" ? 1 : -1);
 }
 
 function productImage(item){

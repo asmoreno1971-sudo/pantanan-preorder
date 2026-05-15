@@ -408,9 +408,6 @@ select:focus{
   overflow:hidden;
   border-radius:8px;
   background:#eadbcf;
-  cursor:ew-resize;
-  touch-action:pan-y;
-  user-select:none;
 }
 
 .img-wrap:focus{
@@ -483,6 +480,10 @@ select:focus{
 
 .qty-minus{
   background:#d95b56;
+}
+
+.qty-plus{
+  background:#4aa66a;
 }
 
 .qty{
