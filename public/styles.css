@@ -348,7 +348,7 @@ select:focus{
 }
 
 .menu-row.is-empty .order-line{
-  visibility:hidden;
+  display:none;
 }
 
 .category-section{
