@@ -113,16 +113,41 @@ function normalizeMenuCategory(category){
 function customerMenu(menu){
   return (Array.isArray(menu) ? menu : []).map(item=>{
     const image = String(item.image || "");
+    const id = String(item.id || "");
 
     return {
-      id: String(item.id || ""),
+      id,
       name: String(item.name || "Untitled Product"),
       price: Math.max(0, Number(item.price) || 0),
       theme: String(item.theme || "latte"),
       category: normalizeMenuCategory(item.category),
-      image: image.startsWith("http") && image.length < 300 ? image : ""
+      image: image ? `/api/menu-image/${encodeURIComponent(id)}` : ""
     };
   });
+}
+
+function menuImage(menu, id){
+  const item = (Array.isArray(menu) ? menu : []).find(menuItem=>String(menuItem.id || "") === id);
+  const image = String(item && item.image || "");
+
+  if(!image){
+    return null;
+  }
+
+  if(image.startsWith("http://") || image.startsWith("https://")){
+    return { redirect:image };
+  }
+
+  const match = image.match(/^data:([^;,]+);base64,(.+)$/);
+
+  if(!match){
+    return null;
+  }
+
+  return {
+    contentType: match[1],
+    body: Buffer.from(match[2], "base64")
+  };
 }
 
 function csvCell(value){
@@ -207,6 +232,29 @@ async function handleApi(req, res){
   if(pathname === "/api/menu-lite" && req.method === "GET"){
     const menu = JSON.parse(await fs.readFile(menuPath, "utf8"));
     send(res, 200, JSON.stringify(customerMenu(menu)));
+    return true;
+  }
+
+  if(pathname.startsWith("/api/menu-image/") && req.method === "GET"){
+    const id = decodeURIComponent(pathname.split("/").slice(3).join("/"));
+    const menu = JSON.parse(await fs.readFile(menuPath, "utf8"));
+    const image = menuImage(menu, id);
+
+    if(!image){
+      send(res, 404, "Not found", "text/plain; charset=utf-8");
+      return true;
+    }
+
+    if(image.redirect){
+      res.writeHead(302, {
+        "Location": image.redirect,
+        "Cache-Control":"public, max-age=86400"
+      });
+      res.end();
+      return true;
+    }
+
+    send(res, 200, image.body, image.contentType);
     return true;
   }
 
