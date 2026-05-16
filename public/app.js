@@ -230,11 +230,13 @@ function renderMenu(){
 
       const row = document.createElement("div");
       row.className = `menu-row ${quantities[item.id] > 0 ? "" : "is-empty"}`;
-      const fallback = productImage(item);
-      const image = item.image || fallback;
+      const image = item.image || "";
+      const productMedia = image
+        ? `<img class="product-img" src="${image}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.style.display='none';this.parentElement.classList.add('no-product-image')">`
+        : `<div class="product-img product-img-empty" aria-hidden="true"></div>`;
       row.innerHTML = `
         <div class="img-wrap" role="button" tabindex="0" aria-label="Add one ${item.name}" onclick="changeQty('${item.id}',1)" onkeydown="addFromImage(event,'${item.id}')">
-          <img class="product-img" src="${image}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallback}'">
+          ${productMedia}
           <div class="overlay-name">${item.name}</div>
           <div class="overlay-price">P${item.price}</div>
         </div>
@@ -271,51 +273,6 @@ function addFromImage(e,id){
 
   e.preventDefault();
   changeQty(id, 1);
-}
-
-function productImage(item){
-  const category = normalizeCategory(item.category);
-  const palettes = {
-    Sandwiches:["#efc486", "#8a5530", "#fff2c7", "#72a35b"],
-    Drinks:["#dcae73", "#5b3322", "#fff2dd", "#b78052"],
-    Dimsum:["#f2c98f", "#8d5c2f", "#fff3d8", "#c6783d"],
-    Noodle:["#f0d17d", "#73502a", "#fff0b8", "#b56b38"],
-    Others:["#c8d6c3", "#4d6048", "#f2ead8", "#829b7a"]
-  };
-  const [bg, dark, light, accent] = palettes[category] || palettes.Others;
-  const art = category === "Sandwiches"
-    ? `<path d="M34 88 L110 24 L186 88 Z" fill="${light}"/>
-       <path d="M48 86 L110 39 L172 86 Z" fill="${accent}"/>
-       <path d="M58 88 L110 51 L162 88 Z" fill="${dark}" opacity=".8"/>
-       <rect x="46" y="86" width="128" height="20" rx="8" fill="${light}"/>
-       <circle cx="68" cy="36" r="12" fill="#fff7dc" opacity=".8"/>`
-      : category === "Dimsum"
-        ? `<ellipse cx="110" cy="102" rx="76" ry="18" fill="${dark}" opacity=".18"/>
-           <path d="M62 92 C60 52 91 34 111 68 C130 34 160 53 158 92 Z" fill="${light}"/>
-           <path d="M86 91 C88 61 102 51 111 70 C121 51 136 61 138 91" fill="none" stroke="${dark}" stroke-width="8" opacity=".65"/>
-           <circle cx="110" cy="53" r="11" fill="${accent}"/>`
-        : category === "Noodle"
-          ? `<ellipse cx="110" cy="100" rx="76" ry="18" fill="${dark}" opacity=".2"/>
-             <path d="M54 86 C65 118 155 118 166 86 Z" fill="${light}"/>
-             <path d="M67 82 C90 66 123 99 153 78" fill="none" stroke="${accent}" stroke-width="8" stroke-linecap="round"/>
-             <path d="M66 92 C92 78 120 108 154 89" fill="none" stroke="${dark}" stroke-width="7" stroke-linecap="round" opacity=".72"/>
-             <rect x="138" y="36" width="8" height="56" rx="4" fill="${dark}" transform="rotate(20 142 64)"/>
-             <rect x="152" y="36" width="8" height="56" rx="4" fill="${dark}" transform="rotate(20 156 64)"/>`
-      : `<rect x="72" y="20" width="76" height="98" rx="12" fill="${light}"/>
-         <rect x="82" y="46" width="56" height="56" rx="6" fill="${dark}" opacity=".82"/>
-         <rect x="90" y="58" width="40" height="16" fill="#ffffff" opacity=".42"/>
-         <path d="M148 54 C185 54 185 94 148 94" fill="none" stroke="${light}" stroke-width="10"/>
-         <circle cx="58" cy="32" r="16" fill="#fff7dc" opacity=".82"/>
-         <rect x="78" y="102" width="64" height="10" rx="5" fill="${accent}" opacity=".65"/>`;
-
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 140">
-      <rect width="220" height="140" fill="${bg}"/>
-      ${art}
-    </svg>
-  `;
-
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
 function changeQty(id, delta){

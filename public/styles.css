@@ -415,7 +415,8 @@ select:focus{
   height:auto;
   overflow:hidden;
   border-radius:8px;
-  background:#eadbcf;
+  background:#f2ebe4;
+  border:1px solid #dccfc3;
   cursor:pointer;
 }
 
@@ -433,6 +434,14 @@ select:focus{
   height:100%;
   display:block;
   object-fit:cover;
+}
+
+.product-img-empty{
+  background:linear-gradient(135deg, #f8f3ed, #ebe0d6);
+}
+
+.no-product-image{
+  background:linear-gradient(135deg, #f8f3ed, #ebe0d6);
 }
 
 .overlay-name{
@@ -636,11 +645,12 @@ button:disabled{
 }
 
 .product-image-editor{
+  position:relative;
   width:168px;
   aspect-ratio:4 / 3;
   overflow:hidden;
   border-radius:8px;
-  background:#eadbcf;
+  background:#f2ebe4;
   border:1px solid #dccfc3;
 }
 
@@ -649,6 +659,21 @@ button:disabled{
   height:100%;
   display:block;
   object-fit:cover;
+}
+
+.product-image-editor span{
+  position:absolute;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  color:#7a5a43;
+  font-size:14px;
+  font-weight:850;
+}
+
+.product-image-editor.no-image span{
+  display:flex;
 }
 
 .product-fields-editor{

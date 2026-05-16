@@ -56,10 +56,10 @@ function renderEditor(){
     const card = document.createElement("div");
     card.className = "product-card-editor";
 
-    const image = item.image || productFallback(item);
     card.innerHTML = `
       <div class="product-image-editor">
         <img alt="">
+        <span>No picture</span>
       </div>
       <div class="product-fields-editor">
         <label>
@@ -92,11 +92,11 @@ function renderEditor(){
     `;
 
     const img = card.querySelector("img");
-    img.src = image;
     img.alt = item.name || "Product picture";
+    setEditorImage(card.querySelector(".product-image-editor"), img, item.image);
     img.addEventListener("error", ()=>{
-      img.src = productFallback(item);
-    }, { once:true });
+      setEditorImage(card.querySelector(".product-image-editor"), img, "");
+    });
 
     const nameInput = card.querySelector(".name-input");
     const priceInput = card.querySelector(".price-input");
@@ -117,13 +117,13 @@ function renderEditor(){
     categoryInput.addEventListener("change", ()=>updateItem(index, "category", categoryInput.value));
     imageInput.addEventListener("input", ()=>{
       updateItem(index, "image", imageInput.value);
-      img.src = menu[index].image || productFallback(menu[index]);
+      setEditorImage(card.querySelector(".product-image-editor"), img, menu[index].image);
     });
     fileInput.addEventListener("change", ()=>uploadImage(index, fileInput, imageInput, img));
     card.querySelector(".clear-image-btn").addEventListener("click", ()=>{
       menu[index].image = "";
       imageInput.value = "";
-      img.src = productFallback(menu[index]);
+      setEditorImage(card.querySelector(".product-image-editor"), img, "");
       saveMenuDraft();
       statusText("Picture cleared");
     });
@@ -131,6 +131,19 @@ function renderEditor(){
 
     editorList.appendChild(card);
   });
+}
+
+function setEditorImage(preview, img, image){
+  if(image){
+    preview.classList.remove("no-image");
+    img.style.display = "";
+    img.src = image;
+    return;
+  }
+
+  preview.classList.add("no-image");
+  img.removeAttribute("src");
+  img.style.display = "none";
 }
 
 function updateItem(index, field, value){
@@ -182,7 +195,7 @@ function uploadImage(index, fileInput, imageInput, img){
       .then(image=>{
         menu[index].image = image;
         imageInput.value = image;
-        img.src = image;
+        setEditorImage(img.closest(".product-image-editor"), img, image);
         saveMenuDraft();
         statusText("Picture added. Save products to publish it.");
       })
@@ -353,28 +366,6 @@ function normalizeCategory(category){
   }
 
   return categories.includes(normalized) ? normalized : "Drinks";
-}
-
-function productFallback(item){
-  const category = normalizeCategory(item.category);
-  const palettes = {
-    Sandwiches:["#efc486", "#8a5530", "#fff2c7", "#72a35b"],
-    Drinks:["#dcae73", "#5b3322", "#fff2dd", "#b78052"],
-    Dimsum:["#f2c98f", "#8d5c2f", "#fff3d8", "#c6783d"],
-    Noodle:["#f0d17d", "#73502a", "#fff0b8", "#b56b38"],
-    Other:["#c8d6c3", "#4d6048", "#f2ead8", "#829b7a"]
-  };
-  const [bg, dark, light, accent] = palettes[category] || palettes.Other;
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 140">
-      <rect width="220" height="140" fill="${bg}"/>
-      <circle cx="72" cy="72" r="38" fill="${light}"/>
-      <rect x="106" y="42" width="72" height="58" rx="14" fill="${dark}" opacity=".82"/>
-      <path d="M44 104 C76 82 105 82 140 104" fill="none" stroke="${accent}" stroke-width="12" stroke-linecap="round"/>
-    </svg>
-  `;
-
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
 function resizeImage(src, maxSize, quality){
