@@ -369,7 +369,7 @@ function validate(){
   }
 
   summaryTitleText.innerHTML = nameVal
-    ? `Order Summary for:<strong>${nameVal}</strong>`
+    ? `<span class="summary-label">Order Summary for:</span><strong class="summary-customer-name">${nameVal}</strong>`
     : "Order Summary";
 
   const hasItem = Object.values(quantities).some(qty=>qty > 0);

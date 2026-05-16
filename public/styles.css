@@ -1458,6 +1458,21 @@ textarea{
 #summaryTitle{
   color:#20384f;
   font-size:14px !important;
+  font-weight:700;
+  gap:6px;
+}
+
+.summary-label{
+  color:#4c6378;
+  font-weight:500;
+}
+
+.summary-customer-name{
+  display:block;
+  margin-top:4px;
+  color:#17212b;
+  font-weight:850;
+  letter-spacing:0;
 }
 
 #liveSummary{
