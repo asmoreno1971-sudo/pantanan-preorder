@@ -80,14 +80,16 @@ function generateTimes(){
   timeDropdown.innerHTML = "";
   timeDropdown.disabled = limits.closed;
   if(!limits.closed){
-    for(const value of deliveryTimeOptions(limits)){
+    const options = deliveryTimeOptions(limits);
+    for(const value of options){
       const option = document.createElement("option");
       option.value = value;
       option.textContent = formatDeliveryTime(value);
       timeDropdown.appendChild(option);
     }
+    timeDropdown.disabled = options.length === 0;
   }
-  timeDropdown.value = limits.closed ? "" : limits.earliest;
+  timeDropdown.value = timeDropdown.disabled ? "" : timeDropdown.options[0].value;
   selectedTime.value = formatDeliveryTime(timeDropdown.value);
   summaryTimeText.innerHTML = selectedTime.value ? `<strong>${selectedTime.value}</strong>` : "--";
   const timePickerWrap = timeDropdown.closest(".time-picker-wrap");
@@ -475,13 +477,6 @@ async function openSummary(){
     return;
   }
 
-  if(timeDropdown && !deliveryTimeIsValid(timeDropdown.value)){
-    const limits = deliveryTimeLimits();
-    alert(`Please choose any delivery time at least 5 minutes from now, using 5-minute intervals.`);
-    timeDropdown.focus();
-    return;
-  }
-
   if(!items.length){
     alert("Please tap a product photo to add an item.");
     return;
@@ -686,25 +681,6 @@ function deliveryTimeLimits(){
     earliest:formatTimeValue(earliest),
     closed:earliest > closing
   };
-}
-
-function deliveryTimeIsValid(value){
-  if(!value){
-    return false;
-  }
-
-  const limits = deliveryTimeLimits();
-
-  if(limits.closed){
-    return false;
-  }
-
-  return value >= limits.min && value <= limits.max && value >= limits.earliest && deliveryMinuteIsValid(value);
-}
-
-function deliveryMinuteIsValid(value){
-  const minute = Number(String(value || "").split(":")[1] || 0);
-  return minute % 5 === 0;
 }
 
 function deliveryTimeOptions(limits){
