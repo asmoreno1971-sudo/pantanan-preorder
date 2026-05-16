@@ -1300,18 +1300,20 @@ button:disabled{
   }
 
   .menu-row{
-    grid-template-columns:minmax(0, 1fr) clamp(134px, 64%, 180px);
-    gap:clamp(4px, 1.2vw, 8px);
+    grid-template-columns:42px minmax(0, 1fr);
+    gap:6px;
     padding:clamp(6px, 1.8vw, 10px);
   }
 
   .order-line{
     justify-content:center;
-    gap:clamp(2px, .8vw, 4px);
+    gap:3px;
+    min-width:42px;
+    z-index:1;
   }
 
   .qty{
-    width:clamp(12px, 3.6vw, 18px);
+    width:18px;
     height:clamp(16px, 4.4vw, 20px);
     font-size:clamp(10px, 2.8vw, 12px) !important;
   }
@@ -1454,14 +1456,16 @@ textarea{
   max-width:none;
 }
 
-.time-picker-wrap input{
+.time-picker-wrap input,
+.time-picker-wrap select{
   width:100%;
   padding-right:12px;
   text-align:center;
   cursor:pointer;
 }
 
-.time-picker-wrap:not(.has-time) input{
+.time-picker-wrap:not(.has-time) input,
+.time-picker-wrap:not(.has-time) select{
   color:transparent;
 }
 

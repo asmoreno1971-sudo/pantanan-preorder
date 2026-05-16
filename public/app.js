@@ -77,10 +77,16 @@ function generateTimes(){
   }
 
   const limits = deliveryTimeLimits();
-  timeDropdown.min = limits.min;
-  timeDropdown.max = limits.max;
-  timeDropdown.step = "300";
+  timeDropdown.innerHTML = "";
   timeDropdown.disabled = limits.closed;
+  if(!limits.closed){
+    for(const value of deliveryTimeOptions(limits)){
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = formatDeliveryTime(value);
+      timeDropdown.appendChild(option);
+    }
+  }
   timeDropdown.value = limits.closed ? "" : limits.earliest;
   selectedTime.value = formatDeliveryTime(timeDropdown.value);
   summaryTimeText.innerHTML = selectedTime.value ? `<strong>${selectedTime.value}</strong>` : "--";
@@ -107,13 +113,6 @@ if(timeDropdown){
       timeDropdown.focus();
     }
   };
-  const blockManualTimeEntry = function(event){
-    if(event.key === "Tab"){
-      return;
-    }
-
-    event.preventDefault();
-  };
   const syncDeliveryTime = function(){
     selectedTime.value = formatDeliveryTime(this.value);
     summaryTimeText.innerHTML = selectedTime.value ? `<strong>${selectedTime.value}</strong>` : "--";
@@ -122,11 +121,7 @@ if(timeDropdown){
     }
     validate();
   };
-  timeDropdown.addEventListener("input", syncDeliveryTime);
   timeDropdown.addEventListener("change", syncDeliveryTime);
-  timeDropdown.addEventListener("keydown", blockManualTimeEntry);
-  timeDropdown.addEventListener("beforeinput", e=>e.preventDefault());
-  timeDropdown.addEventListener("paste", e=>e.preventDefault());
   timeDropdown.addEventListener("click", openTimePicker);
   if(timePickerWrap){
     timePickerWrap.addEventListener("click", openTimePicker);
@@ -710,6 +705,26 @@ function deliveryTimeIsValid(value){
 function deliveryMinuteIsValid(value){
   const minute = Number(String(value || "").split(":")[1] || 0);
   return minute % 5 === 0;
+}
+
+function deliveryTimeOptions(limits){
+  const options = [];
+  const cursor = timeValueToDate(limits.earliest);
+  const closing = timeValueToDate(limits.max);
+
+  while(cursor <= closing){
+    options.push(formatTimeValue(cursor));
+    cursor.setMinutes(cursor.getMinutes() + 5, 0, 0);
+  }
+
+  return options;
+}
+
+function timeValueToDate(value){
+  const [hourText, minuteText] = String(value || "00:00").split(":");
+  const date = new Date();
+  date.setHours(Number(hourText) || 0, Number(minuteText) || 0, 0, 0);
+  return date;
 }
 
 function roundUpToMinuteInterval(date, interval){
