@@ -1101,7 +1101,7 @@ button:disabled{
   background:#fffaf4;
   box-shadow:0 16px 35px rgba(74,47,28,.16);
   z-index:9;
-  animation:status-pop .42s ease-out, status-alert-pulse 1.25s ease-in-out infinite;
+  animation:status-pop .42s ease-out;
   transform-origin:bottom right;
 }
 
