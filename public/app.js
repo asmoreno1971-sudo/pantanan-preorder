@@ -23,8 +23,6 @@ const customerStatus = document.getElementById("customerStatus");
 const customerStatusTitle = document.getElementById("customerStatusTitle");
 const customerStatusText = document.getElementById("customerStatusText");
 const maxOrdersPerSlot = 5;
-const menuCacheKey = "pantananCustomerMenuV1";
-const embeddedMenu = Array.isArray(window.PANTANAN_MENU_FALLBACK) ? window.PANTANAN_MENU_FALLBACK : [];
 let activeOrderId = localStorage.getItem("activeOrderId") || "";
 let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
 let activeOrderVisible = Boolean(activeOrderId);
@@ -45,7 +43,8 @@ function saveCustomer(){
 
 async function loadMenu(){
   try{
-    const res = await fetch("/api/menu?view=customer", { cache:"default" });
+    localStorage.removeItem("pantananCustomerMenuV1");
+    const res = await fetch(`/api/menu?view=customer&fresh=${Date.now()}`, { cache:"no-store" });
     const freshMenu = await res.json();
 
     if(!Array.isArray(freshMenu)){
@@ -54,34 +53,12 @@ async function loadMenu(){
 
     if(menuSignature(freshMenu) !== menuSignature(menu)){
       menu = freshMenu;
-      localStorage.setItem(menuCacheKey, JSON.stringify(menu));
       renderMenu();
     }
   }catch{
-    loadCachedMenu();
-  }
-}
-
-function loadCachedMenu(){
-  if(menu.length){
-    return;
-  }
-
-  try{
-    const cachedMenu = JSON.parse(localStorage.getItem(menuCacheKey) || "[]");
-
-    if(Array.isArray(cachedMenu) && cachedMenu.length){
-      menu = cachedMenu;
-      renderMenu();
-      return;
+    if(!menu.length){
+      menuList.innerHTML = `<div class="category-empty">Menu is loading. Please refresh.</div>`;
     }
-  }catch{
-    localStorage.removeItem(menuCacheKey);
-  }
-
-  if(embeddedMenu.length){
-    menu = embeddedMenu;
-    renderMenu();
   }
 }
 
@@ -865,7 +842,6 @@ generateTimes();
 loadSavedCustomer();
 updatePaymentVisibility();
 updateCashInputWidth();
-loadCachedMenu();
 loadMenu();
 checkActiveOrder();
 validate();
