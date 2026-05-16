@@ -709,8 +709,10 @@ async function checkActiveOrder(){
 
 setInterval(updateNowTime, 1000);
 setInterval(checkActiveOrder, 5000);
-setInterval(refreshMenuIfIdle, 15000);
+setInterval(refreshMenuIfIdle, 5000);
 window.addEventListener("focus", refreshMenuIfIdle);
+window.addEventListener("pageshow", refreshMenuIfIdle);
+window.addEventListener("online", refreshMenuIfIdle);
 document.addEventListener("visibilitychange", ()=>{
   if(document.visibilityState === "visible"){
     refreshMenuIfIdle();
