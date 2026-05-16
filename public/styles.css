@@ -1084,6 +1084,17 @@ button:disabled{
   opacity:.72;
 }
 
+.final-done-btn{
+  border-color:#8bd4a4;
+  background:linear-gradient(135deg, #dcfce7, #22c55e);
+  color:#14532d;
+  box-shadow:0 8px 18px rgba(34,197,94,.2);
+}
+
+.final-done-btn:hover{
+  box-shadow:0 10px 22px rgba(34,197,94,.28);
+}
+
 .done-list .notify-btn,
 .done-list .order-status{
   opacity:.62;
