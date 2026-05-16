@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<link rel="stylesheet" href="/styles.css?v=20260515-consistent-badges">
+<link rel="stylesheet" href="/styles.css?v=20260517-admin-action-boxes">
 </head>
 <body>
 <div class="admin-shell">
@@ -24,17 +24,25 @@
 <h4>Edit Products</h4>
 <p class="admin-help">Change names, prices, categories, and product pictures for preorder.</p>
 </div>
-<button class="secondary-btn" onclick="addProduct()">Add Product</button>
+</div>
+<div class="admin-action-boxes">
+<button class="admin-action-box admin-action-add" type="button" onclick="addProduct()">
+<span>Add Product</span>
+</button>
+<a class="admin-action-box admin-action-sales" href="/sales">
+<span>Daily Sales</span>
+</a>
+<a class="admin-action-box admin-action-customer" href="/">
+<span>Customer Page</span>
+</a>
 </div>
 <div id="productEditor"></div>
 <div class="admin-actions">
-<a href="/sales">Daily Sales</a>
-<a href="/">Customer Page</a>
 <span id="status" class="status"></span>
 </div>
 </div>
 </div>
 
-<script src="/admin.js?v=20260517-admin-no-url-placeholder"></script>
+<script src="/admin.js?v=20260517-admin-action-boxes"></script>
 </body>
 </html>

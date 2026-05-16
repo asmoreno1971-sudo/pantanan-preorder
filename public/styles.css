@@ -738,6 +738,70 @@ button:disabled{
   flex-wrap:wrap;
 }
 
+.admin-action-boxes{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:12px;
+  margin:0 0 18px;
+}
+
+.admin-action-box{
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:68px;
+  padding:14px 18px;
+  border-radius:8px;
+  border:1px solid #d7c8bb;
+  background:#fffaf4;
+  color:#2f1d13;
+  box-shadow:0 10px 24px rgba(74,47,28,.09);
+  font-size:22px !important;
+  font-weight:900;
+  line-height:1.1;
+  text-align:center;
+  text-decoration:none;
+  cursor:pointer;
+  transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.admin-action-box::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  opacity:.42;
+  background:linear-gradient(135deg, rgba(255,255,255,.75), rgba(255,255,255,0));
+  pointer-events:none;
+}
+
+.admin-action-box span{
+  position:relative;
+  z-index:1;
+}
+
+.admin-action-add{
+  border-color:#dfc5aa;
+  background:linear-gradient(135deg, #fff7ed, #efd8c2);
+}
+
+.admin-action-sales{
+  border-color:#c8d6c2;
+  background:linear-gradient(135deg, #f3fbef, #dcebd5);
+}
+
+.admin-action-customer{
+  border-color:#c8d4e4;
+  background:linear-gradient(135deg, #f2f7ff, #dbe7f6);
+}
+
+.admin-action-box:hover{
+  transform:translateY(-2px);
+  border-color:#b9987f;
+  box-shadow:0 14px 28px rgba(74,47,28,.14);
+}
+
 .status{
   color:#7a5a43;
   font-weight:800;
@@ -1539,6 +1603,10 @@ button:disabled{
 
   .admin-title-row{
     display:grid;
+  }
+
+  .admin-action-boxes{
+    grid-template-columns:1fr;
   }
 
   .product-card-editor{
