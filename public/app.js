@@ -368,9 +368,7 @@ function validate(){
     nameInput.value = nameInput.value.toUpperCase().replace(/[^A-Z0-9 ]/g, "").replace(/\s+/g, " ").slice(0, 30);
   }
 
-  summaryTitleText.innerHTML = nameVal
-    ? `<span class="summary-label">Order Summary for:</span><strong class="summary-customer-name">${nameVal}</strong>`
-    : "Order Summary";
+  summaryTitleText.innerHTML = "Order Summary";
 
   const hasItem = Object.values(quantities).some(qty=>qty > 0);
   const contactVal = contactInput ? contactInput.value.trim() : "";
