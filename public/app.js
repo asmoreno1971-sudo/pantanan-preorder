@@ -109,6 +109,11 @@ function generateTimes(){
       timeDropdown.appendChild(option);
     }
     timeDropdown.disabled = options.length === 0;
+  }else{
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "Closed for today";
+    timeDropdown.appendChild(option);
   }
   timeDropdown.value = timeDropdown.disabled ? "" : timeDropdown.options[0].value;
   selectedTime.value = formatDeliveryTime(timeDropdown.value);
@@ -679,7 +684,7 @@ function deliveryTimeLimits(){
   const opening = new Date();
   opening.setHours(8, 0, 0, 0);
   const closing = new Date();
-  closing.setHours(20, 0, 0, 0);
+  closing.setHours(21, 0, 0, 0);
   const earliest = new Date(now.getTime() + 5 * 60 * 1000);
   if(earliest.getSeconds() || earliest.getMilliseconds()){
     earliest.setMinutes(earliest.getMinutes() + 1, 0, 0);
@@ -689,7 +694,7 @@ function deliveryTimeLimits(){
 
   return {
     min:formatTimeValue(minTime),
-    max:"20:00",
+    max:"21:00",
     earliest:formatTimeValue(earliest),
     closed:earliest > closing
   };
