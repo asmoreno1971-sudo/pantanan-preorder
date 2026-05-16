@@ -164,7 +164,7 @@ function ordersTable(orders, done){
             <th>Order</th>
             <th>Status</th>
             <th>Customer</th>
-            <th>Delivery Time</th>
+            <th>Pickup Time</th>
             <th>Items</th>
             <th>Total</th>
             <th>Action</th>
