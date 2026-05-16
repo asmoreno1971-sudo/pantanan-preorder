@@ -740,7 +740,7 @@ button:disabled{
 
 .admin-action-boxes{
   display:grid;
-  grid-template-columns:repeat(3, minmax(0, 1fr));
+  grid-template-columns:repeat(4, minmax(0, 1fr));
   gap:12px;
   margin:18px 0 10px;
 }
@@ -751,8 +751,8 @@ button:disabled{
   display:flex;
   align-items:center;
   justify-content:center;
-  min-height:68px;
-  padding:14px 18px;
+  min-height:34px;
+  padding:8px 14px;
   border-radius:8px;
   border:1px solid #d7c8bb;
   background:#fffaf4;
@@ -789,6 +789,11 @@ button:disabled{
 .admin-action-sales{
   border-color:#c8d6c2;
   background:linear-gradient(135deg, #f3fbef, #dcebd5);
+}
+
+.admin-action-kitchen{
+  border-color:#d5c9e7;
+  background:linear-gradient(135deg, #f8f5ff, #e7ddf7);
 }
 
 .admin-action-customer{
