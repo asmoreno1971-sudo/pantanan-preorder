@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Daily Sales</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<link rel="stylesheet" href="/styles.css?v=20260516-daily-sales">
+</head>
+<body>
+<div class="sales-shell">
+<div class="sales-top">
+<div>
+<h3>Daily Sales</h3>
+<p class="admin-help">Completed customer orders and POS sales.</p>
+</div>
+<div class="sales-links">
+<a href="/admin">Admin</a>
+<a href="/pos">POS RW</a>
+<a href="/">Customer Page</a>
+</div>
+</div>
+
+<div id="salesLoginPanel" class="admin-panel sales-login-panel">
+<h4>Admin Login</h4>
+<input id="salesPassword" type="password" placeholder="Admin password">
+<button onclick="loginSales()">Login</button>
+<span id="salesLoginStatus" class="status"></span>
+</div>
+
+<div id="salesPanel" class="sales-panel hidden">
+<div class="sales-toolbar">
+<label for="salesDate">Date</label>
+<input id="salesDate" type="date" onchange="loadSales()">
+<button class="secondary-btn" onclick="loadSales()">Refresh</button>
+<span id="salesStatus" class="status"></span>
+</div>
+
+<div class="sales-sheet-wrap">
+<table class="sales-sheet">
+<thead>
+<tr>
+<th id="salesDateLabel">Today</th>
+<th>Frq</th>
+<th>P <span id="salesGrandTotal">0</span></th>
+</tr>
+</thead>
+<tbody id="salesRows">
+<tr><td colspan="3">No sales yet</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<script src="/sales.js?v=20260516-daily-sales"></script>
+</body>
+</html>

@@ -1283,6 +1283,127 @@ button:disabled{
   text-decoration:none;
 }
 
+.sales-shell{
+  max-width:760px;
+  margin:0 auto;
+}
+
+.sales-top{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  align-items:flex-start;
+  margin-bottom:16px;
+}
+
+.sales-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:flex-end;
+}
+
+.sales-links a,
+.sales-toolbar button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:38px;
+  padding:8px 12px;
+  border-radius:6px;
+  border:1px solid #d7c8bb;
+  background:#fffaf4;
+  color:#4f3525;
+  font-weight:850;
+  text-decoration:none;
+}
+
+.sales-login-panel{
+  max-width:420px;
+}
+
+.sales-panel{
+  display:grid;
+  gap:12px;
+}
+
+.sales-toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  padding:10px;
+  border:1px solid #dccfc3;
+  border-radius:8px;
+  background:#fffaf4;
+}
+
+.sales-toolbar label{
+  color:#4f3525;
+  font-weight:900;
+}
+
+.sales-toolbar input{
+  width:auto;
+  max-width:none;
+  margin:0;
+}
+
+.sales-sheet-wrap{
+  overflow:auto;
+  border:1px solid #d9d9d9;
+  background:#fff;
+}
+
+.sales-sheet{
+  width:100%;
+  min-width:440px;
+  border-collapse:collapse;
+  table-layout:fixed;
+  font-family:Arial, sans-serif;
+  font-size:20px;
+  line-height:1.2;
+}
+
+.sales-sheet th,
+.sales-sheet td{
+  border:1px solid #e0e0e0;
+  padding:6px 8px;
+  background:#fff;
+}
+
+.sales-sheet th{
+  position:sticky;
+  top:0;
+  z-index:1;
+  background:#ffe9a8;
+  color:#000;
+  font-weight:850;
+  text-align:center;
+  border-bottom:4px solid #cfcfcf;
+}
+
+.sales-sheet th:first-child{
+  width:55%;
+}
+
+.sales-sheet th:nth-child(2){
+  width:18%;
+}
+
+.sales-sheet th:nth-child(3){
+  width:27%;
+}
+
+.sales-sheet td:first-child{
+  text-align:left;
+}
+
+.sales-sheet td:nth-child(2),
+.sales-sheet td:nth-child(3){
+  text-align:right;
+}
+
 @media (max-width:760px){
   body{
     padding:16px;

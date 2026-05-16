@@ -105,6 +105,59 @@ function localOrderDate(){
   return `${year}-${month}-${day}`;
 }
 
+function formatLocalDate(date){
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function orderSalesDate(order){
+  if(order.orderDate){
+    return order.orderDate;
+  }
+
+  const date = new Date(order.createdAt || order.doneAt || order.completedAt || Date.now());
+  return formatLocalDate(date);
+}
+
+function orderCountsAsSale(order){
+  return ["Paid", "Done"].includes(order.status);
+}
+
+function dailySalesReport(orders, date){
+  const rowsByName = new Map();
+
+  orders
+    .filter(order=>orderCountsAsSale(order) && orderSalesDate(order) === date)
+    .forEach(order=>{
+      (Array.isArray(order.items) ? order.items : []).forEach(item=>{
+        const name = String(item.name || item.product || "Item").trim();
+        const qty = Math.max(0, Number(item.qty) || 0);
+        const subtotal = Number(item.subtotal) || qty * (Number(item.price) || 0);
+
+        if(!name || !qty){
+          return;
+        }
+
+        const row = rowsByName.get(name) || { name, frequency:0, total:0 };
+        row.frequency += qty;
+        row.total += subtotal;
+        rowsByName.set(name, row);
+      });
+    });
+
+  const rows = [...rowsByName.values()]
+    .sort((a, b)=>b.frequency - a.frequency || b.total - a.total || a.name.localeCompare(b.name));
+
+  return {
+    date,
+    rows,
+    totalFrequency:rows.reduce((sum, row)=>sum + row.frequency, 0),
+    totalSales:rows.reduce((sum, row)=>sum + row.total, 0)
+  };
+}
+
 function nextDailyOrderNumber(orders){
   const today = localOrderDate();
   const todaysOrders = orders.filter(order=>order.orderDate === today);
@@ -455,6 +508,18 @@ async function handleApi(req, res){
     return true;
   }
 
+  if(pathname === "/api/sales/daily" && req.method === "GET"){
+    if(!isAdmin(req)){
+      send(res, 401, JSON.stringify({ ok:false, message:"Admin login required" }));
+      return true;
+    }
+
+    const date = url.searchParams.get("date") || localOrderDate();
+    const orders = await readOrders();
+    send(res, 200, JSON.stringify({ ok:true, report:dailySalesReport(orders, date) }));
+    return true;
+  }
+
   if(pathname.startsWith("/api/orders/") && req.method === "GET"){
     const id = pathname.split("/")[3];
     const orders = await readOrders();
@@ -700,6 +765,7 @@ async function serveStatic(req, res){
     "/admin": "admin.html",
     "/kitchen": "kitchen.html",
     "/pos": "pos.html",
+    "/sales": "sales.html",
     "/qr": "qr.html"
   };
 
