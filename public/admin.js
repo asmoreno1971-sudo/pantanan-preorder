@@ -78,7 +78,7 @@ function renderEditor(){
         </label>
         <label class="image-url-field">
           Picture URL
-          <input class="image-input" value="" placeholder="https://...">
+          <input class="image-input" value="" placeholder="No picture set">
         </label>
         <div class="picture-actions">
           <label class="upload-btn">
