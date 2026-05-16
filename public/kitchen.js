@@ -68,7 +68,7 @@ function showSavedSoundState(){
 }
 
 function notifyNewOrders(orders){
-  const activeOrders = orders.filter(order=>order.status !== "Ready for Payment and Pickup");
+  const activeOrders = orders.filter(order=>!orderIsComplete(order));
   const newOrders = activeOrders.filter(order=>!seenOrderIds.has(order.id));
 
   if(seenOrderIds.size && newOrders.length){
@@ -119,17 +119,18 @@ function playAlertTone(startTime, index, destination){
 
 function renderOrders(orders){
   const customerOrders = orders.filter(order=>order.source !== "POS RW" && order.status !== "Cancelled");
-  const activeOrders = customerOrders.filter(order=>order.status !== "Ready for Payment and Pickup");
-  const completedOrders = customerOrders.filter(order=>order.status === "Ready for Payment and Pickup");
+  const activeOrders = customerOrders.filter(order=>!orderIsComplete(order));
+  const completedOrders = customerOrders.filter(order=>orderIsComplete(order));
   const doneOrders = completedOrders.slice(0, 8);
   const newOrders = activeOrders.filter(order=>order.status === "Order Sent").length;
   const preparingOrders = activeOrders.filter(order=>order.status === "Preparing Order").length;
+  const finishedOrders = customerOrders.filter(order=>order.status === "Done").length;
 
   ordersContainer.innerHTML = `
     <div class="queue-stats">
       <div><span>New</span><strong>${newOrders}</strong></div>
       <div><span>Preparing</span><strong>${preparingOrders}</strong></div>
-      <div><span>Done Today</span><strong>${completedOrders.length}</strong></div>
+      <div><span>Done Today</span><strong>${finishedOrders}</strong></div>
     </div>
 
     <section class="queue-section">
@@ -189,7 +190,9 @@ function orderRow(order){
   `).join("");
   const messageButton = order.customerContact ? notifyButton(order) : readyForPickupButton(order);
   const doneButton = order.status === "Ready for Payment and Pickup"
-    ? `<div class="order-status">Ready for payment and pickup</div>`
+    ? `<button class="kitchen-action-btn notify-btn final-done-btn" onclick="markPickedUp('${order.id}')">Done</button>`
+    : order.status === "Done"
+      ? `<div class="order-status">Done</div>`
     : `
       <div class="kitchen-actions">
         <div class="workflow-actions">
@@ -218,7 +221,7 @@ function statusBadge(status){
   const label = status || "Order Sent";
   const className = label === "Preparing Order"
     ? "status-preparing-badge"
-    : label === "Ready for Payment and Pickup"
+    : label === "Ready for Payment and Pickup" || label === "Done"
       ? "status-ready-badge"
       : "status-new-badge";
 
@@ -275,6 +278,15 @@ function updatePreparingTimers(){
 async function markDone(id){
   await finishOrder(id);
   await loadOrders();
+}
+
+async function markPickedUp(id){
+  await fetch(`/api/orders/${id}/complete`, { method:"POST" });
+  await loadOrders();
+}
+
+function orderIsComplete(order){
+  return order.status === "Ready for Payment and Pickup" || order.status === "Done";
 }
 
 async function markPreparing(id){

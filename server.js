@@ -574,6 +574,23 @@ async function handleApi(req, res){
     return true;
   }
 
+  if(pathname.startsWith("/api/orders/") && pathname.endsWith("/complete") && req.method === "POST"){
+    const id = pathname.split("/")[3];
+    const orders = await readOrders();
+    const order = orders.find(item=>item.id === id);
+
+    if(!order){
+      send(res, 404, JSON.stringify({ ok:false, message:"Order not found" }));
+      return true;
+    }
+
+    order.status = "Done";
+    order.completedAt = new Date().toISOString();
+    await writeOrders(orders);
+    send(res, 200, JSON.stringify({ ok:true, order }));
+    return true;
+  }
+
   if(pathname.startsWith("/api/orders/") && pathname.endsWith("/sms") && req.method === "POST"){
     const id = pathname.split("/")[3];
     const orders = await readOrders();

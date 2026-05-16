@@ -606,6 +606,11 @@ function showCustomerStatus(order){
     return;
   }
 
+  if(order.status === "Done"){
+    dismissCustomerStatus();
+    return;
+  }
+
   const message = {
     "Order Sent":"Your order has been sent. Wait for confirmation.",
     "Preparing Order":"Your order is now being prepared.",
