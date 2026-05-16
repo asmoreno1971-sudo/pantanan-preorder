@@ -673,7 +673,7 @@ function deliveryTimeLimits(){
   opening.setHours(8, 0, 0, 0);
   const closing = new Date();
   closing.setHours(20, 0, 0, 0);
-  const earliest = new Date(now.getTime() + 8 * 60 * 1000);
+  const earliest = new Date(now.getTime() + 5 * 60 * 1000);
   if(earliest.getSeconds() || earliest.getMilliseconds()){
     earliest.setMinutes(earliest.getMinutes() + 1, 0, 0);
   }
