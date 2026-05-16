@@ -328,7 +328,7 @@ select:focus{
 
 .menu-row{
   display:grid;
-  grid-template-columns:minmax(0,1fr) clamp(96px, 52%, 138px);
+  grid-template-columns:minmax(0,1fr) clamp(115px, 58%, 166px);
   align-items:center;
   gap:clamp(3px, .8vw, 8px);
   min-width:0;
@@ -1300,7 +1300,7 @@ button:disabled{
   }
 
   .menu-row{
-    grid-template-columns:minmax(0, 1fr) clamp(112px, 58%, 150px);
+    grid-template-columns:minmax(0, 1fr) clamp(134px, 64%, 180px);
     gap:clamp(4px, 1.2vw, 8px);
     padding:clamp(6px, 1.8vw, 10px);
   }
