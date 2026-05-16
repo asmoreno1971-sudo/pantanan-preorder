@@ -190,5 +190,13 @@
     "theme": "latte",
     "category": "Other",
     "image": "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=420&q=80"
+  },
+  {
+    "id": "bottled-water",
+    "name": "Bottled Water",
+    "price": 20,
+    "theme": "latte",
+    "category": "Drinks",
+    "image": ""
   }
 ]

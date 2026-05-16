@@ -367,16 +367,6 @@ async function handleApi(req, res){
     return true;
   }
 
-  if(pathname === "/api/menu-lite" && req.method === "GET"){
-    const menu = await readMenu();
-    res.writeHead(200, {
-      "Content-Type":"application/json; charset=utf-8",
-      "Cache-Control":"no-cache"
-    });
-    res.end(JSON.stringify(customerMenu(menu)));
-    return true;
-  }
-
   if(pathname.startsWith("/api/menu-image/") && req.method === "GET"){
     const id = decodeURIComponent(pathname.split("/").slice(3).join("/"));
     const menu = await readMenu();
@@ -401,11 +391,6 @@ async function handleApi(req, res){
       "Cache-Control":"public, max-age=604800, immutable"
     });
     res.end(image.body);
-    return true;
-  }
-
-  if(pathname === "/products" && req.method === "GET"){
-    send(res, 200, await fs.readFile(menuPath, "utf8"));
     return true;
   }
 
