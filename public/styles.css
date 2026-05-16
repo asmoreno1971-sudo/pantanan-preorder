@@ -439,8 +439,8 @@ select:focus{
   max-width:none;
   background:rgba(255,255,255,.62);
   color:#1f1712;
-  font-size:25px !important;
-  padding:4px 6px;
+  font-size:13px !important;
+  padding:3px 5px;
   font-weight:750;
   line-height:1.08;
   overflow-wrap:anywhere;
@@ -453,10 +453,10 @@ select:focus{
   right:4px;
   bottom:4px;
   min-width:auto;
-  padding:4px 6px;
+  padding:3px 5px;
   background:rgba(255,255,255,.68);
   color:#1f1712;
-  font-size:25px !important;
+  font-size:13px !important;
   font-weight:750;
   line-height:1.08;
   text-align:right;
