@@ -336,9 +336,7 @@ function orderRow(order){
       <span>P${item.subtotal}</span>
     </div>
   `).join("");
-  const messageButton = order.customerContact
-    ? notifyButton(order)
-    : `<button class="kitchen-action-btn notify-btn" onclick="markDone('${order.id}')">Order Ready for Payment/Pickup</button>`;
+  const messageButton = order.customerContact ? notifyButton(order) : readyForPickupButton(order);
   const doneButton = order.status === "Ready for Payment and Pickup"
     ? `<div class="order-status">Ready for payment and pickup</div>`
     : `
@@ -386,6 +384,13 @@ function notifyButton(order){
   const label = canNotify ? "DONE. Notify Customer." : "Prepare First";
 
   return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="notifyCustomerReady('${order.id}')">${label}</button>`;
+}
+
+function readyForPickupButton(order){
+  const canFinish = order.status === "Preparing Order";
+  const disabled = canFinish ? "" : "disabled";
+
+  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="markDone('${order.id}')">Order Ready for Payment/Pickup</button>`;
 }
 
 function preparingLabel(order){

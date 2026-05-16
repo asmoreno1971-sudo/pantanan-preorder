@@ -58,6 +58,10 @@ function refreshMenuIfIdle(){
 }
 
 function updateNowTime(){
+  if(!currentTimeText){
+    return;
+  }
+
   const now = new Date();
   const date = now.toLocaleDateString();
   const h = now.getHours();

@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<link rel="stylesheet" href="/styles.css?v=20260515-visible-labels">
+<link rel="stylesheet" href="/styles.css?v=20260516-customer-panel">
 </head>
 <body>
 <div class="page">
@@ -15,8 +15,7 @@
 </div>
 
 <div class="summary-panel">
-<div class="summary-brand">POS Roadworthy</div>
-<div id="nowTime" class="current-time"></div>
+<div class="summary-brand">Food Kiosk Preorder</div>
 
 <div class="customer-panel">
 <label class="field-label" for="name">Customer name</label>
@@ -27,7 +26,7 @@
 <option value="">-- Select Time --</option>
 </select>
 <input id="time" type="hidden">
-<div class="summary-time">Delivery: <span id="summaryTime">--</span></div>
+<span id="summaryTime" class="hidden">--</span>
 </div>
 
 <h3 id="summaryTitle">Order Summary</h3>
@@ -42,6 +41,6 @@ Total P<span id="liveTotal">0</span>
 </div>
 </div>
 
-<script src="/app.js?v=20260516-price-sync"></script>
+<script src="/app.js?v=20260516-customer-panel"></script>
 </body>
 </html>

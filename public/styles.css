@@ -1400,3 +1400,99 @@ textarea{
   font-family:Arial, sans-serif !important;
   font-size:14px !important;
 }
+
+.summary-panel{
+  border:1px solid rgba(61, 96, 131, .18);
+  background:linear-gradient(180deg, #f9fbff 0%, #fffaf4 100%);
+  box-shadow:0 18px 42px rgba(42, 71, 101, .12);
+}
+
+.summary-panel,
+.summary-panel *,
+.summary-panel input,
+.summary-panel select,
+.summary-panel button{
+  font-size:12px !important;
+}
+
+.summary-brand{
+  margin:0 0 12px;
+  padding-bottom:12px;
+  border-bottom:1px solid rgba(61, 96, 131, .16);
+  color:#20384f;
+  font-size:18px !important;
+  letter-spacing:0;
+}
+
+.customer-panel{
+  gap:8px;
+  margin-bottom:12px;
+  padding-bottom:12px;
+  border-bottom:1px solid rgba(61, 96, 131, .14);
+}
+
+.field-label{
+  margin:0 0 2px;
+  color:#38546d;
+  font-size:12px !important;
+  letter-spacing:0;
+}
+
+.customer-panel input,
+.customer-panel select{
+  min-height:42px;
+  padding:10px 12px;
+  border-color:#c9d6e5;
+  background:#fff;
+  color:#17212b;
+  font-size:12px !important;
+  font-weight:750;
+}
+
+.customer-panel input:focus,
+.customer-panel select:focus{
+  border-color:#4b91d1;
+  box-shadow:0 0 0 3px rgba(75,145,209,.16);
+}
+
+#summaryTitle{
+  color:#20384f;
+  font-size:14px !important;
+}
+
+#liveSummary{
+  min-height:44px;
+  margin-top:10px;
+  padding:10px;
+  border:1px solid rgba(75,145,209,.18);
+  border-radius:8px;
+  background:linear-gradient(135deg, rgba(238,247,255,.95), rgba(241,252,245,.95));
+  color:#20384f;
+  font-weight:700;
+}
+
+.sum-row{
+  grid-template-columns:1fr 28px 54px;
+  gap:6px;
+  margin-bottom:6px;
+  color:#20384f;
+  font-size:12px !important;
+}
+
+.sum-price,
+.summary-total{
+  color:#13714a;
+}
+
+.summary-total{
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid rgba(19,113,74,.18);
+  font-size:15px !important;
+}
+
+#orderBtn{
+  min-height:42px;
+  background:linear-gradient(135deg, #28b573, #1f7fbf);
+  box-shadow:0 10px 22px rgba(31,127,191,.2);
+}
