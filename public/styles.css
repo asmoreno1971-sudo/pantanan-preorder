@@ -778,6 +778,13 @@ button:disabled{
   margin:0;
 }
 
+.kitchen-subtitle{
+  margin:4px 0 0;
+  color:#6f5a4a;
+  font-size:14px;
+  font-weight:750;
+}
+
 .sound-control{
   display:flex;
   align-items:center;
@@ -804,6 +811,71 @@ button:disabled{
   grid-template-columns:1fr 1fr;
   gap:20px;
   align-items:start;
+}
+
+.kitchen-board{
+  display:grid;
+  gap:16px;
+}
+
+.queue-stats{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:12px;
+}
+
+.queue-stats div{
+  min-height:78px;
+  padding:14px 16px;
+  border:1px solid #e2d6cb;
+  border-radius:8px;
+  background:#fffaf4;
+  box-shadow:0 10px 24px rgba(74,47,28,.06);
+}
+
+.queue-stats span{
+  display:block;
+  color:#6f5a4a;
+  font-size:12px;
+  font-weight:850;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+}
+
+.queue-stats strong{
+  display:block;
+  margin-top:4px;
+  color:#4f3525;
+  font-family:var(--font-display);
+  font-size:34px !important;
+  line-height:1;
+}
+
+.queue-section{
+  padding:14px;
+  border:1px solid #e2d6cb;
+  border-radius:8px;
+  background:rgba(255,250,244,.64);
+}
+
+.queue-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+  padding-bottom:10px;
+  border-bottom:1px solid #e2d6cb;
+}
+
+.queue-heading h4{
+  margin:0;
+}
+
+.queue-heading span{
+  color:#6f5a4a;
+  font-size:13px;
+  font-weight:850;
 }
 
 .orders-grid section{
@@ -843,7 +915,7 @@ button:disabled{
 
 .orders-table{
   width:100%;
-  min-width:780px;
+  min-width:940px;
   border-collapse:collapse;
   font-size:14px;
 }
@@ -867,6 +939,10 @@ button:disabled{
 
 .orders-table tr:last-child td{
   border-bottom:0;
+}
+
+.new-order-row td{
+  background:#fffdf7;
 }
 
 .order-id{
@@ -906,6 +982,34 @@ button:disabled{
 .table-item span:last-child,
 .table-total{
   text-align:right;
+}
+
+.queue-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:118px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px !important;
+  font-weight:850;
+  line-height:1.1;
+  white-space:nowrap;
+}
+
+.status-new-badge{
+  background:#fff0d6;
+  color:#a85100;
+}
+
+.status-preparing-badge{
+  background:#e6f7e7;
+  color:#22592d;
+}
+
+.status-ready-badge{
+  background:#eaf2ff;
+  color:#26496f;
 }
 
 .order-status-line{
@@ -1241,6 +1345,33 @@ button:disabled{
 
   .orders-grid{
     grid-template-columns:1fr;
+  }
+
+  .kitchen-top{
+    display:grid;
+  }
+
+  .sound-control{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .queue-stats{
+    grid-template-columns:1fr 1fr 1fr;
+    gap:8px;
+  }
+
+  .queue-stats div{
+    min-height:66px;
+    padding:10px;
+  }
+
+  .queue-stats strong{
+    font-size:28px !important;
+  }
+
+  .queue-section{
+    padding:10px;
   }
 }
 

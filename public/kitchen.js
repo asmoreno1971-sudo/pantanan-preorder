@@ -267,17 +267,33 @@ function playAlertTone(startTime, index, destination){
 }
 
 function renderOrders(orders){
-  const activeOrders = orders.filter(order=>order.status !== "Ready for Payment and Pickup");
-  const doneOrders = orders.filter(order=>order.status === "Ready for Payment and Pickup").slice(0, 6);
+  const customerOrders = orders.filter(order=>order.source !== "POS RW" && order.status !== "Cancelled");
+  const activeOrders = customerOrders.filter(order=>order.status !== "Ready for Payment and Pickup");
+  const completedOrders = customerOrders.filter(order=>order.status === "Ready for Payment and Pickup");
+  const doneOrders = completedOrders.slice(0, 8);
+  const newOrders = activeOrders.filter(order=>order.status === "Order Sent").length;
+  const preparingOrders = activeOrders.filter(order=>order.status === "Preparing Order").length;
 
   ordersContainer.innerHTML = `
-    <section>
-      <h4>Preparing <span>${activeOrders.length}</span></h4>
+    <div class="queue-stats">
+      <div><span>New</span><strong>${newOrders}</strong></div>
+      <div><span>Preparing</span><strong>${preparingOrders}</strong></div>
+      <div><span>Done Today</span><strong>${completedOrders.length}</strong></div>
+    </div>
+
+    <section class="queue-section">
+      <div class="queue-heading">
+        <h4>Received Orders</h4>
+        <span>${activeOrders.length} active</span>
+      </div>
       ${ordersTable(activeOrders, false)}
     </section>
 
-    <section>
-      <h4>Done <span>${doneOrders.length}</span></h4>
+    <section class="queue-section recent-done-section">
+      <div class="queue-heading">
+        <h4>Recently Done</h4>
+        <span>${doneOrders.length} shown</span>
+      </div>
       ${ordersTable(doneOrders, true)}
     </section>
   `;
@@ -294,8 +310,9 @@ function ordersTable(orders, done){
         <thead>
           <tr>
             <th>Order</th>
+            <th>Status</th>
             <th>Customer</th>
-            <th>Pickup</th>
+            <th>Delivery Time</th>
             <th>Items</th>
             <th>Total</th>
             <th>Action</th>
@@ -336,8 +353,9 @@ function orderRow(order){
     `;
 
   return `
-    <tr>
+    <tr class="${order.status === "Order Sent" ? "new-order-row" : ""}">
       <td><strong class="order-id">#${displayNumber}</strong><span class="order-meta">Sent ${created}</span></td>
+      <td>${statusBadge(order.status)}</td>
       <td><strong>${order.customerName}</strong><span class="order-meta">${order.customerContact || order.customerMessenger || order.customerPhone || "No contact"}</span></td>
       <td>${order.pickupTime}</td>
       <td><div class="table-items">${items}</div></td>
@@ -345,6 +363,17 @@ function orderRow(order){
       <td class="table-actions">${doneButton}</td>
     </tr>
   `;
+}
+
+function statusBadge(status){
+  const label = status || "Order Sent";
+  const className = label === "Preparing Order"
+    ? "status-preparing-badge"
+    : label === "Ready for Payment and Pickup"
+      ? "status-ready-badge"
+      : "status-new-badge";
+
+  return `<span class="queue-status ${className}">${label}</span>`;
 }
 
 function emptyState(message){

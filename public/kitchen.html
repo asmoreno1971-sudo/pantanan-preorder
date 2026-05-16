@@ -15,7 +15,10 @@
 
 <div id="kitchenPanel" class="kitchen-shell hidden">
 <div class="kitchen-top">
+<div>
 <h3>Kitchen Orders</h3>
+<p class="kitchen-subtitle">Live order queue</p>
+</div>
 <div class="sound-control">
 <button id="soundBtn" onclick="enableSound()">Enable Sound</button>
 <span id="soundStatus">Click once to allow alerts</span>
@@ -23,7 +26,7 @@
 <a href="/qr">Messenger QR</a>
 <a href="/">Customer Page</a>
 </div>
-<div id="ordersContainer" class="orders-grid"></div>
+<div id="ordersContainer" class="kitchen-board"></div>
 </div>
 
 <div id="messageModal" class="modal-backdrop">
@@ -37,6 +40,6 @@
 </div>
 </div>
 
-<script src="/kitchen.js?v=20260509-print-order-slip"></script>
+<script src="/kitchen.js?v=20260516-table-queue"></script>
 </body>
 </html>
