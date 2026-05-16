@@ -81,7 +81,7 @@ function generateTimes(){
   summaryTimeText.innerHTML = "--";
   timeDropdown.min = limits.min;
   timeDropdown.max = limits.max;
-  timeDropdown.step = "60";
+  timeDropdown.step = "600";
   timeDropdown.disabled = limits.closed;
   timeDropdown.value = "";
 }
@@ -477,7 +477,7 @@ async function openSummary(){
   }
 
   if(timeDropdown && !deliveryTimeIsValid(timeDropdown.value)){
-    alert("Please choose a delivery time between the available opening time and 9:00 PM.");
+    alert("Please choose a delivery time from the current hour up to 8:00 PM, using 10-minute intervals.");
     timeDropdown.focus();
     return;
   }
@@ -672,17 +672,20 @@ function deliveryTimeLimits(){
   const opening = new Date();
   opening.setHours(8, 0, 0, 0);
   const closing = new Date();
-  closing.setHours(21, 0, 0, 0);
+  closing.setHours(20, 0, 0, 0);
   const earliest = new Date(now.getTime() + 15 * 60 * 1000);
   if(earliest.getSeconds() || earliest.getMilliseconds()){
     earliest.setMinutes(earliest.getMinutes() + 1, 0, 0);
   }
-  const minTime = earliest > opening ? earliest : opening;
+  const currentHour = new Date(now);
+  currentHour.setMinutes(0, 0, 0);
+  const minTime = currentHour > opening ? currentHour : opening;
 
   return {
     min:formatTimeValue(minTime),
-    max:"21:00",
-    closed:minTime > closing
+    max:"20:00",
+    earliest:formatTimeValue(earliest),
+    closed:earliest > closing
   };
 }
 
@@ -697,7 +700,12 @@ function deliveryTimeIsValid(value){
     return false;
   }
 
-  return value >= limits.min && value <= limits.max;
+  return value >= limits.min && value <= limits.max && value >= limits.earliest && deliveryMinuteIsValid(value);
+}
+
+function deliveryMinuteIsValid(value){
+  const minute = Number(String(value || "").split(":")[1] || 0);
+  return minute % 10 === 0;
 }
 
 function formatTimeValue(date){
