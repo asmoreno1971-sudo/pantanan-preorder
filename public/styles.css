@@ -800,6 +800,28 @@ button:disabled{
   background:#b85c00;
 }
 
+.kitchen-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  justify-content:flex-end;
+}
+
+.kitchen-links a{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:56px;
+  padding:12px 18px;
+  border-radius:8px;
+  border:1px solid #d7c8bb;
+  background:#fffaf4;
+  color:#2f1d13;
+  font-size:22px;
+  font-weight:900;
+  text-decoration:none;
+}
+
 .sound-control button.sound-on{
   background:#6f4e37;
 }
@@ -1500,6 +1522,10 @@ button:disabled{
   .sound-control{
     align-items:flex-start;
     flex-direction:column;
+  }
+
+  .kitchen-links{
+    justify-content:flex-start;
   }
 
   .queue-stats{
