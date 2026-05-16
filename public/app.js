@@ -24,6 +24,7 @@ const customerStatusTitle = document.getElementById("customerStatusTitle");
 const customerStatusText = document.getElementById("customerStatusText");
 const maxOrdersPerSlot = 5;
 const menuCacheKey = "pantananCustomerMenuV1";
+const embeddedMenu = Array.isArray(window.PANTANAN_MENU_FALLBACK) ? window.PANTANAN_MENU_FALLBACK : [];
 let activeOrderId = localStorage.getItem("activeOrderId") || "";
 let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
 let activeOrderVisible = Boolean(activeOrderId);
@@ -72,9 +73,15 @@ function loadCachedMenu(){
     if(Array.isArray(cachedMenu) && cachedMenu.length){
       menu = cachedMenu;
       renderMenu();
+      return;
     }
   }catch{
     localStorage.removeItem(menuCacheKey);
+  }
+
+  if(embeddedMenu.length){
+    menu = embeddedMenu;
+    renderMenu();
   }
 }
 
