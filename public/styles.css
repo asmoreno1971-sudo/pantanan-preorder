@@ -1214,17 +1214,17 @@ button:disabled{
 
 .customer-status.status-sent strong,
 .customer-status.status-sent p{
-  color:#254d8b;
+  color:#facc15;
 }
 
 .customer-status.status-preparing strong,
 .customer-status.status-preparing p{
-  color:#12635d;
+  color:#f97316;
 }
 
 .customer-status.status-ready strong,
 .customer-status.status-ready p{
-  color:#176b33;
+  color:#16a34a;
 }
 
 .order-status,
