@@ -5,8 +5,10 @@ const crypto = require("node:crypto");
 
 const root = __dirname;
 const publicDir = path.join(root, "public");
-const menuPath = path.join(root, "menu.json");
-const ordersPath = path.join(root, "orders.json");
+const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : root;
+const seedMenuPath = path.join(root, "menu.json");
+const menuPath = path.resolve(process.env.MENU_PATH || path.join(dataDir, "menu.json"));
+const ordersPath = path.resolve(process.env.ORDERS_PATH || path.join(dataDir, "orders.json"));
 const port = Number(process.env.PORT) || 3001;
 const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
 const fallbackAdminPassword = "2929";
@@ -16,6 +18,8 @@ const sessions = new Set();
 let cachedMenu = null;
 let cachedMenuMtime = 0;
 const cachedImages = new Map();
+let menuFileReady = null;
+let ordersFileReady = null;
 
 if(process.env.NODE_ENV === "production" && adminPassword === "admin123"){
   console.error("Set ADMIN_PASSWORD before running in production.");
@@ -58,6 +62,8 @@ async function readBody(req){
 }
 
 async function readOrders(){
+  await ensureOrdersFile();
+
   try{
     return JSON.parse(await fs.readFile(ordersPath, "utf8"));
   }catch{
@@ -66,13 +72,55 @@ async function readOrders(){
 }
 
 async function writeOrders(orders){
+  await fs.mkdir(path.dirname(ordersPath), { recursive:true });
   await fs.writeFile(ordersPath, JSON.stringify(orders, null, 2));
 }
 
 async function writeJsonFile(filePath, value){
+  await fs.mkdir(path.dirname(filePath), { recursive:true });
   const tempPath = `${filePath}.tmp`;
   await fs.writeFile(tempPath, JSON.stringify(value, null, 2));
   await fs.rename(tempPath, filePath);
+}
+
+async function fileExists(filePath){
+  try{
+    await fs.access(filePath);
+    return true;
+  }catch{
+    return false;
+  }
+}
+
+async function ensureJsonFile(filePath, seedPath, fallbackValue){
+  await fs.mkdir(path.dirname(filePath), { recursive:true });
+
+  if(await fileExists(filePath)){
+    return;
+  }
+
+  if(seedPath && await fileExists(seedPath)){
+    await fs.copyFile(seedPath, filePath);
+    return;
+  }
+
+  await writeJsonFile(filePath, fallbackValue);
+}
+
+function ensureMenuFile(){
+  if(!menuFileReady){
+    menuFileReady = ensureJsonFile(menuPath, seedMenuPath, []);
+  }
+
+  return menuFileReady;
+}
+
+function ensureOrdersFile(){
+  if(!ordersFileReady){
+    ordersFileReady = ensureJsonFile(ordersPath, null, []);
+  }
+
+  return ordersFileReady;
 }
 
 function clearMenuCache(){
@@ -82,6 +130,7 @@ function clearMenuCache(){
 }
 
 async function readMenu(){
+  await ensureMenuFile();
   const stats = await fs.stat(menuPath);
 
   if(cachedMenu && cachedMenuMtime === stats.mtimeMs){
@@ -358,7 +407,7 @@ async function handleApi(req, res){
       res.writeHead(200, {
         "Content-Type":"application/json; charset=utf-8",
         "Cache-Control":"no-store",
-        "X-Menu-Source":"menu.json"
+        "X-Menu-Source":"admin-persistent-menu"
       });
       res.end(JSON.stringify(responseMenu));
     }else{

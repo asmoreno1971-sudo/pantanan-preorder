@@ -13,6 +13,14 @@ PANTANAN_MESSENGER_LINK=https://m.me/your-page-username
 
 `PORT` is usually provided by the host. Locally it defaults to `3001`.
 
+For production menu/order persistence, attach persistent storage and set:
+
+```text
+DATA_DIR=/var/data
+```
+
+The app will store Admin product changes in `DATA_DIR/menu.json` and orders in `DATA_DIR/orders.json`. The bundled `menu.json` is only a first-run seed when no saved menu exists yet.
+
 ## Local Start
 
 ```powershell
@@ -29,7 +37,8 @@ Open:
 ## Production Notes
 
 - Do not use the default admin password online.
-- The app currently stores products and orders in JSON files. For a serious public deployment, move data to a hosted database.
+- Admin product changes must be saved to persistent storage. On Render, attach a persistent disk mounted at `/var/data` and set `DATA_DIR=/var/data`. Without persistent storage, a redeploy can reset products back to the repository seed file.
+- For a higher-volume public deployment, move `menu.json` and `orders.json` to PostgreSQL or another hosted database.
 - Use the official Pantanan Facebook Page Messenger link for `PANTANAN_MESSENGER_LINK`.
 - Use the official Pantanan WhatsApp Business number for `PANTANAN_WHATSAPP_LINK`.
 - Deploy on HTTPS so QR scans and browser features work reliably.
