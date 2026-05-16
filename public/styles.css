@@ -188,6 +188,10 @@ select:focus{
 
 .summary-total span{
   margin-left:4px;
+  font:inherit;
+  font-size:inherit !important;
+  font-weight:inherit;
+  line-height:inherit;
 }
 
 .cash-panel{
