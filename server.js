@@ -6,6 +6,7 @@ const crypto = require("node:crypto");
 const root = __dirname;
 const publicDir = path.join(root, "public");
 const menuPath = path.join(root, "menu.json");
+const customerMenuPath = path.join(publicDir, "customer-menu.json");
 const ordersPath = path.join(root, "orders.json");
 const port = Number(process.env.PORT) || 3001;
 const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
@@ -92,6 +93,30 @@ async function readMenu(){
   cachedMenuMtime = stats.mtimeMs;
   cachedImages.clear();
   return cachedMenu;
+}
+
+async function writeCustomerMenuFile(menu){
+  await writeJsonFile(customerMenuPath, customerMenu(menu));
+}
+
+async function readCustomerMenu(){
+  try{
+    const [menuStats, customerMenuStats] = await Promise.all([
+      fs.stat(menuPath),
+      fs.stat(customerMenuPath)
+    ]);
+
+    if(customerMenuStats.mtimeMs >= menuStats.mtimeMs){
+      return JSON.parse(await fs.readFile(customerMenuPath, "utf8"));
+    }
+  }catch{
+    // Rebuild below when the lightweight customer menu is missing or stale.
+  }
+
+  const menu = await readMenu();
+  const liteMenu = customerMenu(menu);
+  await writeCustomerMenuFile(menu);
+  return liteMenu;
 }
 
 function localOrderDate(){
@@ -348,17 +373,18 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/menu" && req.method === "GET"){
-    const menu = await readMenu();
     const customerView = url.searchParams.get("view") === "customer";
-    const responseMenu = customerView ? customerMenu(menu) : normalizeMenu(menu);
 
     if(customerView){
+      const responseMenu = await readCustomerMenu();
       res.writeHead(200, {
         "Content-Type":"application/json; charset=utf-8",
         "Cache-Control":"no-store"
       });
       res.end(JSON.stringify(responseMenu));
     }else{
+      const menu = await readMenu();
+      const responseMenu = normalizeMenu(menu);
       send(res, 200, JSON.stringify(responseMenu));
     }
     return true;
@@ -434,6 +460,7 @@ async function handleApi(req, res){
 
     try{
       await writeJsonFile(menuPath, cleanMenu);
+      await writeCustomerMenuFile(cleanMenu);
       clearMenuCache();
     }catch{
       send(res, 500, JSON.stringify({ ok:false, message:"Server could not save products. Your browser backup is still available." }));
