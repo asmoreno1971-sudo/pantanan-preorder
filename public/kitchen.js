@@ -235,7 +235,7 @@ function emptyState(message){
 function notifyButton(order){
   const canNotify = order.status === "Preparing Order";
   const disabled = canNotify ? "" : "disabled";
-  const label = canNotify ? "DONE. Notify Customer." : "Prepare First";
+  const label = canNotify ? "Order Ready for Payment/Pickup" : "Prepare First";
 
   return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="notifyCustomerReady('${order.id}')">${label}</button>`;
 }
@@ -320,20 +320,7 @@ async function messageCustomer(id){
 }
 
 async function notifyCustomerReady(id){
-  const res = await fetch(`/api/orders/${id}`);
-  const data = await res.json();
-
-  if(!data.ok){
-    return;
-  }
-
-  const order = data.order;
-  const messageTextValue = customerMessage(order);
-  await copyText(messageTextValue);
   await finishOrder(id);
-  messageContact.innerText = `Customer mobile: ${order.customerContact || "No contact"}`;
-  messageText.value = messageTextValue;
-  messageModal.classList.add("show");
   await loadOrders();
 }
 
