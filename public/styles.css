@@ -1106,21 +1106,21 @@ button:disabled{
 }
 
 .customer-status.status-sent{
-  border-color:#dcbf7b;
-  background:#fff4d6;
-  box-shadow:0 16px 35px rgba(122,85,0,.18);
+  border-color:#9fb7e8;
+  background:#eef4ff;
+  box-shadow:0 16px 35px rgba(49,92,153,.18);
 }
 
 .customer-status.status-preparing{
-  border-color:#87a6cf;
-  background:#eaf2ff;
-  box-shadow:0 16px 35px rgba(38,73,111,.18);
+  border-color:#8bcfc6;
+  background:#e9fbf8;
+  box-shadow:0 16px 35px rgba(30,112,106,.18);
 }
 
 .customer-status.status-ready{
-  border-color:#78a66d;
-  background:#e6f7e7;
-  box-shadow:0 16px 35px rgba(34,89,45,.2);
+  border-color:#8fdda5;
+  background:#ecfdf1;
+  box-shadow:0 16px 35px rgba(31,122,59,.2);
 }
 
 @keyframes status-pop{
@@ -1178,17 +1178,17 @@ button:disabled{
 
 .customer-status.status-sent strong,
 .customer-status.status-sent p{
-  color:#6d4b00;
+  color:#254d8b;
 }
 
 .customer-status.status-preparing strong,
 .customer-status.status-preparing p{
-  color:#26496f;
+  color:#12635d;
 }
 
 .customer-status.status-ready strong,
 .customer-status.status-ready p{
-  color:#22592d;
+  color:#176b33;
 }
 
 .order-status,
