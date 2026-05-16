@@ -338,7 +338,7 @@ function orderRow(order){
   `).join("");
   const messageButton = order.customerContact
     ? notifyButton(order)
-    : `<button class="kitchen-action-btn" onclick="messageCustomer('${order.id}')">No Valid Number</button>`;
+    : `<button class="kitchen-action-btn notify-btn" onclick="markDone('${order.id}')">Order Ready for Payment/Pickup</button>`;
   const doneButton = order.status === "Ready for Payment and Pickup"
     ? `<div class="order-status">Ready for payment and pickup</div>`
     : `
