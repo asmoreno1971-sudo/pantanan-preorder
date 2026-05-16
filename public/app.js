@@ -121,21 +121,6 @@ function generateTimes(){
 
 if(timeDropdown){
   const timePickerWrap = timeDropdown.closest(".time-picker-wrap");
-  const openTimePicker = function(event){
-    if(event){
-      event.stopPropagation();
-    }
-
-    if(timeDropdown.disabled){
-      return;
-    }
-
-    if(typeof timeDropdown.showPicker === "function"){
-      timeDropdown.showPicker();
-    }else{
-      timeDropdown.focus();
-    }
-  };
   const syncDeliveryTime = function(){
     selectedTime.value = formatDeliveryTime(this.value);
     summaryTimeText.innerHTML = selectedTime.value ? `<strong>${selectedTime.value}</strong>` : "--";
@@ -145,9 +130,12 @@ if(timeDropdown){
     validate();
   };
   timeDropdown.addEventListener("change", syncDeliveryTime);
-  timeDropdown.addEventListener("click", openTimePicker);
   if(timePickerWrap){
-    timePickerWrap.addEventListener("click", openTimePicker);
+    timePickerWrap.addEventListener("click", function(event){
+      if(event.target !== timeDropdown && !timeDropdown.disabled){
+        timeDropdown.focus();
+      }
+    });
   }
 }
 
