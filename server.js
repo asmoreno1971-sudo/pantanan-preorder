@@ -13,6 +13,10 @@ const fallbackAdminPassword = "2929";
 const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
 const semaphoreSenderName = process.env.SEMAPHORE_SENDER_NAME || "";
 const sessions = new Set();
+let cachedMenu = null;
+let cachedMenuMtime = 0;
+let cachedCustomerMenu = null;
+const cachedImages = new Map();
 
 if(process.env.NODE_ENV === "production" && adminPassword === "admin123"){
   console.error("Set ADMIN_PASSWORD before running in production.");
@@ -72,6 +76,27 @@ async function writeJsonFile(filePath, value){
   await fs.rename(tempPath, filePath);
 }
 
+function clearMenuCache(){
+  cachedMenu = null;
+  cachedMenuMtime = 0;
+  cachedCustomerMenu = null;
+  cachedImages.clear();
+}
+
+async function readMenu(){
+  const stats = await fs.stat(menuPath);
+
+  if(cachedMenu && cachedMenuMtime === stats.mtimeMs){
+    return cachedMenu;
+  }
+
+  cachedMenu = JSON.parse(await fs.readFile(menuPath, "utf8"));
+  cachedMenuMtime = stats.mtimeMs;
+  cachedCustomerMenu = null;
+  cachedImages.clear();
+  return cachedMenu;
+}
+
 function localOrderDate(){
   const now = new Date();
   const year = now.getFullYear();
@@ -126,9 +151,16 @@ function normalizeMenu(menu){
 }
 
 function customerMenu(menu){
-  return normalizeMenu(menu).map(item=>{
+  if(cachedCustomerMenu && menu === cachedMenu){
+    return cachedCustomerMenu;
+  }
+
+  const items = normalizeMenu(menu).map(item=>{
     const image = String(item.image || "");
     const id = String(item.id || "");
+    const imageVersion = image
+      ? crypto.createHash("sha1").update(image).digest("hex").slice(0, 10)
+      : "";
 
     return {
       id,
@@ -136,12 +168,24 @@ function customerMenu(menu){
       price: item.price,
       theme: item.theme,
       category: item.category,
-      image: image ? `/api/menu-image/${encodeURIComponent(id)}` : ""
+      image: image ? `/api/menu-image/${encodeURIComponent(id)}?v=${imageVersion}` : ""
     };
   });
+
+  if(menu === cachedMenu){
+    cachedCustomerMenu = items;
+  }
+
+  return items;
 }
 
 function menuImage(menu, id){
+  const cachedImage = cachedImages.get(id);
+
+  if(cachedImage){
+    return cachedImage;
+  }
+
   const item = (Array.isArray(menu) ? menu : []).find(menuItem=>String(menuItem.id || "") === id);
   const image = String(item && item.image || "");
 
@@ -150,7 +194,9 @@ function menuImage(menu, id){
   }
 
   if(image.startsWith("http://") || image.startsWith("https://")){
-    return { redirect:image };
+    const response = { redirect:image };
+    cachedImages.set(id, response);
+    return response;
   }
 
   const match = image.match(/^data:([^;,]+);base64,(.+)$/);
@@ -159,10 +205,12 @@ function menuImage(menu, id){
     return null;
   }
 
-  return {
+  const response = {
     contentType: match[1],
     body: Buffer.from(match[2], "base64")
   };
+  cachedImages.set(id, response);
+  return response;
 }
 
 function csvCell(value){
@@ -241,23 +289,35 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/menu" && req.method === "GET"){
-    const menu = JSON.parse(await fs.readFile(menuPath, "utf8"));
-    const responseMenu = url.searchParams.get("view") === "customer"
-      ? customerMenu(menu)
-      : normalizeMenu(menu);
-    send(res, 200, JSON.stringify(responseMenu));
+    const menu = await readMenu();
+    const customerView = url.searchParams.get("view") === "customer";
+    const responseMenu = customerView ? customerMenu(menu) : normalizeMenu(menu);
+
+    if(customerView){
+      res.writeHead(200, {
+        "Content-Type":"application/json; charset=utf-8",
+        "Cache-Control":"no-cache"
+      });
+      res.end(JSON.stringify(responseMenu));
+    }else{
+      send(res, 200, JSON.stringify(responseMenu));
+    }
     return true;
   }
 
   if(pathname === "/api/menu-lite" && req.method === "GET"){
-    const menu = JSON.parse(await fs.readFile(menuPath, "utf8"));
-    send(res, 200, JSON.stringify(customerMenu(menu)));
+    const menu = await readMenu();
+    res.writeHead(200, {
+      "Content-Type":"application/json; charset=utf-8",
+      "Cache-Control":"no-cache"
+    });
+    res.end(JSON.stringify(customerMenu(menu)));
     return true;
   }
 
   if(pathname.startsWith("/api/menu-image/") && req.method === "GET"){
     const id = decodeURIComponent(pathname.split("/").slice(3).join("/"));
-    const menu = JSON.parse(await fs.readFile(menuPath, "utf8"));
+    const menu = await readMenu();
     const image = menuImage(menu, id);
 
     if(!image){
@@ -274,7 +334,11 @@ async function handleApi(req, res){
       return true;
     }
 
-    send(res, 200, image.body, image.contentType);
+    res.writeHead(200, {
+      "Content-Type":image.contentType,
+      "Cache-Control":"public, max-age=604800, immutable"
+    });
+    res.end(image.body);
     return true;
   }
 
@@ -326,6 +390,7 @@ async function handleApi(req, res){
 
     try{
       await writeJsonFile(menuPath, cleanMenu);
+      clearMenuCache();
     }catch{
       send(res, 500, JSON.stringify({ ok:false, message:"Server could not save products. Your browser backup is still available." }));
       return true;
@@ -406,7 +471,7 @@ async function handleApi(req, res){
 
   if(pathname === "/api/orders" && req.method === "POST"){
     const body = JSON.parse(await readBody(req) || "{}");
-    const menu = JSON.parse(await fs.readFile(menuPath, "utf8"));
+    const menu = await readMenu();
     const orders = await readOrders();
     const items = Array.isArray(body.items) ? body.items : [];
     const cleanItems = items
@@ -471,7 +536,7 @@ async function handleApi(req, res){
 
   if((pathname === "/api/pos/transactions" || pathname === "/add-transaction") && req.method === "POST"){
     const body = JSON.parse(await readBody(req) || "{}");
-    const menu = JSON.parse(await fs.readFile(menuPath, "utf8"));
+    const menu = await readMenu();
     const orders = await readOrders();
     const items = Array.isArray(body.items) ? body.items : [];
     const cleanItems = items

@@ -23,6 +23,7 @@ const customerStatus = document.getElementById("customerStatus");
 const customerStatusTitle = document.getElementById("customerStatusTitle");
 const customerStatusText = document.getElementById("customerStatusText");
 const maxOrdersPerSlot = 5;
+const menuCacheKey = "pantananCustomerMenuV1";
 let activeOrderId = localStorage.getItem("activeOrderId") || "";
 let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
 let activeOrderVisible = Boolean(activeOrderId);
@@ -42,9 +43,45 @@ function saveCustomer(){
 }
 
 async function loadMenu(){
-  const res = await fetch(`/api/menu?view=customer&fresh=${Date.now()}`, { cache:"no-store" });
-  menu = await res.json();
-  renderMenu();
+  try{
+    const res = await fetch("/api/menu?view=customer", { cache:"default" });
+    const freshMenu = await res.json();
+
+    if(!Array.isArray(freshMenu)){
+      return;
+    }
+
+    if(menuSignature(freshMenu) !== menuSignature(menu)){
+      menu = freshMenu;
+      localStorage.setItem(menuCacheKey, JSON.stringify(menu));
+      renderMenu();
+    }
+  }catch{
+    loadCachedMenu();
+  }
+}
+
+function loadCachedMenu(){
+  if(menu.length){
+    return;
+  }
+
+  try{
+    const cachedMenu = JSON.parse(localStorage.getItem(menuCacheKey) || "[]");
+
+    if(Array.isArray(cachedMenu) && cachedMenu.length){
+      menu = cachedMenu;
+      renderMenu();
+    }
+  }catch{
+    localStorage.removeItem(menuCacheKey);
+  }
+}
+
+function menuSignature(items){
+  return (Array.isArray(items) ? items : [])
+    .map(item=>`${item.id}|${item.name}|${item.price}|${item.category}|${item.image}`)
+    .join("\n");
 }
 
 function hasSelectedItems(){
@@ -809,7 +846,7 @@ async function checkActiveOrder(){
 
 setInterval(updateNowTime, 1000);
 setInterval(checkActiveOrder, 5000);
-setInterval(refreshMenuIfIdle, 5000);
+setInterval(refreshMenuIfIdle, 60000);
 window.addEventListener("focus", refreshMenuIfIdle);
 window.addEventListener("pageshow", refreshMenuIfIdle);
 window.addEventListener("online", refreshMenuIfIdle);
@@ -823,6 +860,7 @@ generateTimes();
 loadSavedCustomer();
 updatePaymentVisibility();
 updateCashInputWidth();
+loadCachedMenu();
 loadMenu();
 checkActiveOrder();
 validate();
