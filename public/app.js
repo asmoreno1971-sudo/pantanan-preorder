@@ -684,7 +684,7 @@ function deliveryTimeLimits(){
   const opening = new Date();
   opening.setHours(8, 0, 0, 0);
   const closing = new Date();
-  closing.setHours(21, 0, 0, 0);
+  closing.setHours(23, 0, 0, 0);
   const earliest = new Date(now.getTime() + 5 * 60 * 1000);
   if(earliest.getSeconds() || earliest.getMilliseconds()){
     earliest.setMinutes(earliest.getMinutes() + 1, 0, 0);
@@ -694,7 +694,7 @@ function deliveryTimeLimits(){
 
   return {
     min:formatTimeValue(minTime),
-    max:"21:00",
+    max:"23:00",
     earliest:formatTimeValue(earliest),
     closed:earliest > closing
   };
