@@ -490,9 +490,9 @@ async function openSummary(){
     return;
   }
 
-  const nameVal = nameInput ? nameInput.value.trim() : "WALK-IN";
+  const nameVal = nameInput.value.trim();
   const contactVal = contactInput ? contactInput.value.trim() : "";
-  const pickupTime = timeDropdown ? (selectedTime.value || formatDeliveryTime(timeDropdown.value)) : "POS RW";
+  const pickupTime = selectedTime.value || formatDeliveryTime(timeDropdown.value);
   const items = menu
     .filter(item=>quantities[item.id] > 0)
     .map(item=>({
@@ -534,17 +534,15 @@ async function openSummary(){
   let data;
 
   try{
-    const res = await fetch(timeDropdown ? "/api/orders" : "/api/pos/transactions", {
+    const res = await fetch("/api/orders", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify(timeDropdown
-        ? {
-          customerName:nameVal,
-          customerContact:contactVal,
-          pickupTime,
-          items
-        }
-        : { items })
+      body:JSON.stringify({
+        customerName:nameVal,
+        customerContact:contactVal,
+        pickupTime,
+        items
+      })
     });
     data = await res.json();
   }catch{

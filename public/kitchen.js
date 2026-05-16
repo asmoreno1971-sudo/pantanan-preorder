@@ -118,7 +118,7 @@ function playAlertTone(startTime, index, destination){
 }
 
 function renderOrders(orders){
-  const customerOrders = orders.filter(order=>order.source !== "POS RW" && order.status !== "Cancelled");
+  const customerOrders = orders.filter(order=>!order.source && order.status !== "Cancelled");
   const activeOrders = customerOrders.filter(order=>!orderIsComplete(order));
   const completedOrders = customerOrders.filter(order=>orderIsComplete(order));
   const doneOrders = completedOrders.slice(0, 8);

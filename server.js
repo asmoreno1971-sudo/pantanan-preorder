@@ -608,75 +608,6 @@ async function handleApi(req, res){
     return true;
   }
 
-  if((pathname === "/api/pos/transactions" || pathname === "/add-transaction") && req.method === "POST"){
-    const body = JSON.parse(await readBody(req) || "{}");
-    const menu = await readMenu();
-    const orders = await readOrders();
-    const items = Array.isArray(body.items) ? body.items : [];
-    const cleanItems = items
-      .map(item=>{
-        const product = menu.find(menuItem=>menuItem.id === item.id || menuItem.name === item.product || menuItem.name === item.name);
-        const qty = Math.max(0, Number(item.qty) || 0);
-        const fallbackName = String(item.product || item.name || "").trim();
-        const fallbackPrice = Math.max(0, Number(item.price) || 0);
-
-        if(qty === 0 || (!product && (!fallbackName || fallbackPrice === 0))){
-          return null;
-        }
-
-        return {
-          id: product ? product.id : String(item.id || fallbackName).replace(/[^a-z0-9-]/gi, "-").toLowerCase(),
-          name: product ? product.name : fallbackName,
-          qty,
-          price: product ? product.price : fallbackPrice,
-          subtotal: qty * (product ? product.price : fallbackPrice)
-        };
-      })
-      .filter(Boolean);
-
-    if(cleanItems.length === 0){
-      send(res, 400, JSON.stringify({ ok:false, message:"No valid POS items" }));
-      return true;
-    }
-
-    const total = cleanItems.reduce((sum, item)=>sum + item.subtotal, 0);
-    const order = {
-      id: Date.now().toString(),
-      orderNumber: nextDailyOrderNumber(orders),
-      orderDate: localOrderDate(),
-      customerName: "WALK-IN",
-      customerContact: "",
-      pickupTime: "POS RW",
-      source: "POS RW",
-      status: "Paid",
-      createdAt: new Date().toISOString(),
-      paidAt: new Date().toISOString(),
-      items: cleanItems,
-      total
-    };
-
-    orders.unshift(order);
-    await writeOrders(orders);
-    send(res, 200, JSON.stringify({ ok:true, order }));
-    return true;
-  }
-
-  if((pathname === "/api/pos/cancel-last" || pathname === "/cancel-last") && req.method === "POST"){
-    const orders = await readOrders();
-    const order = orders.find(item=>item.source === "POS RW" && item.status !== "Cancelled");
-
-    if(!order){
-      send(res, 404, JSON.stringify({ ok:false, message:"No POS RW transaction to cancel" }));
-      return true;
-    }
-
-    order.status = "Cancelled";
-    order.cancelledAt = new Date().toISOString();
-    await writeOrders(orders);
-    send(res, 200, JSON.stringify({ ok:true, order }));
-    return true;
-  }
-
   if(pathname.startsWith("/api/orders/") && pathname.endsWith("/preparing") && req.method === "POST"){
     const id = pathname.split("/")[3];
     const orders = await readOrders();
@@ -773,7 +704,6 @@ async function serveStatic(req, res){
     "/": "index.html",
     "/admin": "admin.html",
     "/kitchen": "kitchen.html",
-    "/pos": "pos.html",
     "/sales": "sales.html",
     "/qr": "qr.html"
   };
