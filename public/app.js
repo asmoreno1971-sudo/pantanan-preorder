@@ -77,13 +77,17 @@ function generateTimes(){
   }
 
   const limits = deliveryTimeLimits();
-  selectedTime.value = "";
-  summaryTimeText.innerHTML = "--";
   timeDropdown.min = limits.min;
   timeDropdown.max = limits.max;
-  timeDropdown.step = "600";
+  timeDropdown.step = "300";
   timeDropdown.disabled = limits.closed;
-  timeDropdown.value = "";
+  timeDropdown.value = limits.closed ? "" : limits.earliest;
+  selectedTime.value = formatDeliveryTime(timeDropdown.value);
+  summaryTimeText.innerHTML = selectedTime.value ? `<strong>${selectedTime.value}</strong>` : "--";
+  const timePickerWrap = timeDropdown.closest(".time-picker-wrap");
+  if(timePickerWrap){
+    timePickerWrap.classList.toggle("has-time", Boolean(timeDropdown.value));
+  }
 }
 
 if(timeDropdown){
@@ -478,7 +482,7 @@ async function openSummary(){
 
   if(timeDropdown && !deliveryTimeIsValid(timeDropdown.value)){
     const limits = deliveryTimeLimits();
-    alert(`Please choose a delivery time from ${formatDeliveryTime(limits.earliest)} up to 8:00 PM, using 10-minute intervals.`);
+    alert(`Please choose a delivery time from ${formatDeliveryTime(limits.earliest)} up to 8:00 PM, using 5-minute intervals.`);
     timeDropdown.focus();
     return;
   }
@@ -678,6 +682,7 @@ function deliveryTimeLimits(){
   if(earliest.getSeconds() || earliest.getMilliseconds()){
     earliest.setMinutes(earliest.getMinutes() + 1, 0, 0);
   }
+  roundUpToMinuteInterval(earliest, 5);
   const currentHour = new Date(now);
   currentHour.setMinutes(0, 0, 0);
   const minTime = currentHour > opening ? currentHour : opening;
@@ -706,7 +711,16 @@ function deliveryTimeIsValid(value){
 
 function deliveryMinuteIsValid(value){
   const minute = Number(String(value || "").split(":")[1] || 0);
-  return minute % 10 === 0;
+  return minute % 5 === 0;
+}
+
+function roundUpToMinuteInterval(date, interval){
+  const minutes = date.getMinutes();
+  const remainder = minutes % interval;
+
+  if(remainder){
+    date.setMinutes(minutes + (interval - remainder), 0, 0);
+  }
 }
 
 function formatTimeValue(date){
