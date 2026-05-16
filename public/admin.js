@@ -275,13 +275,16 @@ async function verifyCustomerMenuSync(){
 
 function imageFingerprint(value){
   const text = String(value || "");
-  let hash = 0;
+  let hash1 = 0x811c9dc5;
+  let hash2 = 0x01000193;
 
   for(let index = 0; index < text.length; index += 1){
-    hash = ((hash << 5) - hash + text.charCodeAt(index)) | 0;
+    const code = text.charCodeAt(index);
+    hash1 = Math.imul(hash1 ^ code, 0x01000193) >>> 0;
+    hash2 = Math.imul(hash2 + code, 0x811c9dc5) >>> 0;
   }
 
-  return text ? Math.abs(hash).toString(36) : "";
+  return text ? `${hash1.toString(16)}${hash2.toString(16)}`.slice(0, 16) : "";
 }
 
 async function exportCustomers(){
