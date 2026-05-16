@@ -801,25 +801,33 @@ button:disabled{
 }
 
 .kitchen-links{
-  display:flex;
-  flex-wrap:wrap;
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
   gap:12px;
-  justify-content:flex-end;
+  margin:-10px 0 18px;
 }
 
 .kitchen-links a{
-  display:inline-flex;
+  display:flex;
   align-items:center;
   justify-content:center;
-  min-height:56px;
-  padding:12px 18px;
+  min-height:72px;
+  padding:14px 18px;
   border-radius:8px;
   border:1px solid #d7c8bb;
-  background:#fffaf4;
+  background:linear-gradient(135deg, #fffdf8, #f4ebe2);
   color:#2f1d13;
+  box-shadow:0 10px 24px rgba(74,47,28,.09);
   font-size:22px;
   font-weight:900;
   text-decoration:none;
+  transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.kitchen-links a:hover{
+  transform:translateY(-2px);
+  border-color:#b9987f;
+  box-shadow:0 14px 28px rgba(74,47,28,.14);
 }
 
 .sound-control button.sound-on{
@@ -1525,7 +1533,7 @@ button:disabled{
   }
 
   .kitchen-links{
-    justify-content:flex-start;
+    grid-template-columns:1fr;
   }
 
   .queue-stats{
