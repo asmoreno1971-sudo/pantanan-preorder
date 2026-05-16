@@ -25,7 +25,7 @@ const customerStatusText = document.getElementById("customerStatusText");
 const maxOrdersPerSlot = 5;
 let activeOrderId = localStorage.getItem("activeOrderId") || "";
 let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
-let activeOrderVisible = false;
+let activeOrderVisible = Boolean(activeOrderId);
 let orderSubmitted = false;
 let currentTotal = 0;
 
@@ -492,6 +492,7 @@ async function openSummary(){
     return;
   }
 
+  requestNotificationPermission();
   orderSubmitted = true;
   orderButton.disabled = true;
   orderButton.innerText = "Processing...";
@@ -534,7 +535,10 @@ async function openSummary(){
   saveCustomer();
   activeOrderId = data.order.id;
   localStorage.setItem("activeOrderId", activeOrderId);
-  activeOrderVisible = false;
+  activeOrderVisible = true;
+  lastNotifiedStatus = "";
+  localStorage.removeItem("lastNotifiedStatus");
+  showCustomerStatus(data.order);
   resetOrderForm();
 
   orderSubmitted = false;
@@ -599,11 +603,15 @@ function dismissCustomerStatus(){
   localStorage.removeItem("lastNotifiedStatus");
   lastNotifiedStatus = "";
   activeOrderVisible = false;
+  if(!customerStatus){
+    return;
+  }
+
   customerStatus.classList.add("hidden");
 }
 
 function showCustomerStatus(order){
-  if(!activeOrderVisible){
+  if(!activeOrderVisible || !customerStatus || !customerStatusTitle || !customerStatusText){
     return;
   }
 
@@ -620,9 +628,21 @@ function showCustomerStatus(order){
   customerStatus.classList.add(statusClass(order.status));
   customerStatus.classList.remove("hidden");
 
+  if(order.status === "Preparing Order"){
+    notifyCustomer(order, "Pantanan order update", "Your order is now being prepared.");
+  }
+
   if(order.status === "Ready for Payment and Pickup"){
     notifyCustomer(order, "Pantanan order ready", "Your order is ready for payment and pickup.");
   }
+}
+
+function requestNotificationPermission(){
+  if(!("Notification" in window) || Notification.permission !== "default"){
+    return;
+  }
+
+  Notification.requestPermission().catch(()=>{});
 }
 
 async function loadSlotCounts(){
@@ -694,11 +714,17 @@ function notifyCustomer(order,title,message){
 }
 
 async function checkActiveOrder(){
-  if(!activeOrderId || !activeOrderVisible){
+  if(!activeOrderId){
     return;
   }
 
-  const res = await fetch(`/api/orders/${activeOrderId}`);
+  let res;
+
+  try{
+    res = await fetch(`/api/orders/${activeOrderId}`);
+  }catch{
+    return;
+  }
 
   if(!res.ok){
     return;
