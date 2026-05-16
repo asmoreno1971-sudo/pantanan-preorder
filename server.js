@@ -125,12 +125,19 @@ function orderCountsAsSale(order){
   return ["Paid", "Done"].includes(order.status);
 }
 
+function orderSoldAt(order){
+  return order.completedAt || order.doneAt || order.createdAt || new Date().toISOString();
+}
+
 function dailySalesReport(orders, date){
-  const rowsByName = new Map();
+  const rows = [];
 
   orders
     .filter(order=>orderCountsAsSale(order) && orderSalesDate(order) === date)
     .forEach(order=>{
+      const soldAt = orderSoldAt(order);
+      const orderNumber = Number(order.orderNumber) || 0;
+
       (Array.isArray(order.items) ? order.items : []).forEach(item=>{
         const name = String(item.name || item.product || "Item").trim();
         const qty = Math.max(0, Number(item.qty) || 0);
@@ -140,15 +147,17 @@ function dailySalesReport(orders, date){
           return;
         }
 
-        const row = rowsByName.get(name) || { name, frequency:0, total:0 };
-        row.frequency += qty;
-        row.total += subtotal;
-        rowsByName.set(name, row);
+        rows.push({
+          name,
+          soldAt,
+          orderNumber,
+          frequency:qty,
+          total:subtotal
+        });
       });
     });
 
-  const rows = [...rowsByName.values()]
-    .sort((a, b)=>b.frequency - a.frequency || b.total - a.total || a.name.localeCompare(b.name));
+  rows.sort((a, b)=>String(a.soldAt).localeCompare(String(b.soldAt)) || a.name.localeCompare(b.name));
 
   return {
     date,

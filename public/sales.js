@@ -112,7 +112,7 @@ function renderSales(report){
 
   salesRows.innerHTML = report.rows.map(row=>`
     <tr>
-      <td>${escapeHtml(row.name)}</td>
+      <td><span class="sales-time">${escapeHtml(formatSaleTime(row.soldAt))}</span>${escapeHtml(row.name)}</td>
       <td>${numberText(row.frequency)}</td>
       <td>${numberText(row.total)}</td>
     </tr>
@@ -131,6 +131,16 @@ function numberText(value){
 
 function currentTimeText(){
   return new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit", second:"2-digit" });
+}
+
+function formatSaleTime(value){
+  const date = new Date(value);
+
+  if(Number.isNaN(date.getTime())){
+    return "--:--";
+  }
+
+  return date.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
 }
 
 function escapeHtml(value){

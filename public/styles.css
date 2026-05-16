@@ -1399,6 +1399,15 @@ button:disabled{
   text-align:left;
 }
 
+.sales-time{
+  display:inline-block;
+  min-width:78px;
+  margin-right:8px;
+  color:#6f5a4a;
+  font-size:16px;
+  font-weight:750;
+}
+
 .sales-sheet td:nth-child(2),
 .sales-sheet td:nth-child(3){
   text-align:right;
