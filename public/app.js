@@ -482,7 +482,7 @@ async function openSummary(){
 
   if(timeDropdown && !deliveryTimeIsValid(timeDropdown.value)){
     const limits = deliveryTimeLimits();
-    alert(`Please choose a delivery time from ${formatDeliveryTime(limits.earliest)} up to 8:00 PM, using 5-minute intervals.`);
+    alert(`Please choose any delivery time at least 5 minutes from now, using 5-minute intervals.`);
     timeDropdown.focus();
     return;
   }
@@ -683,9 +683,7 @@ function deliveryTimeLimits(){
     earliest.setMinutes(earliest.getMinutes() + 1, 0, 0);
   }
   roundUpToMinuteInterval(earliest, 5);
-  const currentHour = new Date(now);
-  currentHour.setMinutes(0, 0, 0);
-  const minTime = currentHour > opening ? currentHour : opening;
+  const minTime = earliest > opening ? earliest : opening;
 
   return {
     min:formatTimeValue(minTime),
