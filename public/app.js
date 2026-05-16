@@ -71,66 +71,29 @@ function updateNowTime(){
   currentTimeText.innerText = `${date} ${dh}:${m} ${ap}`;
 }
 
-async function generateTimes(){
+function generateTimes(){
   if(!timeDropdown || !selectedTime || !summaryTimeText){
     return;
   }
 
-  let hasAvailableSlot = false;
-  timeDropdown.innerHTML = "";
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
-  placeholder.textContent = "-- Select Time --";
-  timeDropdown.appendChild(placeholder);
+  const limits = deliveryTimeLimits();
   selectedTime.value = "";
   summaryTimeText.innerHTML = "--";
-  const slotCounts = await loadSlotCounts();
-  const now = new Date();
-  const earliest = nextQuarterHour(new Date(now.getTime() + 15 * 60 * 1000));
-  const start = new Date();
-  start.setHours(8, 0, 0, 0);
-  const end = new Date(start);
-  end.setHours(21, 0, 0, 0);
-
-  for(let slot = new Date(start); slot <= end; slot.setMinutes(slot.getMinutes() + 15)){
-    const slotTime = new Date(slot);
-
-    if(slotTime < earliest){
-      continue;
-    }
-
-    const h = slotTime.getHours();
-    const ap = h >= 12 ? "PM" : "AM";
-    const dh = h % 12 || 12;
-    const dm = slotTime.getMinutes().toString().padStart(2,"0");
-    const t = `${dh}:${dm} ${ap}`;
-
-    if((slotCounts[t] || 0) >= maxOrdersPerSlot){
-      continue;
-    }
-
-    const opt = document.createElement("option");
-    opt.value = t;
-    opt.textContent = t;
-    timeDropdown.appendChild(opt);
-    hasAvailableSlot = true;
-  }
-
-  if(!hasAvailableSlot){
-    const opt = document.createElement("option");
-    opt.value = "";
-    opt.textContent = "No more slots today";
-    opt.disabled = true;
-    timeDropdown.appendChild(opt);
-  }
+  timeDropdown.min = limits.min;
+  timeDropdown.max = limits.max;
+  timeDropdown.step = "60";
+  timeDropdown.disabled = limits.closed;
+  timeDropdown.value = "";
 }
 
 if(timeDropdown){
-  timeDropdown.onchange = function(){
-    selectedTime.value = this.value;
-    summaryTimeText.innerHTML = this.value ? `<strong>${this.value}</strong>` : "--";
+  const syncDeliveryTime = function(){
+    selectedTime.value = formatDeliveryTime(this.value);
+    summaryTimeText.innerHTML = selectedTime.value ? `<strong>${selectedTime.value}</strong>` : "--";
     validate();
   };
+  timeDropdown.addEventListener("input", syncDeliveryTime);
+  timeDropdown.addEventListener("change", syncDeliveryTime);
 }
 
 if(nameInput){
@@ -372,10 +335,11 @@ function validate(){
 
   const hasItem = Object.values(quantities).some(qty=>qty > 0);
   const contactVal = contactInput ? contactInput.value.trim() : "";
+  const deliveryValid = !timeDropdown || deliveryTimeIsValid(timeDropdown.value);
   const needsCustomerFields = Boolean(nameInput || contactInput || timeDropdown);
   const cashValid = !cashInput || Number(cashInput.value || 0) >= currentTotal;
   const valid = needsCustomerFields
-    ? nameVal && (!contactInput || normalizeMobileNumber(contactVal)) && hasItem && timeDropdown.value
+    ? nameVal && (!contactInput || normalizeMobileNumber(contactVal)) && hasItem && deliveryValid
     : hasItem && cashValid;
   orderButton.disabled = orderSubmitted || !valid;
   orderButton.style.background = valid && !orderSubmitted ? "#1f8f4d" : "#ccc";
@@ -450,7 +414,7 @@ async function openSummary(){
 
   const nameVal = nameInput ? nameInput.value.trim() : "WALK-IN";
   const contactVal = contactInput ? contactInput.value.trim() : "";
-  const pickupTime = timeDropdown ? (timeDropdown.value || selectedTime.value) : "POS RW";
+  const pickupTime = timeDropdown ? (selectedTime.value || formatDeliveryTime(timeDropdown.value)) : "POS RW";
   const items = menu
     .filter(item=>quantities[item.id] > 0)
     .map(item=>({
@@ -479,8 +443,8 @@ async function openSummary(){
     return;
   }
 
-  if(timeDropdown && !pickupTime){
-    alert("Please select an available delivery time.");
+  if(timeDropdown && !deliveryTimeIsValid(timeDropdown.value)){
+    alert("Please choose a delivery time between the available opening time and 9:00 PM.");
     timeDropdown.focus();
     return;
   }
@@ -587,6 +551,7 @@ function resetOrderForm(){
 
   updateTotal();
   summaryTitleText.innerHTML = "Order Summary";
+  generateTimes();
 }
 
 function closeSuccessModal(){
@@ -667,6 +632,63 @@ function nextQuarterHour(date){
   const nextMinutes = Math.ceil(minutes / 15) * 15;
   rounded.setMinutes(nextMinutes, 0, 0);
   return rounded;
+}
+
+function deliveryTimeLimits(){
+  const now = new Date();
+  const opening = new Date();
+  opening.setHours(8, 0, 0, 0);
+  const closing = new Date();
+  closing.setHours(21, 0, 0, 0);
+  const earliest = new Date(now.getTime() + 15 * 60 * 1000);
+  if(earliest.getSeconds() || earliest.getMilliseconds()){
+    earliest.setMinutes(earliest.getMinutes() + 1, 0, 0);
+  }
+  const minTime = earliest > opening ? earliest : opening;
+
+  return {
+    min:formatTimeValue(minTime),
+    max:"21:00",
+    closed:minTime > closing
+  };
+}
+
+function deliveryTimeIsValid(value){
+  if(!value){
+    return false;
+  }
+
+  const limits = deliveryTimeLimits();
+
+  if(limits.closed){
+    return false;
+  }
+
+  return value >= limits.min && value <= limits.max;
+}
+
+function formatTimeValue(date){
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function formatDeliveryTime(value){
+  if(!value){
+    return "";
+  }
+
+  const [hourText, minuteText] = value.split(":");
+  const hour = Number(hourText);
+  const minute = String(minuteText || "00").padStart(2, "0");
+
+  if(Number.isNaN(hour)){
+    return "";
+  }
+
+  const ap = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${minute} ${ap}`;
 }
 
 function localOrderDate(){

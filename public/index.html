@@ -22,9 +22,7 @@
 <input id="name" type="text" autocomplete="name" placeholder="Enter name">
 
 <label class="field-label" for="timeSelect">Delivery time</label>
-<select id="timeSelect">
-<option value="">-- Select Time --</option>
-</select>
+<input id="timeSelect" type="time" min="08:00" max="21:00" step="60">
 <input id="time" type="hidden">
 <span id="summaryTime" class="hidden">--</span>
 </div>
@@ -47,6 +45,6 @@ Total P<span id="liveTotal">0</span>
 <p id="customerStatusText">Your order status will appear here.</p>
 </div>
 
-<script src="/app.js?v=20260516-simple-summary-title"></script>
+<script src="/app.js?v=20260516-free-delivery-time"></script>
 </body>
 </html>
