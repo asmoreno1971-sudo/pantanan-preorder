@@ -64,7 +64,7 @@ async function loadMenu(){
 
 function menuSignature(items){
   return (Array.isArray(items) ? items : [])
-    .map(item=>`${item.id}|${item.name}|${item.price}|${item.category}|${item.image}`)
+    .map(item=>`${item.id}|${item.name}|${item.price}|${item.category}|${item.image}|${item.imageFingerprint || ""}`)
     .join("\n");
 }
 

@@ -259,11 +259,11 @@ async function verifyCustomerMenuSync(){
   try{
     const res = await fetch(`/api/menu?view=customer&fresh=${Date.now()}`, { cache:"no-store" });
     const customerMenu = await res.json();
-    const savedSignature = menu.map(item=>`${item.id}|${item.name}|${Number(item.price) || 0}`).join("\n");
-    const customerSignature = customerMenu.map(item=>`${item.id}|${item.name}|${Number(item.price) || 0}`).join("\n");
+    const savedSignature = menu.map(item=>`${item.id}|${item.name}|${Number(item.price) || 0}|${normalizeCategory(item.category)}|${imageFingerprint(item.image)}`).join("\n");
+    const customerSignature = customerMenu.map(item=>`${item.id}|${item.name}|${Number(item.price) || 0}|${normalizeCategory(item.category)}|${item.imageFingerprint || ""}`).join("\n");
 
     if(savedSignature !== customerSignature){
-      statusText("Saved, but customer prices do not match yet. Press Save Products again.");
+      statusText("Saved, but customer menu does not match yet. Editing is paused until the server catches up.");
       return;
     }
 
@@ -271,6 +271,17 @@ async function verifyCustomerMenuSync(){
   }catch{
     statusText(`Saved ${menu.length} products. Customer sync check unavailable.`);
   }
+}
+
+function imageFingerprint(value){
+  const text = String(value || "");
+  let hash = 0;
+
+  for(let index = 0; index < text.length; index += 1){
+    hash = ((hash << 5) - hash + text.charCodeAt(index)) | 0;
+  }
+
+  return text ? Math.abs(hash).toString(36) : "";
 }
 
 async function exportCustomers(){

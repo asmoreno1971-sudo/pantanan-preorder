@@ -5,7 +5,7 @@ const crypto = require("node:crypto");
 
 const root = __dirname;
 const publicDir = path.join(root, "public");
-const menuPath = process.env.MENU_PATH || path.join(root, "menu.json");
+const menuPath = path.join(root, "menu.json");
 const ordersPath = path.join(root, "orders.json");
 const port = Number(process.env.PORT) || 3001;
 const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
@@ -15,7 +15,6 @@ const semaphoreSenderName = process.env.SEMAPHORE_SENDER_NAME || "";
 const sessions = new Set();
 let cachedMenu = null;
 let cachedMenuMtime = 0;
-let cachedCustomerMenu = null;
 const cachedImages = new Map();
 
 if(process.env.NODE_ENV === "production" && adminPassword === "admin123"){
@@ -79,7 +78,6 @@ async function writeJsonFile(filePath, value){
 function clearMenuCache(){
   cachedMenu = null;
   cachedMenuMtime = 0;
-  cachedCustomerMenu = null;
   cachedImages.clear();
 }
 
@@ -92,7 +90,6 @@ async function readMenu(){
 
   cachedMenu = JSON.parse(await fs.readFile(menuPath, "utf8"));
   cachedMenuMtime = stats.mtimeMs;
-  cachedCustomerMenu = null;
   cachedImages.clear();
   return cachedMenu;
 }
@@ -212,17 +209,22 @@ function normalizeMenu(menu){
   return (Array.isArray(menu) ? menu : []).map(normalizeMenuItem);
 }
 
-function customerMenu(menu){
-  if(cachedCustomerMenu && menu === cachedMenu){
-    return cachedCustomerMenu;
+function imageFingerprint(value){
+  const text = String(value || "");
+  let hash = 0;
+
+  for(let index = 0; index < text.length; index += 1){
+    hash = ((hash << 5) - hash + text.charCodeAt(index)) | 0;
   }
 
-  const items = normalizeMenu(menu).map(item=>{
+  return text ? Math.abs(hash).toString(36) : "";
+}
+
+function customerMenu(menu){
+  return normalizeMenu(menu).map(item=>{
     const image = String(item.image || "");
     const id = String(item.id || "");
-    const imageVersion = image
-      ? crypto.createHash("sha1").update(image).digest("hex").slice(0, 10)
-      : "";
+    const imageVersion = imageFingerprint(image);
 
     return {
       id,
@@ -230,15 +232,10 @@ function customerMenu(menu){
       price: item.price,
       theme: item.theme,
       category: item.category,
-      image: image ? `/api/menu-image/${encodeURIComponent(id)}?v=${imageVersion}` : ""
+      image: image ? `/api/menu-image/${encodeURIComponent(id)}?v=${imageVersion}` : "",
+      imageFingerprint:imageVersion
     };
   });
-
-  if(menu === cachedMenu){
-    cachedCustomerMenu = items;
-  }
-
-  return items;
 }
 
 function menuImage(menu, id){
@@ -358,7 +355,7 @@ async function handleApi(req, res){
     if(customerView){
       res.writeHead(200, {
         "Content-Type":"application/json; charset=utf-8",
-        "Cache-Control":"no-cache"
+        "Cache-Control":"no-store"
       });
       res.end(JSON.stringify(responseMenu));
     }else{
