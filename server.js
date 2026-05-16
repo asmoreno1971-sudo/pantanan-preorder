@@ -6,7 +6,6 @@ const crypto = require("node:crypto");
 const root = __dirname;
 const publicDir = path.join(root, "public");
 const menuPath = path.join(root, "menu.json");
-const customerMenuPath = path.join(publicDir, "customer-menu.json");
 const ordersPath = path.join(root, "orders.json");
 const port = Number(process.env.PORT) || 3001;
 const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
@@ -93,30 +92,6 @@ async function readMenu(){
   cachedMenuMtime = stats.mtimeMs;
   cachedImages.clear();
   return cachedMenu;
-}
-
-async function writeCustomerMenuFile(menu){
-  await writeJsonFile(customerMenuPath, customerMenu(menu));
-}
-
-async function readCustomerMenu(){
-  try{
-    const [menuStats, customerMenuStats] = await Promise.all([
-      fs.stat(menuPath),
-      fs.stat(customerMenuPath)
-    ]);
-
-    if(customerMenuStats.mtimeMs >= menuStats.mtimeMs){
-      return JSON.parse(await fs.readFile(customerMenuPath, "utf8"));
-    }
-  }catch{
-    // Rebuild below when the lightweight customer menu is missing or stale.
-  }
-
-  const menu = await readMenu();
-  const liteMenu = customerMenu(menu);
-  await writeCustomerMenuFile(menu);
-  return liteMenu;
 }
 
 function localOrderDate(){
@@ -376,10 +351,11 @@ async function handleApi(req, res){
     const customerView = url.searchParams.get("view") === "customer";
 
     if(customerView){
-      const responseMenu = await readCustomerMenu();
+      const responseMenu = customerMenu(await readMenu());
       res.writeHead(200, {
         "Content-Type":"application/json; charset=utf-8",
-        "Cache-Control":"no-store"
+        "Cache-Control":"no-store",
+        "X-Menu-Source":"menu.json"
       });
       res.end(JSON.stringify(responseMenu));
     }else{
@@ -460,7 +436,6 @@ async function handleApi(req, res){
 
     try{
       await writeJsonFile(menuPath, cleanMenu);
-      await writeCustomerMenuFile(cleanMenu);
       clearMenuCache();
     }catch{
       send(res, 500, JSON.stringify({ ok:false, message:"Server could not save products. Your browser backup is still available." }));
