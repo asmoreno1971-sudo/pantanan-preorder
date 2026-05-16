@@ -323,16 +323,16 @@ select:focus{
 .category-items{
   display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:clamp(3px, .8vw, 8px);
+  gap:clamp(6px, 1.2vw, 12px);
 }
 
 .menu-row{
   display:grid;
-  grid-template-columns:minmax(0,1fr) clamp(68px, 42%, 96px);
+  grid-template-columns:minmax(0,1fr) clamp(96px, 52%, 138px);
   align-items:center;
-  gap:clamp(1px, .35vw, 4px);
+  gap:clamp(3px, .8vw, 8px);
   min-width:0;
-  padding:clamp(5px, .8vw, 8px);
+  padding:clamp(6px, 1vw, 10px);
   border:1px solid rgba(111,78,55,.14);
   border-radius:8px;
   background:rgba(255,250,244,.38);
@@ -439,8 +439,8 @@ select:focus{
   max-width:none;
   background:rgba(255,255,255,.62);
   color:#1f1712;
-  font-size:15px !important;
-  padding:3px 5px;
+  font-size:25px !important;
+  padding:4px 6px;
   font-weight:750;
   line-height:1.08;
   overflow-wrap:anywhere;
@@ -453,10 +453,10 @@ select:focus{
   right:4px;
   bottom:4px;
   min-width:auto;
-  padding:3px 5px;
+  padding:4px 6px;
   background:rgba(255,255,255,.68);
   color:#1f1712;
-  font-size:17px !important;
+  font-size:25px !important;
   font-weight:750;
   line-height:1.08;
   text-align:right;
@@ -1300,9 +1300,9 @@ button:disabled{
   }
 
   .menu-row{
-    grid-template-columns:minmax(0, 1fr) clamp(76px, 45%, 104px);
-    gap:clamp(3px, 1vw, 6px);
-    padding:clamp(5px, 1.4vw, 8px);
+    grid-template-columns:minmax(0, 1fr) clamp(112px, 58%, 150px);
+    gap:clamp(4px, 1.2vw, 8px);
+    padding:clamp(6px, 1.8vw, 10px);
   }
 
   .order-line{
