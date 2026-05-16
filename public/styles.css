@@ -1092,8 +1092,8 @@ button:disabled{
 
 .customer-status{
   position:fixed;
-  right:18px;
-  bottom:18px;
+  left:18px;
+  top:18px;
   width:min(330px, calc(100% - 36px));
   padding:16px;
   border:1px solid #dccfc3;
@@ -1102,7 +1102,7 @@ button:disabled{
   box-shadow:0 16px 35px rgba(74,47,28,.16);
   z-index:9;
   animation:status-pop .42s ease-out, status-alert-pulse 1.45s ease-in-out infinite;
-  transform-origin:bottom right;
+  transform-origin:top left;
 }
 
 .customer-status.status-sent{
