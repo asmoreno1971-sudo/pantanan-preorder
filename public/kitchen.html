@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<link rel="stylesheet" href="/styles.css?v=20260517-kitchen-click-boxes">
+<link rel="stylesheet" href="/styles.css?v=20260517-kitchen-action-boxes-v2">
 </head>
 <body>
 <div id="kitchenLoginPanel" class="admin-panel kitchen-login-panel">
@@ -27,11 +27,17 @@
 <span id="soundStatus">Click once to allow alerts</span>
 </div>
 </div>
-<div class="kitchen-links">
-<a href="/admin">Add Product</a>
-<a href="/sales">Daily Sales</a>
-<a href="/">Customer Page</a>
-</div>
+<nav class="kitchen-shortcuts" aria-label="Kitchen shortcuts">
+<a class="kitchen-shortcut kitchen-shortcut-add" href="/admin">
+<span>Add Product</span>
+</a>
+<a class="kitchen-shortcut kitchen-shortcut-sales" href="/sales">
+<span>Daily Sales</span>
+</a>
+<a class="kitchen-shortcut kitchen-shortcut-customer" href="/">
+<span>Customer Page</span>
+</a>
+</nav>
 <div id="ordersContainer" class="kitchen-board"></div>
 </div>
 
@@ -46,6 +52,6 @@
 </div>
 </div>
 
-<script src="/kitchen.js?v=20260517-kitchen-click-boxes"></script>
+<script src="/kitchen.js?v=20260517-kitchen-action-boxes-v2"></script>
 </body>
 </html>
