@@ -257,13 +257,13 @@ async function saveMenu(){
 
 async function verifyCustomerMenuSync(){
   try{
-    const res = await fetch(`/api/menu-lite?fresh=${Date.now()}`, { cache:"no-store" });
+    const res = await fetch(`/api/menu?view=customer&fresh=${Date.now()}`, { cache:"no-store" });
     const customerMenu = await res.json();
     const savedSignature = menu.map(item=>`${item.id}|${item.name}|${Number(item.price) || 0}`).join("\n");
     const customerSignature = customerMenu.map(item=>`${item.id}|${item.name}|${Number(item.price) || 0}`).join("\n");
 
     if(savedSignature !== customerSignature){
-      statusText("Saved, but customer menu is still refreshing. Check again in a few seconds.");
+      statusText("Saved, but customer prices do not match yet. Press Save Products again.");
       return;
     }
 

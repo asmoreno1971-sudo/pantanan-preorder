@@ -224,6 +224,7 @@ async function sendSms(number, message){
 
 async function handleApi(req, res){
   const pathname = requestPath(req);
+  const url = new URL(req.url, "http://localhost");
 
   if(pathname === "/health" && req.method === "GET"){
     send(res, 200, JSON.stringify({ ok:true, service:"pantanan-preorder" }));
@@ -241,7 +242,10 @@ async function handleApi(req, res){
 
   if(pathname === "/api/menu" && req.method === "GET"){
     const menu = JSON.parse(await fs.readFile(menuPath, "utf8"));
-    send(res, 200, JSON.stringify(normalizeMenu(menu)));
+    const responseMenu = url.searchParams.get("view") === "customer"
+      ? customerMenu(menu)
+      : normalizeMenu(menu);
+    send(res, 200, JSON.stringify(responseMenu));
     return true;
   }
 

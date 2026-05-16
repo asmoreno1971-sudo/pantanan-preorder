@@ -42,7 +42,7 @@ function saveCustomer(){
 }
 
 async function loadMenu(){
-  const res = await fetch(`/api/menu-lite?fresh=${Date.now()}`, { cache:"no-store" });
+  const res = await fetch(`/api/menu?view=customer&fresh=${Date.now()}`, { cache:"no-store" });
   menu = await res.json();
   renderMenu();
 }
