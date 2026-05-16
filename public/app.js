@@ -87,13 +87,46 @@ function generateTimes(){
 }
 
 if(timeDropdown){
+  const timePickerWrap = timeDropdown.closest(".time-picker-wrap");
+  const openTimePicker = function(event){
+    if(event){
+      event.stopPropagation();
+    }
+
+    if(timeDropdown.disabled){
+      return;
+    }
+
+    if(typeof timeDropdown.showPicker === "function"){
+      timeDropdown.showPicker();
+    }else{
+      timeDropdown.focus();
+    }
+  };
+  const blockManualTimeEntry = function(event){
+    if(event.key === "Tab"){
+      return;
+    }
+
+    event.preventDefault();
+  };
   const syncDeliveryTime = function(){
     selectedTime.value = formatDeliveryTime(this.value);
     summaryTimeText.innerHTML = selectedTime.value ? `<strong>${selectedTime.value}</strong>` : "--";
+    if(timePickerWrap){
+      timePickerWrap.classList.toggle("has-time", Boolean(this.value));
+    }
     validate();
   };
   timeDropdown.addEventListener("input", syncDeliveryTime);
   timeDropdown.addEventListener("change", syncDeliveryTime);
+  timeDropdown.addEventListener("keydown", blockManualTimeEntry);
+  timeDropdown.addEventListener("beforeinput", e=>e.preventDefault());
+  timeDropdown.addEventListener("paste", e=>e.preventDefault());
+  timeDropdown.addEventListener("click", openTimePicker);
+  if(timePickerWrap){
+    timePickerWrap.addEventListener("click", openTimePicker);
+  }
 }
 
 if(nameInput){

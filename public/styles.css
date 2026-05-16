@@ -1449,6 +1449,50 @@ textarea{
   font-weight:750;
 }
 
+.time-picker-wrap{
+  position:relative;
+  max-width:none;
+}
+
+.time-picker-wrap input{
+  width:100%;
+  padding-right:12px;
+  text-align:center;
+  cursor:pointer;
+}
+
+.time-picker-wrap:not(.has-time) input{
+  color:transparent;
+}
+
+.time-picker-icon{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  color:#2f5f88;
+  font-size:28px !important;
+  font-weight:850;
+  pointer-events:none;
+}
+
+.time-picker-wrap.has-time .time-picker-icon{
+  right:12px;
+  left:auto;
+  width:34px;
+  font-size:20px !important;
+  opacity:.75;
+}
+
+#timeSelect::-webkit-calendar-picker-indicator{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  opacity:0;
+  cursor:pointer;
+}
+
 .customer-panel input:focus,
 .customer-panel select:focus{
   border-color:#4b91d1;

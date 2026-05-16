@@ -22,7 +22,10 @@
 <input id="name" type="text" autocomplete="name" placeholder="Enter name">
 
 <label class="field-label" for="timeSelect">Delivery time</label>
-<input id="timeSelect" type="time" min="08:00" max="21:00" step="60">
+<div class="time-picker-wrap">
+<input id="timeSelect" type="time" min="08:00" max="21:00" step="60" inputmode="none" aria-label="Choose delivery time">
+<span class="time-picker-icon" aria-hidden="true">◷</span>
+</div>
 <input id="time" type="hidden">
 <span id="summaryTime" class="hidden">--</span>
 </div>
@@ -45,6 +48,6 @@ Total P<span id="liveTotal">0</span>
 <p id="customerStatusText">Your order status will appear here.</p>
 </div>
 
-<script src="/app.js?v=20260516-free-delivery-time"></script>
+<script src="/app.js?v=20260516-picker-only-time"></script>
 </body>
 </html>
