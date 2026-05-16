@@ -1,4 +1,6 @@
 let salesToken = localStorage.getItem("adminToken") || "";
+let salesRefreshTimer = null;
+let salesLoading = false;
 
 const salesLoginPanel = document.getElementById("salesLoginPanel");
 const salesPanel = document.getElementById("salesPanel");
@@ -21,6 +23,7 @@ function todayValue(){
 function showSales(){
   salesLoginPanel.classList.add("hidden");
   salesPanel.classList.remove("hidden");
+  startAutoRefresh();
 }
 
 async function loginSales(){
@@ -43,27 +46,59 @@ async function loginSales(){
 }
 
 async function loadSales(){
-  if(!salesToken){
+  if(!salesToken || salesLoading){
     return;
   }
 
+  salesLoading = true;
   salesStatus.innerText = "Loading...";
 
-  const res = await fetch(`/api/sales/daily?date=${encodeURIComponent(salesDate.value)}`, {
-    headers:{ Authorization:`Bearer ${salesToken}` },
-    cache:"no-store"
-  });
-  const data = await res.json();
+  let data;
+
+  try{
+    const res = await fetch(`/api/sales/daily?date=${encodeURIComponent(salesDate.value)}`, {
+      headers:{ Authorization:`Bearer ${salesToken}` },
+      cache:"no-store"
+    });
+    data = await res.json();
+  }catch{
+    salesStatus.innerText = "Offline. Retrying...";
+    salesLoading = false;
+    return;
+  }
 
   if(!data.ok){
     salesStatus.innerText = data.message || "Unable to load sales";
     salesLoginPanel.classList.remove("hidden");
     salesPanel.classList.add("hidden");
+    salesLoading = false;
     return;
   }
 
   renderSales(data.report);
-  salesStatus.innerText = "Updated";
+  salesStatus.innerText = `Auto updated ${currentTimeText()}`;
+  salesLoading = false;
+}
+
+function startAutoRefresh(){
+  if(salesRefreshTimer){
+    return;
+  }
+
+  salesRefreshTimer = setInterval(function(){
+    if(document.visibilityState === "visible"){
+      keepTodayCurrent();
+      loadSales();
+    }
+  }, 5000);
+}
+
+function keepTodayCurrent(){
+  const today = todayValue();
+
+  if(!salesDate.value || salesDate.value > today){
+    salesDate.value = today;
+  }
 }
 
 function renderSales(report){
@@ -94,6 +129,10 @@ function numberText(value){
   return Number(value || 0).toLocaleString("en-US", { maximumFractionDigits:0 });
 }
 
+function currentTimeText(){
+  return new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit", second:"2-digit" });
+}
+
 function escapeHtml(value){
   return String(value)
     .replace(/&/g, "&amp;")
@@ -115,3 +154,10 @@ if(salesToken){
   showSales();
   loadSales();
 }
+
+document.addEventListener("visibilitychange", function(){
+  if(document.visibilityState === "visible"){
+    keepTodayCurrent();
+    loadSales();
+  }
+});
