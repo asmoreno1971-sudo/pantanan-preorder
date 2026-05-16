@@ -368,11 +368,11 @@ function validate(){
 
   const hasItem = Object.values(quantities).some(qty=>qty > 0);
   const contactVal = contactInput ? contactInput.value.trim() : "";
-  const deliveryValid = !timeDropdown || deliveryTimeIsValid(timeDropdown.value);
+  const hasDeliveryTime = !timeDropdown || Boolean(timeDropdown.value);
   const needsCustomerFields = Boolean(nameInput || contactInput || timeDropdown);
   const cashValid = !cashInput || Number(cashInput.value || 0) >= currentTotal;
   const valid = needsCustomerFields
-    ? nameVal && (!contactInput || normalizeMobileNumber(contactVal)) && hasItem && deliveryValid
+    ? nameVal && (!contactInput || normalizeMobileNumber(contactVal)) && hasItem && hasDeliveryTime
     : hasItem && cashValid;
   orderButton.disabled = orderSubmitted || !valid;
   orderButton.style.background = valid && !orderSubmitted ? "#1f8f4d" : "#ccc";
@@ -477,7 +477,8 @@ async function openSummary(){
   }
 
   if(timeDropdown && !deliveryTimeIsValid(timeDropdown.value)){
-    alert("Please choose a delivery time from the current hour up to 8:00 PM, using 10-minute intervals.");
+    const limits = deliveryTimeLimits();
+    alert(`Please choose a delivery time from ${formatDeliveryTime(limits.earliest)} up to 8:00 PM, using 10-minute intervals.`);
     timeDropdown.focus();
     return;
   }
