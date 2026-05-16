@@ -110,17 +110,32 @@ function normalizeMenuCategory(category){
   return allowed.has(normalized) ? normalized : "Drinks";
 }
 
+function normalizeMenuItem(item, index = 0){
+  return {
+    id: String(item.id || `item-${index + 1}`).replace(/[^a-z0-9-]/gi, "-").toLowerCase(),
+    name: String(item.name || "Untitled Product").trim(),
+    price: Math.max(0, Number(item.price) || 0),
+    theme: String(item.theme || "latte"),
+    category: normalizeMenuCategory(item.category),
+    image: String(item.image || "")
+  };
+}
+
+function normalizeMenu(menu){
+  return (Array.isArray(menu) ? menu : []).map(normalizeMenuItem);
+}
+
 function customerMenu(menu){
-  return (Array.isArray(menu) ? menu : []).map(item=>{
+  return normalizeMenu(menu).map(item=>{
     const image = String(item.image || "");
     const id = String(item.id || "");
 
     return {
       id,
-      name: String(item.name || "Untitled Product"),
-      price: Math.max(0, Number(item.price) || 0),
-      theme: String(item.theme || "latte"),
-      category: normalizeMenuCategory(item.category),
+      name: item.name,
+      price: item.price,
+      theme: item.theme,
+      category: item.category,
       image: image ? `/api/menu-image/${encodeURIComponent(id)}` : ""
     };
   });
@@ -225,7 +240,8 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/menu" && req.method === "GET"){
-    send(res, 200, await fs.readFile(menuPath, "utf8"));
+    const menu = JSON.parse(await fs.readFile(menuPath, "utf8"));
+    send(res, 200, JSON.stringify(normalizeMenu(menu)));
     return true;
   }
 
@@ -302,14 +318,7 @@ async function handleApi(req, res){
       return true;
     }
 
-    const cleanMenu = menu.map((item, index)=>({
-      id: String(item.id || `item-${index + 1}`).replace(/[^a-z0-9-]/gi, "-").toLowerCase(),
-      name: String(item.name || "Untitled Product").trim(),
-      price: Math.max(0, Number(item.price) || 0),
-      theme: String(item.theme || "latte"),
-      category: normalizeMenuCategory(item.category),
-      image: String(item.image || "")
-    }));
+    const cleanMenu = normalizeMenu(menu);
 
     try{
       await writeJsonFile(menuPath, cleanMenu);
