@@ -6,8 +6,7 @@ const crypto = require("node:crypto");
 const root = __dirname;
 const publicDir = path.join(root, "public");
 const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : root;
-const seedMenuPath = path.join(root, "menu.json");
-const menuPath = path.resolve(process.env.MENU_PATH || path.join(dataDir, "menu.json"));
+const menuPath = path.resolve(process.env.ADMIN_PRODUCTS_PATH || path.join(dataDir, "admin-products.json"));
 const ordersPath = path.resolve(process.env.ORDERS_PATH || path.join(dataDir, "orders.json"));
 const port = Number(process.env.PORT) || 3001;
 const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
@@ -109,7 +108,7 @@ async function ensureJsonFile(filePath, seedPath, fallbackValue){
 
 function ensureMenuFile(){
   if(!menuFileReady){
-    menuFileReady = ensureJsonFile(menuPath, seedMenuPath, []);
+    menuFileReady = ensureJsonFile(menuPath, null, []);
   }
 
   return menuFileReady;
@@ -404,6 +403,7 @@ async function handleApi(req, res){
       "Content-Type":"application/json; charset=utf-8",
       "Cache-Control":"no-store",
       "X-Menu-Source":"admin-persistent-menu",
+      "X-Menu-File":"admin-products",
       "X-Menu-View":view || "admin"
     });
     res.end(JSON.stringify(responseMenu));
