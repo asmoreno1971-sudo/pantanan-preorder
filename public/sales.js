@@ -90,7 +90,7 @@ function startAutoRefresh(){
       keepTodayCurrent();
       loadSales();
     }
-  }, 5000);
+  }, 7000);
 }
 
 function keepTodayCurrent(){
