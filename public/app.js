@@ -16,6 +16,7 @@ const cashInput = document.getElementById("cashInput");
 const changeOutput = document.getElementById("changeOutput");
 const exactCashButton = document.getElementById("exactCashBtn");
 const cashPanel = document.querySelector(".cash-panel");
+const orderButtonReadyText = orderButton ? orderButton.dataset.readyText || orderButton.innerText || "Send Order" : "Send Order";
 const modal = document.getElementById("successModal");
 const successTitle = document.getElementById("successTitle");
 const successText = document.getElementById("successText");
@@ -344,7 +345,7 @@ function validate(){
   const needsCustomerFields = Boolean(nameInput || contactInput || timeDropdown);
   const cashValid = !cashInput || Number(cashInput.value || 0) >= currentTotal;
   const valid = needsCustomerFields
-    ? nameVal && (!contactInput || normalizeMobileNumber(contactVal)) && hasItem && hasDeliveryTime
+    ? nameVal && (!contactInput || normalizeMobileNumber(contactVal)) && hasItem && hasDeliveryTime && cashValid
     : hasItem && cashValid;
   orderButton.disabled = orderSubmitted || !valid;
   orderButton.style.background = valid && !orderSubmitted ? "#1f8f4d" : "#ccc";
@@ -398,6 +399,10 @@ function setCashAmount(amount){
   updateChange();
   validate();
   hideCashPresets();
+}
+
+function setExactCashAmount(){
+  setCashAmount(currentTotal);
 }
 
 function showCashPresets(){
@@ -475,7 +480,7 @@ async function openSummary(){
   }catch{
     orderSubmitted = false;
     orderButton.disabled = false;
-    orderButton.innerText = "Process / New Sale";
+    orderButton.innerText = orderButtonReadyText;
     alert("Unable to send order. Please check your internet connection and try again.");
     validate();
     return;
@@ -484,7 +489,7 @@ async function openSummary(){
   if(!data.ok){
     orderSubmitted = false;
     orderButton.disabled = false;
-    orderButton.innerText = "Process / New Sale";
+    orderButton.innerText = orderButtonReadyText;
     alert(data.message || "Unable to send order");
     await generateTimes();
     validate();
@@ -502,7 +507,7 @@ async function openSummary(){
 
   orderSubmitted = false;
   orderButton.disabled = false;
-  orderButton.innerText = "Process / New Sale";
+  orderButton.innerText = orderButtonReadyText;
   validate();
 }
 

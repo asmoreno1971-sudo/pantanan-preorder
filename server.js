@@ -755,6 +755,7 @@ async function serveStatic(req, res){
   const routes = {
     "/": "index.html",
     "/admin": "admin.html",
+    "/cashier": "cashier.html",
     "/kitchen": "kitchen.html",
     "/sales": "sales.html",
     "/qr": "qr.html"
