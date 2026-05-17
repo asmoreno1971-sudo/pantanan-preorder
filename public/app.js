@@ -45,7 +45,14 @@ function saveCustomer(){
 async function loadMenu(){
   try{
     localStorage.removeItem("pantananCustomerMenuV1");
-    const res = await fetch(`/api/menu?view=customer&fresh=${Date.now()}`, { cache:"no-store" });
+    const menuView = window.location.pathname.replace(/\/$/, "") === "/cashier" ? "cashier" : "customer";
+    const res = await fetch(`/api/menu?view=${menuView}&fresh=${Date.now()}`, { cache:"no-store" });
+    const menuSource = res.headers.get("X-Menu-Source");
+
+    if(menuSource !== "admin-persistent-menu"){
+      throw new Error("Wrong menu source");
+    }
+
     const freshMenu = await res.json();
 
     if(!Array.isArray(freshMenu)){

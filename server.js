@@ -411,20 +411,28 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/menu" && req.method === "GET"){
-    const customerView = url.searchParams.get("view") === "customer";
+    const view = url.searchParams.get("view");
+    const sharedPublicView = view === "customer" || view === "cashier";
 
-    if(customerView){
+    if(sharedPublicView){
       const responseMenu = customerMenu(await readMenu());
       res.writeHead(200, {
         "Content-Type":"application/json; charset=utf-8",
         "Cache-Control":"no-store",
-        "X-Menu-Source":"admin-persistent-menu"
+        "X-Menu-Source":"admin-persistent-menu",
+        "X-Menu-View":view
       });
       res.end(JSON.stringify(responseMenu));
     }else{
       const menu = await readMenu();
       const responseMenu = normalizeMenu(menu);
-      send(res, 200, JSON.stringify(responseMenu));
+      res.writeHead(200, {
+        "Content-Type":"application/json; charset=utf-8",
+        "Cache-Control":"no-store",
+        "X-Menu-Source":"admin-persistent-menu",
+        "X-Menu-View":"admin"
+      });
+      res.end(JSON.stringify(responseMenu));
     }
     return true;
   }

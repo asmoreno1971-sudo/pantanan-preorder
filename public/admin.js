@@ -307,32 +307,53 @@ async function saveMenu(options = {}){
 
 async function verifyCustomerMenuSync(options = {}){
   try{
-    const res = await fetch(`/api/menu?view=customer&fresh=${Date.now()}`, { cache:"no-store" });
-    const customerMenu = await res.json();
-    const savedSignature = menu.map(item=>`${item.id}|${item.name}|${Number(item.price) || 0}|${normalizeCategory(item.category)}|${imageFingerprint(item.image)}`).join("\n");
-    const customerSignature = customerMenu.map(item=>`${item.id}|${item.name}|${Number(item.price) || 0}|${normalizeCategory(item.category)}|${item.imageFingerprint || ""}`).join("\n");
+    const [customerRes, cashierRes] = await Promise.all([
+      fetch(`/api/menu?view=customer&fresh=${Date.now()}`, { cache:"no-store" }),
+      fetch(`/api/menu?view=cashier&fresh=${Date.now()}`, { cache:"no-store" })
+    ]);
 
-    if(savedSignature !== customerSignature){
-      statusText("Saved, but customer menu does not match yet. Editing is paused until the server catches up.");
+    if(customerRes.headers.get("X-Menu-Source") !== "admin-persistent-menu" || cashierRes.headers.get("X-Menu-Source") !== "admin-persistent-menu"){
+      statusText("Save rejected: customer or cashier is using the wrong menu source.");
+      return false;
+    }
+
+    const [customerMenu, cashierMenu] = await Promise.all([
+      customerRes.json(),
+      cashierRes.json()
+    ]);
+    const savedSignature = publicMenuSignature(menu, true);
+    const customerSignature = publicMenuSignature(customerMenu, false);
+    const cashierSignature = publicMenuSignature(cashierMenu, false);
+
+    if(savedSignature !== customerSignature || savedSignature !== cashierSignature){
+      statusText("Save rejected: customer and cashier menus do not match Admin yet.");
       return false;
     }
 
     if(options.verifyImageForId){
-      const item = customerMenu.find(product=>product.id === options.verifyImageForId);
+      const customerItem = customerMenu.find(product=>product.id === options.verifyImageForId);
+      const cashierItem = cashierMenu.find(product=>product.id === options.verifyImageForId);
       const expected = imageFingerprint(options.verifyImage);
 
-      if(!item || item.imageFingerprint !== expected){
-        statusText("Picture upload did not stick on the server. Please log in again and retry.");
+      if(!customerItem || !cashierItem || customerItem.imageFingerprint !== expected || cashierItem.imageFingerprint !== expected){
+        statusText("Picture upload did not stick in customer and cashier. Please log in again and retry.");
         return false;
       }
     }
 
-    statusText(`Saved ${menu.length} products. Customer page is updated.`);
+    statusText(`Saved ${menu.length} products. Customer and Cashier pages are updated.`);
     return true;
   }catch{
-    statusText(`Saved ${menu.length} products. Customer sync check unavailable.`);
-    return true;
+    statusText("Save rejected: customer/cashier sync check unavailable.");
+    return false;
   }
+}
+
+function publicMenuSignature(items, hasRawImages){
+  return (Array.isArray(items) ? items : []).map(item=>{
+    const imageKey = hasRawImages ? imageFingerprint(item.image) : item.imageFingerprint || "";
+    return `${item.id}|${item.name}|${Number(item.price) || 0}|${normalizeCategory(item.category)}|${imageKey}`;
+  }).join("\n");
 }
 
 function imageFingerprint(value){
