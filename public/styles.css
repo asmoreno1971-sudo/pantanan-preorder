@@ -230,14 +230,16 @@ select:focus{
   width:max-content;
   min-width:0;
   color:#1f8f4d;
-  font-weight:900;
+  font-size:28px !important;
+  font-weight:750;
+  line-height:1;
 }
 
 .currency-prefix{
   color:#1f8f4d !important;
   font-size:inherit !important;
-  font-weight:750 !important;
-  line-height:1;
+  font-weight:inherit !important;
+  line-height:inherit;
 }
 
 .cash-field input{
