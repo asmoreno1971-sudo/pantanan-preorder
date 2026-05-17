@@ -422,9 +422,9 @@ async function openSummary(){
     return;
   }
 
-  const nameVal = nameInput.value.trim();
+  const nameVal = nameInput ? nameInput.value.trim() : "CASHIER";
   const contactVal = contactInput ? contactInput.value.trim() : "";
-  const pickupTime = selectedTime.value || formatDeliveryTime(timeDropdown.value);
+  const pickupTime = selectedTime && timeDropdown ? selectedTime.value || formatDeliveryTime(timeDropdown.value) : "Cashier";
   const items = menu
     .filter(item=>quantities[item.id] > 0)
     .map(item=>({
