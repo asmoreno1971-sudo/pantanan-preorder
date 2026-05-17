@@ -307,6 +307,8 @@ select:focus{
   border:1px solid #eaded3;
   background:#f7efe8;
   color:#4a3224;
+  font-size:18px !important;
+  font-weight:850 !important;
   box-shadow:none;
 }
 
