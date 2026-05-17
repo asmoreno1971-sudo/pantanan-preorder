@@ -7,6 +7,8 @@ const kitchenLoginPanel = document.getElementById("kitchenLoginPanel");
 const kitchenPanel = document.getElementById("kitchenPanel");
 const kitchenPassword = document.getElementById("kitchenPassword");
 const kitchenLoginStatus = document.getElementById("kitchenLoginStatus");
+const soundBtn = document.getElementById("soundBtn");
+const soundStatus = document.getElementById("soundStatus");
 
 async function loginKitchen(){
   const res = await fetch("/api/admin/login", {
@@ -50,20 +52,30 @@ function enableSound(){
   return audioContext.resume().then(()=>{
     soundEnabled = true;
     localStorage.setItem("kitchenSoundEnabled", "true");
-    soundBtn.innerText = "Sound On";
-    soundBtn.classList.add("sound-on");
-    soundStatus.innerText = "Alerts enabled";
+    if(soundBtn){
+      soundBtn.innerText = "Sound On";
+      soundBtn.classList.add("sound-on");
+    }
+    if(soundStatus){
+      soundStatus.innerText = "Alerts enabled";
+    }
     playAlertSound();
   }).catch(()=>{
-    soundStatus.innerText = "Tap Enable Sound once";
+    if(soundStatus){
+      soundStatus.innerText = "Tap Enable Sound once";
+    }
   });
 }
 
 function showSavedSoundState(){
   if(soundEnabled){
-    soundBtn.innerText = "Sound On";
-    soundBtn.classList.add("sound-on");
-    soundStatus.innerText = "Alerts enabled";
+    if(soundBtn){
+      soundBtn.innerText = "Sound On";
+      soundBtn.classList.add("sound-on");
+    }
+    if(soundStatus){
+      soundStatus.innerText = "Alerts enabled";
+    }
   }
 }
 

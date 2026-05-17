@@ -899,68 +899,9 @@ button:disabled{
   background:#b85c00;
 }
 
-.kitchen-links,
 .kitchen-shortcuts{
-  display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:12px;
   margin:-10px 0 18px;
-}
-
-.kitchen-links a,
-.kitchen-shortcut{
-  position:relative;
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  min-height:72px;
-  padding:14px 18px;
-  border-radius:8px;
-  border:1px solid #d7c8bb;
-  background:linear-gradient(135deg, #fffdf8, #f4ebe2);
-  color:#2f1d13;
-  box-shadow:0 10px 24px rgba(74,47,28,.09);
-  font-size:22px;
-  font-weight:900;
-  text-decoration:none;
-  transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
-}
-
-.kitchen-shortcut::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  opacity:.42;
-  background:linear-gradient(135deg, rgba(255,255,255,.75), rgba(255,255,255,0));
-  pointer-events:none;
-}
-
-.kitchen-shortcut span{
-  position:relative;
-  z-index:1;
-}
-
-.kitchen-shortcut-add{
-  border-color:#dfc5aa;
-  background:linear-gradient(135deg, #fff7ed, #efd8c2);
-}
-
-.kitchen-shortcut-sales{
-  border-color:#c8d6c2;
-  background:linear-gradient(135deg, #f3fbef, #dcebd5);
-}
-
-.kitchen-shortcut-customer{
-  border-color:#c8d4e4;
-  background:linear-gradient(135deg, #f2f7ff, #dbe7f6);
-}
-
-.kitchen-links a:hover,
-.kitchen-shortcut:hover{
-  transform:translateY(-2px);
-  border-color:#b9987f;
-  box-shadow:0 14px 28px rgba(74,47,28,.14);
 }
 
 .sound-control button.sound-on{
@@ -1664,12 +1605,6 @@ button:disabled{
     display:grid;
   }
 
-  .sound-control{
-    align-items:flex-start;
-    flex-direction:column;
-  }
-
-  .kitchen-links,
   .kitchen-shortcuts{
     grid-template-columns:1fr;
   }
