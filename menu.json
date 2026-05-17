@@ -181,7 +181,7 @@
     "price": 60,
     "theme": "americano",
     "category": "Sandwiches",
-    "image": ""
+    "image": "https://www.lotusbiscoff.com/sites/default/files/styles/image_style_scale_width_xs/public/2023-10/Biscoff%20Hero%20Image%20Classic%20250g.jpg?itok=ubW9RlEN"
   },
   {
     "id": "new-product-1778126157710",
@@ -189,7 +189,7 @@
     "price": 60,
     "theme": "latte",
     "category": "Other",
-    "image": ""
+    "image": "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=420&q=80"
   },
   {
     "id": "bottled-water",
@@ -197,6 +197,6 @@
     "price": 20,
     "theme": "latte",
     "category": "Drinks",
-    "image": ""
+    "image": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Bottle_of_water.png"
   }
 ]

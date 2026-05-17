@@ -255,26 +255,8 @@ function normalizeMenuItem(item, index = 0){
     price: Math.max(0, Number(item.price) || 0),
     theme: String(item.theme || "latte"),
     category: normalizeMenuCategory(item.category),
-    image: normalizeMenuImage(item.image)
+    image: String(item.image || "").trim()
   };
-}
-
-function normalizeMenuImage(image){
-  const value = String(image || "").trim();
-
-  if(isLegacySeedImage(value)){
-    return "";
-  }
-
-  return value;
-}
-
-function isLegacySeedImage(image){
-  return [
-    "images.unsplash.com/photo-1499636136210-6f4ee915583e",
-    "upload.wikimedia.org/wikipedia/commons/8/8b/Bottle_of_water.png",
-    "lotusbiscoff.com/sites/default/files/styles/image_style_scale_width_xs/public/2023-10/Biscoff%20Hero%20Image%20Classic%20250g.jpg"
-  ].some(pattern=>image.includes(pattern));
 }
 
 function normalizeMenu(menu){
