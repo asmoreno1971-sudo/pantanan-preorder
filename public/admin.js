@@ -4,6 +4,7 @@ let isSaving = false;
 let isLoadingMenu = false;
 
 const menuDraftKey = "adminMenuDraft";
+const menuBackupKey = "adminMenuLastGood";
 const categories = ["Sandwiches", "Drinks", "Dimsum", "Noodle", "Other"];
 const passwordInput = document.getElementById("password");
 const loginBox = document.getElementById("loginPanel");
@@ -64,8 +65,24 @@ async function loadMenu(){
   isLoadingMenu = true;
   try{
     const res = await fetch(`/api/menu?fresh=${Date.now()}`, { cache:"no-store" });
-    menu = await res.json();
-    localStorage.removeItem(menuDraftKey);
+    const serverMenu = await res.json();
+    const savedAt = Number(localStorage.getItem("adminMenuServerSavedAt") || 0);
+    const draft = readStoredMenu(menuDraftKey);
+    const backup = readStoredMenu(menuBackupKey);
+    const draftIsNewer = draft && draft.savedAt > savedAt;
+    const backupHasMorePictures = backup && countProductPictures(backup.items) > countProductPictures(serverMenu);
+
+    if(draftIsNewer){
+      menu = draft.items;
+      statusText("Restored your unsaved browser backup. Press Save Products when ready.");
+    }else if(backupHasMorePictures){
+      menu = backup.items;
+      statusText("Restored your last saved browser backup because the server menu lost pictures. Press Save Products.");
+    }else{
+      menu = serverMenu;
+      localStorage.removeItem(menuDraftKey);
+    }
+
     menu.forEach(item=>{
       item.category = normalizeCategory(item.category);
     });
@@ -73,7 +90,7 @@ async function loadMenu(){
 
     if(menu.length === 0){
       statusText("No products loaded. Do not save yet. Refresh after deploy finishes.");
-    }else{
+    }else if(!draftIsNewer && !backupHasMorePictures){
       statusText("Loaded saved online products. Admin will not auto-reload while you edit.");
       scrollAdminToBottom();
     }
@@ -285,6 +302,7 @@ async function saveMenu(options = {}){
     menu = data.menu;
     const savedAt = Date.now();
     localStorage.setItem("adminMenuServerSavedAt", String(savedAt));
+    saveStoredMenu(menuBackupKey, savedAt, menu);
     localStorage.removeItem(menuDraftKey);
     renderEditor();
     const synced = await verifyCustomerMenuSync(options);
@@ -390,14 +408,37 @@ function statusText(message){
 }
 
 function saveMenuDraft(savedAt = Date.now()){
+  saveStoredMenu(menuDraftKey, savedAt, menu);
+}
+
+function saveStoredMenu(key, savedAt, items){
   try{
-    localStorage.setItem(menuDraftKey, JSON.stringify({
+    localStorage.setItem(key, JSON.stringify({
       savedAt,
-      items:menu
+      items
     }));
   }catch{
     statusText("Browser backup is full. Save Products now, or use smaller pictures.");
   }
+}
+
+function readStoredMenu(key){
+  try{
+    const stored = JSON.parse(localStorage.getItem(key) || "null");
+
+    if(!stored || !Array.isArray(stored.items) || stored.items.length === 0){
+      return null;
+    }
+
+    return stored;
+  }catch{
+    localStorage.removeItem(key);
+    return null;
+  }
+}
+
+function countProductPictures(items){
+  return (Array.isArray(items) ? items : []).filter(item=>String(item.image || "").trim()).length;
 }
 
 function prepareMenuForSave(){
