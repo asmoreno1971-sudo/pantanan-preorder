@@ -71,13 +71,16 @@ async function loadMenu(){
     const backup = readStoredMenu(menuBackupKey);
     const draftIsNewer = draft && draft.savedAt > savedAt;
     const backupHasMorePictures = backup && countProductPictures(backup.items) > countProductPictures(serverMenu);
+    let restoredFromBrowser = false;
 
     if(draftIsNewer){
       menu = draft.items;
+      restoredFromBrowser = true;
       statusText("Restored your unsaved browser backup. Press Save Products when ready.");
     }else if(backupHasMorePictures){
       menu = backup.items;
-      statusText("Restored your last saved browser backup because the server menu lost pictures. Press Save Products.");
+      restoredFromBrowser = true;
+      statusText("Restoring your last saved Admin products to the server...");
     }else{
       menu = serverMenu;
       localStorage.removeItem(menuDraftKey);
@@ -90,6 +93,8 @@ async function loadMenu(){
 
     if(menu.length === 0){
       statusText("No products loaded. Do not save yet. Refresh after deploy finishes.");
+    }else if(restoredFromBrowser && backupHasMorePictures && !draftIsNewer){
+      saveMenu();
     }else if(!draftIsNewer && !backupHasMorePictures){
       statusText("Loaded saved online products. Admin will not auto-reload while you edit.");
       scrollAdminToBottom();
