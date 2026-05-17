@@ -9,8 +9,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: ADMIN_PASSWORD
-        sync: false
       - key: PANTANAN_WHATSAPP_LINK
         value: https://wa.me/639695093050
       - key: PANTANAN_MESSENGER_LINK

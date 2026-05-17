@@ -6,7 +6,6 @@ Set these on the hosting platform:
 
 ```text
 NODE_ENV=production
-ADMIN_PASSWORD=use-a-strong-password
 PANTANAN_WHATSAPP_LINK=https://wa.me/639695093050
 PANTANAN_MESSENGER_LINK=https://m.me/your-page-username
 ```
@@ -36,7 +35,6 @@ Open:
 
 ## Production Notes
 
-- Do not use the default admin password online.
 - Admin product changes must be saved to persistent storage. On Render, attach a persistent disk mounted at `/var/data` and set `DATA_DIR=/var/data`. Without persistent storage, a redeploy can reset products back to the repository seed file.
 - For a higher-volume public deployment, move `admin-products.json` and `orders.json` to PostgreSQL or another hosted database.
 - Use the official Pantanan Facebook Page Messenger link for `PANTANAN_MESSENGER_LINK`.

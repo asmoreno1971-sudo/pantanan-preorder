@@ -1,4 +1,3 @@
-let token = localStorage.getItem("adminToken") || "";
 let menu = [];
 let isSaving = false;
 let isLoadingMenu = false;
@@ -6,56 +5,9 @@ let isLoadingMenu = false;
 const menuDraftKey = "adminMenuDraft";
 const menuBackupKey = "adminMenuLastGood";
 const categories = ["Sandwiches", "Drinks", "Dimsum", "Noodle", "Other"];
-const passwordInput = document.getElementById("password");
-const loginBox = document.getElementById("loginPanel");
 const editorBox = document.getElementById("editorPanel");
 const editorList = document.getElementById("productEditor");
 const statusLabel = document.getElementById("status");
-
-async function login(){
-  const res = await fetch("/api/admin/login", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ password:passwordInput.value })
-  });
-  const data = await res.json();
-
-  if(!data.ok){
-    statusText("Wrong password");
-    return;
-  }
-
-  token = data.token;
-  localStorage.setItem("adminToken", token);
-  loginBox.classList.add("hidden");
-  editorBox.classList.remove("hidden");
-  statusText("Logged in");
-  await loadMenu();
-}
-
-async function verifyAdminSession(){
-  if(!token){
-    return false;
-  }
-
-  try{
-    const res = await fetch("/api/admin/session", {
-      cache:"no-store",
-      headers:{ "Authorization":`Bearer ${token}` }
-    });
-    return res.ok;
-  }catch{
-    return false;
-  }
-}
-
-function showLogin(message){
-  token = "";
-  localStorage.removeItem("adminToken");
-  loginBox.classList.remove("hidden");
-  editorBox.classList.add("hidden");
-  statusText(message);
-}
 
 async function loadMenu(){
   if(isLoadingMenu){
@@ -284,19 +236,12 @@ async function saveMenu(options = {}){
     const res = await fetch("/api/menu", {
       method:"PUT",
       headers:{
-        "Content-Type":"application/json",
-        "Authorization":`Bearer ${token}`
+        "Content-Type":"application/json"
       },
       cache:"no-store",
       body:JSON.stringify(cleanMenu)
     });
     const data = await res.json().catch(()=>({ ok:false, message:"Server did not return JSON." }));
-
-    if(res.status === 401){
-      showLogin("Login expired. Please log in again before editing products.");
-      isSaving = false;
-      return false;
-    }
 
     if(!res.ok || !data.ok){
       statusText(data.message || `Save failed (${res.status})`);
@@ -387,9 +332,7 @@ function imageFingerprint(value){
 }
 
 async function exportCustomers(){
-  const res = await fetch("/api/customers.csv", {
-    headers:{ "Authorization":`Bearer ${token}` }
-  });
+  const res = await fetch("/api/customers.csv");
 
   if(!res.ok){
     statusText("Export failed");
@@ -483,16 +426,6 @@ function resizeImage(src, maxSize, quality){
 }
 
 async function startAdmin(){
-  if(!token){
-    return;
-  }
-
-  if(!await verifyAdminSession()){
-    showLogin("Login expired after server restart. Please log in again before editing products.");
-    return;
-  }
-
-  loginBox.classList.add("hidden");
   editorBox.classList.remove("hidden");
   await loadMenu();
 }

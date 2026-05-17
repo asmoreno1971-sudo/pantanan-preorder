@@ -9,21 +9,13 @@ const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : root
 const menuPath = path.resolve(process.env.ADMIN_PRODUCTS_PATH || path.join(dataDir, "admin-products.json"));
 const ordersPath = path.resolve(process.env.ORDERS_PATH || path.join(dataDir, "orders.json"));
 const port = Number(process.env.PORT) || 3001;
-const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
-const fallbackAdminPassword = "2929";
 const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
 const semaphoreSenderName = process.env.SEMAPHORE_SENDER_NAME || "";
-const sessions = new Set();
 let cachedMenu = null;
 let cachedMenuMtime = 0;
 const cachedImages = new Map();
 let menuFileReady = null;
 let ordersFileReady = null;
-
-if(process.env.NODE_ENV === "production" && adminPassword === "admin123"){
-  console.error("Set ADMIN_PASSWORD before running in production.");
-  process.exit(1);
-}
 
 const types = {
   ".html": "text/html; charset=utf-8",
@@ -229,12 +221,6 @@ function pickupSlotCount(orders, pickupTime){
   return orders.filter(order=>order.orderDate === today && order.pickupTime === pickupTime).length;
 }
 
-function isAdmin(req){
-  const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-  return sessions.has(token);
-}
-
 function normalizeMenuCategory(category){
   const value = String(category || "Drinks").trim();
   const normalized = value === "Sandwhich" || value === "Sandwich" ? "Sandwiches" : value;
@@ -437,31 +423,7 @@ async function handleApi(req, res){
     return true;
   }
 
-  if(pathname === "/api/admin/login" && req.method === "POST"){
-    const body = JSON.parse(await readBody(req) || "{}");
-
-    if(body.password !== adminPassword && body.password !== fallbackAdminPassword){
-      send(res, 401, JSON.stringify({ ok:false, message:"Wrong password" }));
-      return true;
-    }
-
-    const token = crypto.randomBytes(24).toString("hex");
-    sessions.add(token);
-    send(res, 200, JSON.stringify({ ok:true, token }));
-    return true;
-  }
-
-  if(pathname === "/api/admin/session" && req.method === "GET"){
-    send(res, isAdmin(req) ? 200 : 401, JSON.stringify({ ok:isAdmin(req) }));
-    return true;
-  }
-
   if(pathname === "/api/menu" && req.method === "PUT"){
-    if(!isAdmin(req)){
-      send(res, 401, JSON.stringify({ ok:false, message:"Admin login required" }));
-      return true;
-    }
-
     let menu;
 
     try{
@@ -514,11 +476,6 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/customers.csv" && req.method === "GET"){
-    if(!isAdmin(req)){
-      send(res, 401, "Admin login required", "text/plain; charset=utf-8");
-      return true;
-    }
-
     const orders = await readOrders();
     const seen = new Map();
 
@@ -564,11 +521,6 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/sales/daily" && req.method === "GET"){
-    if(!isAdmin(req)){
-      send(res, 401, JSON.stringify({ ok:false, message:"Admin login required" }));
-      return true;
-    }
-
     const date = url.searchParams.get("date") || localOrderDate();
     const orders = await readOrders();
     send(res, 200, JSON.stringify({ ok:true, report:dailySalesReport(orders, date) }));
