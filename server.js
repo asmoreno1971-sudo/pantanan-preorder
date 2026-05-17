@@ -312,7 +312,7 @@ function customerMenu(menu){
       price: item.price,
       theme: item.theme,
       category: item.category,
-      image: image ? `/api/menu-image/${encodeURIComponent(id)}?v=${imageVersion}` : "",
+      image,
       imageFingerprint:imageVersion
     };
   });

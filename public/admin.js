@@ -370,9 +370,9 @@ async function verifyCustomerMenuSync(options = {}){
       customerRes.json(),
       cashierRes.json()
     ]);
-    const savedSignature = publicMenuSignature(menu, true);
-    const customerSignature = publicMenuSignature(customerMenu, false);
-    const cashierSignature = publicMenuSignature(cashierMenu, false);
+    const savedSignature = publicMenuSignature(menu);
+    const customerSignature = publicMenuSignature(customerMenu);
+    const cashierSignature = publicMenuSignature(cashierMenu);
 
     if(savedSignature !== customerSignature || savedSignature !== cashierSignature){
       statusText("Save rejected: customer and cashier menus do not match Admin yet.");
@@ -398,9 +398,9 @@ async function verifyCustomerMenuSync(options = {}){
   }
 }
 
-function publicMenuSignature(items, hasRawImages){
+function publicMenuSignature(items){
   return (Array.isArray(items) ? items : []).map(item=>{
-    const imageKey = hasRawImages ? imageFingerprint(item.image) : item.imageFingerprint || "";
+    const imageKey = imageFingerprint(item.image);
     return `${item.id}|${item.name}|${Number(item.price) || 0}|${normalizeCategory(item.category)}|${imageKey}`;
   }).join("\n");
 }
