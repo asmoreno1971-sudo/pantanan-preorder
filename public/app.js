@@ -366,7 +366,7 @@ function updateChange(){
 
   const cash = Number(cashInput ? cashInput.value || 0 : 0);
   const change = Math.max(0, cash - currentTotal);
-  changeOutput.value = `P${change}`;
+  changeOutput.value = String(change);
   updateCashInputWidth();
 }
 
