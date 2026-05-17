@@ -17,6 +17,7 @@ const changeOutput = document.getElementById("changeOutput");
 const exactCashButton = document.getElementById("exactCashBtn");
 const cashPanel = document.querySelector(".cash-panel");
 const orderButtonReadyText = orderButton ? orderButton.dataset.readyText || orderButton.innerText || "Send Order" : "Send Order";
+const isCashierPage = window.location.pathname.replace(/\/$/, "") === "/cashier";
 const modal = document.getElementById("successModal");
 const successTitle = document.getElementById("successTitle");
 const successText = document.getElementById("successText");
@@ -45,7 +46,7 @@ function saveCustomer(){
 async function loadMenu(){
   try{
     localStorage.removeItem("pantananCustomerMenuV1");
-    const menuView = window.location.pathname.replace(/\/$/, "") === "/cashier" ? "cashier" : "customer";
+    const menuView = isCashierPage ? "cashier" : "customer";
     const res = await fetch(`/api/menu?view=${menuView}&fresh=${Date.now()}`, { cache:"no-store" });
     const menuSource = res.headers.get("X-Menu-Source");
 
@@ -480,7 +481,9 @@ async function openSummary(){
         customerName:nameVal,
         customerContact:contactVal,
         pickupTime,
-        items
+        items,
+        source:isCashierPage ? "cashier" : "customer",
+        cashReceived:cashInput ? Number(cashInput.value || 0) : undefined
       })
     });
     data = await res.json();
@@ -504,12 +507,14 @@ async function openSummary(){
   }
 
   saveCustomer();
-  activeOrderId = data.order.id;
-  localStorage.setItem("activeOrderId", activeOrderId);
-  activeOrderVisible = true;
-  lastNotifiedStatus = "";
-  localStorage.removeItem("lastNotifiedStatus");
-  showCustomerStatus(data.order);
+  if(!isCashierPage){
+    activeOrderId = data.order.id;
+    localStorage.setItem("activeOrderId", activeOrderId);
+    activeOrderVisible = true;
+    lastNotifiedStatus = "";
+    localStorage.removeItem("lastNotifiedStatus");
+    showCustomerStatus(data.order);
+  }
   resetOrderForm();
 
   orderSubmitted = false;

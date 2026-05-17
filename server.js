@@ -657,6 +657,8 @@ async function handleApi(req, res){
 
     const customerContact = String(body.customerContact || body.customerMessenger || "").trim();
     const normalizedContact = normalizePhilippineMobileNumber(customerContact);
+    const source = String(body.source || "customer").trim().toLowerCase() === "cashier" ? "cashier" : "";
+    const isCashierOrder = source === "cashier";
 
     if(!body.customerName || !body.pickupTime || cleanItems.length === 0){
       send(res, 400, JSON.stringify({ ok:false, message:"Order is incomplete" }));
@@ -670,12 +672,14 @@ async function handleApi(req, res){
 
     const pickupTime = String(body.pickupTime);
 
-    if(pickupSlotCount(orders, pickupTime) >= 5){
+    if(!isCashierOrder && pickupSlotCount(orders, pickupTime) >= 5){
       send(res, 400, JSON.stringify({ ok:false, message:"That pickup time is already full. Please select the next available time." }));
       return true;
     }
 
     const total = cleanItems.reduce((sum, item)=>sum + item.subtotal, 0);
+    const cashReceived = Math.max(0, Number(body.cashReceived) || 0);
+    const completedAt = new Date().toISOString();
     const orderNumber = nextDailyOrderNumber(orders);
     const order = {
       id: Date.now().toString(),
@@ -684,11 +688,19 @@ async function handleApi(req, res){
       customerName: String(body.customerName).trim().toUpperCase(),
       customerContact:normalizedContact,
       pickupTime,
-      status: "Order Sent",
-      createdAt: new Date().toISOString(),
+      status: isCashierOrder ? "Done" : "Order Sent",
+      source,
+      createdAt: completedAt,
       items: cleanItems,
       total
     };
+
+    if(isCashierOrder){
+      order.completedAt = completedAt;
+      order.doneAt = completedAt;
+      order.cashReceived = cashReceived;
+      order.change = Math.max(0, cashReceived - total);
+    }
 
     orders.unshift(order);
     await writeOrders(orders);
