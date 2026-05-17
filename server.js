@@ -226,7 +226,12 @@ function dailySalesReport(orders, date){
       });
     });
 
-  rows.sort((a, b)=>String(a.soldAt).localeCompare(String(b.soldAt)) || a.name.localeCompare(b.name));
+  rows.sort((a, b)=>
+    b.frequency - a.frequency ||
+    b.total - a.total ||
+    String(a.soldAt).localeCompare(String(b.soldAt)) ||
+    a.name.localeCompare(b.name)
+  );
 
   return {
     date,
