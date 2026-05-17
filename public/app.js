@@ -14,7 +14,6 @@ const summaryItems = document.getElementById("liveSummary");
 const totalText = document.getElementById("liveTotal");
 const cashInput = document.getElementById("cashInput");
 const changeOutput = document.getElementById("changeOutput");
-const exactCashButton = document.getElementById("exactCashBtn");
 const cashPanel = document.querySelector(".cash-panel");
 const orderButtonReadyText = orderButton ? orderButton.dataset.readyText || orderButton.innerText || "Send Order" : "Send Order";
 const isCashierPage = window.location.pathname.replace(/\/$/, "") === "/cashier";
@@ -311,7 +310,7 @@ function updateTotal(){
   });
 
   currentTotal = total;
-  updateExactCashButton();
+  syncCashToTotal();
   updateSummary(total);
   updatePaymentVisibility();
   updateChange();
@@ -388,15 +387,6 @@ function updateCashInputWidth(){
   cashInput.style.flexBasis = `${Math.max(1, digits)}ch`;
 }
 
-function updateExactCashButton(){
-  if(!exactCashButton){
-    return;
-  }
-
-  exactCashButton.innerText = `P${currentTotal}`;
-  exactCashButton.disabled = currentTotal <= 0;
-}
-
 function setCashAmount(amount){
   if(!cashInput){
     return;
@@ -409,8 +399,13 @@ function setCashAmount(amount){
   hideCashPresets();
 }
 
-function setExactCashAmount(){
-  setCashAmount(currentTotal);
+function syncCashToTotal(){
+  if(!cashInput){
+    return;
+  }
+
+  cashInput.value = currentTotal > 0 ? String(currentTotal) : "";
+  updateCashInputWidth();
 }
 
 function showCashPresets(){
