@@ -362,7 +362,7 @@ async function verifyCustomerMenuSync(options = {}){
 
 function publicMenuSignature(items){
   return (Array.isArray(items) ? items : []).map(item=>{
-    const imageKey = imageFingerprint(item.image);
+    const imageKey = item.imageFingerprint || imageFingerprint(item.image);
     return `${item.id}|${item.name}|${Number(item.price) || 0}|${normalizeCategory(item.category)}|${imageKey}`;
   }).join("\n");
 }

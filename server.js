@@ -282,6 +282,7 @@ function customerMenu(menu){
     const image = String(item.image || "");
     const id = String(item.id || "");
     const imageVersion = imageFingerprint(image);
+    const imageUrl = image ? `/api/menu-image/${encodeURIComponent(id)}?v=${imageVersion}` : "";
 
     return {
       id,
@@ -289,7 +290,7 @@ function customerMenu(menu){
       price: item.price,
       theme: item.theme,
       category: item.category,
-      image,
+      image:imageUrl,
       imageFingerprint:imageVersion
     };
   });
@@ -455,7 +456,7 @@ async function handleApi(req, res){
     if(image.redirect){
       res.writeHead(302, {
         "Location": image.redirect,
-        "Cache-Control":"no-store"
+        "Cache-Control":"public, max-age=604800, immutable"
       });
       res.end();
       return true;
@@ -463,7 +464,7 @@ async function handleApi(req, res){
 
     res.writeHead(200, {
       "Content-Type":image.contentType,
-      "Cache-Control":"no-store"
+      "Cache-Control":"public, max-age=604800, immutable"
     });
     res.end(image.body);
     return true;
