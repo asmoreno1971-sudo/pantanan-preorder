@@ -46,7 +46,16 @@ async function loadMenu(){
     statusText("No products loaded. Do not save yet. Refresh after deploy finishes.");
   }else{
     statusText("Loaded saved online products.");
+    scrollAdminToBottom();
   }
+}
+
+function scrollAdminToBottom(){
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      window.scrollTo({ top:document.documentElement.scrollHeight, behavior:"auto" });
+    });
+  });
 }
 
 function renderEditor(){
