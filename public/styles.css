@@ -235,7 +235,7 @@ select:focus{
 
 .currency-prefix{
   color:#1f8f4d !important;
-  font-size:28px !important;
+  font-size:inherit !important;
   font-weight:750 !important;
   line-height:1;
 }
