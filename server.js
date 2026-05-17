@@ -20,6 +20,10 @@ let cachedMenuMtime = 0;
 const cachedImages = new Map();
 let menuFileReady = null;
 let ordersFileReady = null;
+const legacyImageReplacements = {
+  biscoff:"https://www.lotusbiscoff.com/sites/default/files/styles/image_style_scale_width_xs/public/2023-10/Biscoff%20Hero%20Image%20Classic%20250g.jpg?itok=ubW9RlEN",
+  "bottled-water":"https://upload.wikimedia.org/wikipedia/commons/8/8b/Bottle_of_water.png"
+};
 
 if(process.env.NODE_ENV === "production" && adminPassword === "admin123"){
   console.error("Set ADMIN_PASSWORD before running in production.");
@@ -137,10 +141,29 @@ async function readMenu(){
     return cachedMenu;
   }
 
-  cachedMenu = JSON.parse(await fs.readFile(menuPath, "utf8"));
+  cachedMenu = normalizeMenu(JSON.parse(await fs.readFile(menuPath, "utf8")));
+  if(repairLegacyMenuImages(cachedMenu)){
+    await writeJsonFile(menuPath, cachedMenu);
+  }
   cachedMenuMtime = stats.mtimeMs;
   cachedImages.clear();
   return cachedMenu;
+}
+
+function repairLegacyMenuImages(menu){
+  let repaired = false;
+
+  for(const item of Array.isArray(menu) ? menu : []){
+    const replacement = legacyImageReplacements[String(item.id || "")];
+    const image = String(item.image || "");
+
+    if(replacement && image.startsWith("data:image/svg")){
+      item.image = replacement;
+      repaired = true;
+    }
+  }
+
+  return repaired;
 }
 
 function localOrderDate(){
@@ -291,14 +314,14 @@ function customerMenu(menu){
 }
 
 function menuImage(menu, id){
-  const cachedImage = cachedImages.get(id);
+  const item = (Array.isArray(menu) ? menu : []).find(menuItem=>String(menuItem.id || "") === id);
+  const image = String(item && item.image || "");
+  const cacheKey = `${id}:${imageFingerprint(image)}`;
+  const cachedImage = cachedImages.get(cacheKey);
 
   if(cachedImage){
     return cachedImage;
   }
-
-  const item = (Array.isArray(menu) ? menu : []).find(menuItem=>String(menuItem.id || "") === id);
-  const image = String(item && item.image || "");
 
   if(!image){
     return null;
@@ -306,7 +329,7 @@ function menuImage(menu, id){
 
   if(image.startsWith("http://") || image.startsWith("https://")){
     const response = { redirect:image };
-    cachedImages.set(id, response);
+    cachedImages.set(cacheKey, response);
     return response;
   }
 
@@ -317,7 +340,7 @@ function menuImage(menu, id){
       contentType: match[1],
       body: Buffer.from(match[2], "base64")
     };
-    cachedImages.set(id, response);
+    cachedImages.set(cacheKey, response);
     return response;
   }
 
@@ -331,7 +354,7 @@ function menuImage(menu, id){
     contentType: encodedMatch[1],
     body: Buffer.from(decodeURIComponent(encodedMatch[2]), "utf8")
   };
-  cachedImages.set(id, response);
+  cachedImages.set(cacheKey, response);
   return response;
 }
 

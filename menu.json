@@ -181,7 +181,7 @@
     "price": 60,
     "theme": "americano",
     "category": "Sandwiches",
-    "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20420%20300%22%3E%3Crect%20width%3D%22420%22%20height%3D%22300%22%20fill%3D%22%23f1c982%22%2F%3E%3Cellipse%20cx%3D%22150%22%20cy%3D%22162%22%20rx%3D%2286%22%20ry%3D%2272%22%20fill%3D%22%23fff2cb%22%2F%3E%3Crect%20x%3D%22222%22%20y%3D%2291%22%20width%3D%22122%22%20height%3D%2296%22%20rx%3D%2226%22%20fill%3D%22%23a36b3d%22%2F%3E%3Cpath%20d%3D%22M62%20203%20C136%20157%20246%20157%20330%20210%22%20fill%3D%22none%22%20stroke%3D%22%236aad5c%22%20stroke-width%3D%2227%22%20stroke-linecap%3D%22round%22%2F%3E%3Ctext%20x%3D%22210%22%20y%3D%22264%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2Csans-serif%22%20font-size%3D%2244%22%20font-weight%3D%22700%22%20fill%3D%22%233d2312%22%3EBISCOFF%3C%2Ftext%3E%3C%2Fsvg%3E"
+    "image": "https://www.lotusbiscoff.com/sites/default/files/styles/image_style_scale_width_xs/public/2023-10/Biscoff%20Hero%20Image%20Classic%20250g.jpg?itok=ubW9RlEN"
   },
   {
     "id": "new-product-1778126157710",
@@ -197,6 +197,6 @@
     "price": 20,
     "theme": "latte",
     "category": "Drinks",
-    "image": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 300'%3E%3Crect width='420' height='300' fill='%23e8f7ff'/%3E%3Cellipse cx='210' cy='254' rx='132' ry='18' fill='%238bc7de' opacity='.35'/%3E%3Cpath d='M176 42h68l10 46c18 14 28 38 28 70v68c0 18-14 32-32 32h-80c-18 0-32-14-32-32v-68c0-32 10-56 28-70l10-46z' fill='%23c7ecff' stroke='%232383a6' stroke-width='12'/%3E%3Crect x='171' y='113' width='78' height='88' rx='14' fill='%23fff' opacity='.82'/%3E%3Cpath d='M176 62h68' stroke='%232383a6' stroke-width='16' stroke-linecap='round'/%3E%3Cpath d='M170 225c28-16 52 16 80 0' fill='none' stroke='%2357b6d4' stroke-width='12' stroke-linecap='round'/%3E%3Ctext x='210' y='167' text-anchor='middle' font-family='Arial,sans-serif' font-size='38' font-weight='800' fill='%23176b87'%3EWATER%3C/text%3E%3C/svg%3E"
+    "image": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Bottle_of_water.png"
   }
 ]
