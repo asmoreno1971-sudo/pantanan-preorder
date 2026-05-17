@@ -1,8 +1,6 @@
 let token = localStorage.getItem("adminToken") || "";
 let menu = [];
-let autoSaveTimer = null;
 let isSaving = false;
-let pendingSave = false;
 let isLoadingMenu = false;
 
 const menuDraftKey = "adminMenuDraft";
@@ -168,7 +166,7 @@ function renderEditor(){
       imageInput.value = "";
       setEditorImage(card.querySelector(".product-image-editor"), img, "");
       saveMenuDraft();
-      statusText("Picture cleared");
+      statusText("Picture cleared. Press Save Products when ready.");
     });
     card.querySelector(".remove-btn").addEventListener("click", ()=>removeProduct(index));
 
@@ -215,14 +213,14 @@ function addProduct(){
 
   renderEditor();
   saveMenuDraft();
-  statusText("New product added");
+  statusText("New product added. Press Save Products when ready.");
 }
 
 function removeProduct(index){
   menu.splice(index, 1);
   renderEditor();
   saveMenuDraft();
-  statusText("Product removed");
+  statusText("Product removed. Press Save Products when ready.");
 }
 
 function uploadImage(index, fileInput, imageInput, img){
@@ -239,14 +237,9 @@ function uploadImage(index, fileInput, imageInput, img){
         menu[index].image = image;
         imageInput.value = image;
         setEditorImage(img.closest(".product-image-editor"), img, image);
-        saveMenuDraft(false);
-        statusText("Saving picture online...");
-        return saveMenu({ verifyImageForId:menu[index].id, verifyImage:image });
-      })
-      .then(saved=>{
-        if(saved){
-          statusText("Picture saved online. Customer page is updated.");
-        }
+        saveMenuDraft();
+        statusText("Picture loaded. Press Save Products when ready.");
+        return true;
       })
       .catch(()=>{
         statusText("Could not read that picture.");
@@ -258,11 +251,6 @@ function uploadImage(index, fileInput, imageInput, img){
 async function saveMenu(options = {}){
   if(menu.length === 0){
     statusText("Save blocked: product list is empty. Refresh the page first.");
-    return false;
-  }
-
-  if(isSaving){
-    pendingSave = true;
     return false;
   }
 
@@ -307,11 +295,6 @@ async function saveMenu(options = {}){
     return false;
   }finally{
     isSaving = false;
-
-    if(pendingSave){
-      pendingSave = false;
-      saveMenu();
-    }
   }
 }
 
@@ -406,31 +389,15 @@ function statusText(message){
   statusLabel.innerText = message;
 }
 
-function saveMenuDraft(autosave = true, savedAt = Date.now()){
+function saveMenuDraft(savedAt = Date.now()){
   try{
     localStorage.setItem(menuDraftKey, JSON.stringify({
       savedAt,
       items:menu
     }));
-    if(autosave){
-      scheduleAutoSave();
-    }
   }catch{
     statusText("Browser backup is full. Save Products now, or use smaller pictures.");
   }
-}
-
-function scheduleAutoSave(){
-  if(!token || menu.length === 0){
-    return;
-  }
-
-  statusText("Saving changes...");
-  clearTimeout(autoSaveTimer);
-  autoSaveTimer = setTimeout(()=>{
-    autoSaveTimer = null;
-    saveMenu();
-  }, 900);
 }
 
 function prepareMenuForSave(){
