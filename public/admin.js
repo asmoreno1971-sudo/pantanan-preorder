@@ -1,11 +1,9 @@
 let token = localStorage.getItem("adminToken") || "";
 let menu = [];
 let autoSaveTimer = null;
-let adminRefreshTimer = null;
 let isSaving = false;
 let pendingSave = false;
 let isLoadingMenu = false;
-let lastUserEditAt = 0;
 
 const menuDraftKey = "adminMenuDraft";
 const categories = ["Sandwiches", "Drinks", "Dimsum", "Noodle", "Other"];
@@ -34,7 +32,6 @@ async function login(){
   editorBox.classList.remove("hidden");
   statusText("Logged in");
   await loadMenu();
-  startAdminAutoRefresh();
 }
 
 async function verifyAdminSession(){
@@ -56,16 +53,12 @@ async function verifyAdminSession(){
 function showLogin(message){
   token = "";
   localStorage.removeItem("adminToken");
-  if(adminRefreshTimer){
-    clearInterval(adminRefreshTimer);
-    adminRefreshTimer = null;
-  }
   loginBox.classList.remove("hidden");
   editorBox.classList.add("hidden");
   statusText(message);
 }
 
-async function loadMenu(options = {}){
+async function loadMenu(){
   if(isLoadingMenu){
     return;
   }
@@ -83,39 +76,12 @@ async function loadMenu(options = {}){
     if(menu.length === 0){
       statusText("No products loaded. Do not save yet. Refresh after deploy finishes.");
     }else{
-      statusText(options.quiet ? `Auto updated ${currentTimeText()}` : "Loaded saved online products.");
-      if(options.scroll !== false){
-        scrollAdminToBottom();
-      }
+      statusText("Loaded saved online products. Admin will not auto-reload while you edit.");
+      scrollAdminToBottom();
     }
   }finally{
     isLoadingMenu = false;
   }
-}
-
-async function refreshAdminProducts(){
-  if(!token || isSaving || pendingSave || autoSaveTimer || isLoadingMenu || document.visibilityState !== "visible"){
-    return;
-  }
-
-  if(editorList.contains(document.activeElement) || Date.now() - lastUserEditAt < 7000){
-    return;
-  }
-
-  try{
-    await loadMenu({ quiet:true, scroll:false });
-  }catch{
-    statusText("Auto update failed. Retrying...");
-    isLoadingMenu = false;
-  }
-}
-
-function startAdminAutoRefresh(){
-  if(adminRefreshTimer){
-    return;
-  }
-
-  adminRefreshTimer = setInterval(refreshAdminProducts, 7000);
 }
 
 function scrollAdminToBottom(){
@@ -224,8 +190,6 @@ function setEditorImage(preview, img, image){
 }
 
 function updateItem(index, field, value){
-  lastUserEditAt = Date.now();
-
   if(field === "price"){
     menu[index][field] = Number(value) || 0;
   }else if(field === "name"){
@@ -238,7 +202,6 @@ function updateItem(index, field, value){
 }
 
 function addProduct(){
-  lastUserEditAt = Date.now();
   const nextNumber = menu.length + 1;
 
   menu.push({
@@ -256,7 +219,6 @@ function addProduct(){
 }
 
 function removeProduct(index){
-  lastUserEditAt = Date.now();
   menu.splice(index, 1);
   renderEditor();
   saveMenuDraft();
@@ -264,7 +226,6 @@ function removeProduct(index){
 }
 
 function uploadImage(index, fileInput, imageInput, img){
-  lastUserEditAt = Date.now();
   const file = fileInput.files && fileInput.files[0];
 
   if(!file){
@@ -445,10 +406,6 @@ function statusText(message){
   statusLabel.innerText = message;
 }
 
-function currentTimeText(){
-  return new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit", second:"2-digit" });
-}
-
 function saveMenuDraft(autosave = true, savedAt = Date.now()){
   try{
     localStorage.setItem(menuDraftKey, JSON.stringify({
@@ -525,7 +482,6 @@ async function startAdmin(){
   loginBox.classList.add("hidden");
   editorBox.classList.remove("hidden");
   await loadMenu();
-  startAdminAutoRefresh();
 }
 
 startAdmin();
