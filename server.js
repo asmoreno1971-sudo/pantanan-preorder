@@ -20,10 +20,6 @@ let cachedMenuMtime = 0;
 const cachedImages = new Map();
 let menuFileReady = null;
 let ordersFileReady = null;
-const legacyImageReplacements = {
-  biscoff:"https://www.lotusbiscoff.com/sites/default/files/styles/image_style_scale_width_xs/public/2023-10/Biscoff%20Hero%20Image%20Classic%20250g.jpg?itok=ubW9RlEN",
-  "bottled-water":"https://upload.wikimedia.org/wikipedia/commons/8/8b/Bottle_of_water.png"
-};
 
 if(process.env.NODE_ENV === "production" && adminPassword === "admin123"){
   console.error("Set ADMIN_PASSWORD before running in production.");
@@ -142,28 +138,9 @@ async function readMenu(){
   }
 
   cachedMenu = normalizeMenu(JSON.parse(await fs.readFile(menuPath, "utf8")));
-  if(repairLegacyMenuImages(cachedMenu)){
-    await writeJsonFile(menuPath, cachedMenu);
-  }
   cachedMenuMtime = stats.mtimeMs;
   cachedImages.clear();
   return cachedMenu;
-}
-
-function repairLegacyMenuImages(menu){
-  let repaired = false;
-
-  for(const item of Array.isArray(menu) ? menu : []){
-    const replacement = legacyImageReplacements[String(item.id || "")];
-    const image = String(item.image || "");
-
-    if(replacement && image.startsWith("data:image/svg")){
-      item.image = replacement;
-      repaired = true;
-    }
-  }
-
-  return repaired;
 }
 
 function localOrderDate(){
