@@ -33,6 +33,30 @@ async function login(){
   await loadMenu();
 }
 
+async function verifyAdminSession(){
+  if(!token){
+    return false;
+  }
+
+  try{
+    const res = await fetch("/api/admin/session", {
+      cache:"no-store",
+      headers:{ "Authorization":`Bearer ${token}` }
+    });
+    return res.ok;
+  }catch{
+    return false;
+  }
+}
+
+function showLogin(message){
+  token = "";
+  localStorage.removeItem("adminToken");
+  loginBox.classList.remove("hidden");
+  editorBox.classList.add("hidden");
+  statusText(message);
+}
+
 async function loadMenu(){
   const res = await fetch(`/api/menu?fresh=${Date.now()}`, { cache:"no-store" });
   menu = await res.json();
@@ -205,8 +229,14 @@ function uploadImage(index, fileInput, imageInput, img){
         menu[index].image = image;
         imageInput.value = image;
         setEditorImage(img.closest(".product-image-editor"), img, image);
-        saveMenuDraft();
-        statusText("Picture added. Save products to publish it.");
+        saveMenuDraft(false);
+        statusText("Saving picture online...");
+        return saveMenu({ verifyImageForId:menu[index].id, verifyImage:image });
+      })
+      .then(saved=>{
+        if(saved){
+          statusText("Picture saved online. Customer page is updated.");
+        }
       })
       .catch(()=>{
         statusText("Could not read that picture.");
@@ -215,15 +245,15 @@ function uploadImage(index, fileInput, imageInput, img){
   reader.readAsDataURL(file);
 }
 
-async function saveMenu(){
+async function saveMenu(options = {}){
   if(menu.length === 0){
     statusText("Save blocked: product list is empty. Refresh the page first.");
-    return;
+    return false;
   }
 
   if(isSaving){
     pendingSave = true;
-    return;
+    return false;
   }
 
   isSaving = true;
@@ -243,19 +273,15 @@ async function saveMenu(){
     const data = await res.json().catch(()=>({ ok:false, message:"Server did not return JSON." }));
 
     if(res.status === 401){
-      token = "";
-      localStorage.removeItem("adminToken");
-      loginBox.classList.remove("hidden");
-      editorBox.classList.add("hidden");
-      statusText("Login expired. Please log in again.");
+      showLogin("Login expired. Please log in again before editing products.");
       isSaving = false;
-      return;
+      return false;
     }
 
     if(!res.ok || !data.ok){
       statusText(data.message || `Save failed (${res.status})`);
       isSaving = false;
-      return;
+      return false;
     }
 
     menu = data.menu;
@@ -263,10 +289,12 @@ async function saveMenu(){
     localStorage.setItem("adminMenuServerSavedAt", String(savedAt));
     localStorage.removeItem(menuDraftKey);
     renderEditor();
-    await verifyCustomerMenuSync();
+    const synced = await verifyCustomerMenuSync(options);
+    return synced;
   }catch{
     saveMenuDraft();
     statusText("Save failed, but your edits are backed up in this browser. Try Save Products again.");
+    return false;
   }finally{
     isSaving = false;
 
@@ -277,7 +305,7 @@ async function saveMenu(){
   }
 }
 
-async function verifyCustomerMenuSync(){
+async function verifyCustomerMenuSync(options = {}){
   try{
     const res = await fetch(`/api/menu?view=customer&fresh=${Date.now()}`, { cache:"no-store" });
     const customerMenu = await res.json();
@@ -286,12 +314,24 @@ async function verifyCustomerMenuSync(){
 
     if(savedSignature !== customerSignature){
       statusText("Saved, but customer menu does not match yet. Editing is paused until the server catches up.");
-      return;
+      return false;
+    }
+
+    if(options.verifyImageForId){
+      const item = customerMenu.find(product=>product.id === options.verifyImageForId);
+      const expected = imageFingerprint(options.verifyImage);
+
+      if(!item || item.imageFingerprint !== expected){
+        statusText("Picture upload did not stick on the server. Please log in again and retry.");
+        return false;
+      }
     }
 
     statusText(`Saved ${menu.length} products. Customer page is updated.`);
+    return true;
   }catch{
     statusText(`Saved ${menu.length} products. Customer sync check unavailable.`);
+    return true;
   }
 }
 
@@ -397,8 +437,19 @@ function resizeImage(src, maxSize, quality){
   });
 }
 
-if(token){
+async function startAdmin(){
+  if(!token){
+    return;
+  }
+
+  if(!await verifyAdminSession()){
+    showLogin("Login expired after server restart. Please log in again before editing products.");
+    return;
+  }
+
   loginBox.classList.add("hidden");
   editorBox.classList.remove("hidden");
-  loadMenu();
+  await loadMenu();
 }
+
+startAdmin();

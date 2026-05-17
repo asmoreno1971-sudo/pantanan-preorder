@@ -459,6 +459,11 @@ async function handleApi(req, res){
     return true;
   }
 
+  if(pathname === "/api/admin/session" && req.method === "GET"){
+    send(res, isAdmin(req) ? 200 : 401, JSON.stringify({ ok:isAdmin(req) }));
+    return true;
+  }
+
   if(pathname === "/api/menu" && req.method === "PUT"){
     if(!isAdmin(req)){
       send(res, 401, JSON.stringify({ ok:false, message:"Admin login required" }));
