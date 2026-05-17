@@ -551,7 +551,20 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/orders" && req.method === "GET"){
-    send(res, 200, JSON.stringify(await readOrders()));
+    const source = url.searchParams.get("source");
+    const orders = await readOrders();
+
+    if(source === "customer"){
+      send(res, 200, JSON.stringify(orders.filter(order=>!order.source)));
+      return true;
+    }
+
+    if(source === "cashier"){
+      send(res, 200, JSON.stringify(orders.filter(order=>order.source === "cashier")));
+      return true;
+    }
+
+    send(res, 200, JSON.stringify(orders));
     return true;
   }
 

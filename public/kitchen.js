@@ -40,7 +40,7 @@ async function loadOrders(){
     return;
   }
 
-  const res = await fetch("/api/orders");
+  const res = await fetch("/api/orders?source=customer");
   const orders = await res.json();
   currentOrders = orders;
   notifyNewOrders(orders);
