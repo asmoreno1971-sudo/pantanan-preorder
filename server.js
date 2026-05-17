@@ -312,13 +312,24 @@ function menuImage(menu, id){
 
   const match = image.match(/^data:([^;,]+);base64,(.+)$/);
 
-  if(!match){
+  if(match){
+    const response = {
+      contentType: match[1],
+      body: Buffer.from(match[2], "base64")
+    };
+    cachedImages.set(id, response);
+    return response;
+  }
+
+  const encodedMatch = image.match(/^data:([^;,]+),(.*)$/);
+
+  if(!encodedMatch){
     return null;
   }
 
   const response = {
-    contentType: match[1],
-    body: Buffer.from(match[2], "base64")
+    contentType: encodedMatch[1],
+    body: Buffer.from(decodeURIComponent(encodedMatch[2]), "utf8")
   };
   cachedImages.set(id, response);
   return response;
