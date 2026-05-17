@@ -277,25 +277,6 @@ function imageFingerprint(value){
   return text ? `${hash1.toString(16)}${hash2.toString(16)}`.slice(0, 16) : "";
 }
 
-function customerMenu(menu){
-  return normalizeMenu(menu).map(item=>{
-    const image = String(item.image || "");
-    const id = String(item.id || "");
-    const imageVersion = imageFingerprint(image);
-    const imageUrl = image ? `/api/menu-image/${encodeURIComponent(id)}?v=${imageVersion}` : "";
-
-    return {
-      id,
-      name: item.name,
-      price: item.price,
-      theme: item.theme,
-      category: item.category,
-      image:imageUrl,
-      imageFingerprint:imageVersion
-    };
-  });
-}
-
 function menuImage(menu, id){
   const item = (Array.isArray(menu) ? menu : []).find(menuItem=>String(menuItem.id || "") === id);
   const image = String(item && item.image || "");
@@ -418,28 +399,14 @@ async function handleApi(req, res){
 
   if(pathname === "/api/menu" && req.method === "GET"){
     const view = url.searchParams.get("view");
-    const sharedPublicView = view === "customer" || view === "cashier";
-
-    if(sharedPublicView){
-      const responseMenu = customerMenu(await readMenu());
-      res.writeHead(200, {
-        "Content-Type":"application/json; charset=utf-8",
-        "Cache-Control":"no-store",
-        "X-Menu-Source":"admin-persistent-menu",
-        "X-Menu-View":view
-      });
-      res.end(JSON.stringify(responseMenu));
-    }else{
-      const menu = await readMenu();
-      const responseMenu = normalizeMenu(menu);
-      res.writeHead(200, {
-        "Content-Type":"application/json; charset=utf-8",
-        "Cache-Control":"no-store",
-        "X-Menu-Source":"admin-persistent-menu",
-        "X-Menu-View":"admin"
-      });
-      res.end(JSON.stringify(responseMenu));
-    }
+    const responseMenu = normalizeMenu(await readMenu());
+    res.writeHead(200, {
+      "Content-Type":"application/json; charset=utf-8",
+      "Cache-Control":"no-store",
+      "X-Menu-Source":"admin-persistent-menu",
+      "X-Menu-View":view || "admin"
+    });
+    res.end(JSON.stringify(responseMenu));
     return true;
   }
 
