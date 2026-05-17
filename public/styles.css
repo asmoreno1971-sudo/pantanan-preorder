@@ -237,7 +237,7 @@ select:focus{
 
 .currency-prefix{
   color:#1f8f4d !important;
-  font-size:inherit !important;
+  font-size:28px !important;
   font-weight:inherit !important;
   line-height:inherit;
 }
@@ -1811,4 +1811,14 @@ textarea{
   min-height:42px;
   background:linear-gradient(135deg, #28b573, #1f7fbf);
   box-shadow:0 10px 22px rgba(31,127,191,.2);
+}
+
+.cash-field .cash-value,
+.cash-field .currency-prefix,
+.cash-field #cashInput,
+.cash-field #changeOutput{
+  color:#1f8f4d !important;
+  font-size:28px !important;
+  font-weight:750 !important;
+  line-height:1 !important;
 }
