@@ -325,9 +325,11 @@ function requirePersistentStorageForProduction(key, operation){
     return;
   }
 
-  if(isProduction && !databaseUrl && protectedKeys.has(key)){
-    throw new Error(`${key} storage is not persistent. Set DATABASE_URL before ${operation === "read" ? "serving" : "writing"} live business data.`);
+  if(operation === "read" && key === "admin-products"){
+    return;
   }
+
+  throw new Error(`${key} storage is not persistent. Set DATABASE_URL before ${operation === "read" ? "serving" : "writing"} live business data.`);
 }
 
 async function readJsonSeed(filePath, fallbackValue){
@@ -428,7 +430,7 @@ function storageMode(){
     return "postgres";
   }
 
-  return isProduction ? "blocked-missing-database" : "json-fallback";
+  return isProduction ? "canonical-readonly-menu" : "json-fallback";
 }
 
 async function readMenu(){
@@ -476,6 +478,22 @@ async function readLiveRecordCount(reader){
     return {
       count:0,
       transactionCount:0
+    };
+  }
+}
+
+async function readLiveMenuStatus(){
+  try{
+    const menu = await readMenu();
+
+    return {
+      count:menu.length,
+      fingerprint:menuFingerprint(menu)
+    };
+  }catch{
+    return {
+      count:0,
+      fingerprint:menuFingerprint([])
     };
   }
 }
@@ -837,7 +855,7 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/storage-status" && req.method === "GET"){
-    const menu = databaseUrl ? await readMenu() : [];
+    const menu = await readLiveMenuStatus();
     const orders = await readLiveRecordCount(()=>readOrders());
     const transactionLines = await readLiveRecordCount(()=>readReportingTransactionLines());
     send(res, 200, JSON.stringify({
@@ -845,12 +863,12 @@ async function handleApi(req, res){
       menuContractVersion,
       storageMode:storageMode(),
       storagePersistent:Boolean(databaseUrl),
-      menuCount:menu.length,
-      menuFingerprint:menuFingerprint(menu),
+      menuCount:menu.count,
+      menuFingerprint:menu.fingerprint,
       orderCount:orders.count,
       transactionLineCount:transactionLines.count,
       transactionCount:transactionLines.transactionCount,
-      storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. Admin, Customer, Cashier, and transaction writes are blocked so stale fallback data cannot be served or saved."
+      storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. Customer and Cashier are using the cleaned canonical menu read-only. Saving products and transactions is blocked until Render Postgres is connected."
     }));
     return true;
   }
