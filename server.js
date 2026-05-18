@@ -6,16 +6,16 @@ const crypto = require("node:crypto");
 const root = __dirname;
 const publicDir = path.join(root, "public");
 const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : root;
-const menuPath = path.resolve(process.env.ADMIN_PRODUCTS_PATH || path.join(dataDir, "admin-products.json"));
+const databaseUrl = process.env.DATABASE_URL || "";
+const isProduction = process.env.NODE_ENV === "production";
+const menuPath = resolveAdminProductsPath();
 const ordersPath = path.resolve(process.env.ORDERS_PATH || path.join(dataDir, "orders.json"));
 const ordersWatermarkPath = path.resolve(process.env.ORDERS_WATERMARK_PATH || path.join(dataDir, "orders-watermark.json"));
 const transactionLedgerPath = path.resolve(process.env.TRANSACTION_LEDGER_PATH || path.join(dataDir, "transaction-ledger.json"));
-const databaseUrl = process.env.DATABASE_URL || "";
 const port = Number(process.env.PORT) || 3001;
 const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
 const semaphoreSenderName = process.env.SEMAPHORE_SENDER_NAME || "";
 const menuContractVersion = "20260518-admin-canonical-menu";
-const isProduction = process.env.NODE_ENV === "production";
 const allowEmptyOrderStorage = process.env.ALLOW_EMPTY_ORDER_STORAGE === "true";
 let cachedMenu = null;
 let cachedMenuMtime = 0;
@@ -26,8 +26,9 @@ let dbPool = null;
 let dbReady = null;
 const legacyMenuPaths = [...new Set([
   path.join(root, "menu.json"),
-  path.join(dataDir, "menu.json")
-])].filter(filePath=>path.resolve(filePath) !== menuPath);
+  path.join(dataDir, "menu.json"),
+  process.env.ADMIN_PRODUCTS_PATH ? path.resolve(process.env.ADMIN_PRODUCTS_PATH) : ""
+])].filter(filePath=>filePath && path.resolve(filePath) !== menuPath);
 
 const types = {
   ".html": "text/html; charset=utf-8",
@@ -40,6 +41,19 @@ function requestPath(req){
   const url = new URL(req.url, "http://localhost");
   const pathname = url.pathname;
   return pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname;
+}
+
+function resolveAdminProductsPath(){
+  const canonicalPath = path.join(dataDir, "admin-products.json");
+  const configuredPath = process.env.ADMIN_PRODUCTS_PATH
+    ? path.resolve(process.env.ADMIN_PRODUCTS_PATH)
+    : canonicalPath;
+
+  if(isProduction || path.basename(configuredPath).toLowerCase() === "menu.json"){
+    return canonicalPath;
+  }
+
+  return configuredPath;
 }
 
 function send(res, status, body, type = "application/json; charset=utf-8"){
@@ -306,18 +320,13 @@ function requirePersistentStorageForProduction(key, operation){
     "orders-watermark",
     "transaction-ledger"
   ]);
-  const writeOnlyProtectedKeys = new Set(["admin-products"]);
 
   if(!isProduction || databaseUrl || !protectedKeys.has(key)){
     return;
   }
 
-  if(operation === "read" && writeOnlyProtectedKeys.has(key)){
-    return;
-  }
-
   if(isProduction && !databaseUrl && protectedKeys.has(key)){
-    throw new Error(`${key} storage is not persistent. Set DATABASE_URL before writing live business data.`);
+    throw new Error(`${key} storage is not persistent. Set DATABASE_URL before ${operation === "read" ? "serving" : "writing"} live business data.`);
   }
 }
 
@@ -381,7 +390,7 @@ async function ensureJsonFile(filePath, seedPath, fallbackValue){
 function ensureMenuFile(){
   if(!menuFileReady){
     menuFileReady = removeLegacyMenuFiles().then(async ()=>{
-      if(!databaseUrl){
+      if(!databaseUrl && !isProduction){
         await ensureJsonFile(menuPath, null, []);
       }
     });
@@ -402,7 +411,7 @@ async function removeLegacyMenuFiles(){
 
 function ensureOrdersFile(){
   if(!ordersFileReady){
-    ordersFileReady = databaseUrl ? Promise.resolve() : ensureJsonFile(ordersPath, null, []);
+    ordersFileReady = databaseUrl || isProduction ? Promise.resolve() : ensureJsonFile(ordersPath, null, []);
   }
 
   return ordersFileReady;
@@ -415,7 +424,11 @@ function clearMenuCache(){
 }
 
 function storageMode(){
-  return databaseUrl ? "postgres" : "json-fallback";
+  if(databaseUrl){
+    return "postgres";
+  }
+
+  return isProduction ? "blocked-missing-database" : "json-fallback";
 }
 
 async function readMenu(){
@@ -824,7 +837,7 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/storage-status" && req.method === "GET"){
-    const menu = await readMenu();
+    const menu = databaseUrl ? await readMenu() : [];
     const orders = await readLiveRecordCount(()=>readOrders());
     const transactionLines = await readLiveRecordCount(()=>readReportingTransactionLines());
     send(res, 200, JSON.stringify({
@@ -837,7 +850,7 @@ async function handleApi(req, res){
       orderCount:orders.count,
       transactionLineCount:transactionLines.count,
       transactionCount:transactionLines.transactionCount,
-      storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. Live transaction writes are blocked to prevent record loss."
+      storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. Admin, Customer, Cashier, and transaction writes are blocked so stale fallback data cannot be served or saved."
     }));
     return true;
   }
@@ -921,8 +934,11 @@ async function handleApi(req, res){
     try{
       await writeDataRecord("admin-products", menuPath, cleanMenu);
       clearMenuCache();
-    }catch{
-      send(res, 500, JSON.stringify({ ok:false, message:"Server could not save products. Your browser backup is still available." }));
+    }catch(error){
+      const message = databaseUrl
+        ? "Server could not save products. Your browser backup is still available."
+        : "Save blocked: DATABASE_URL is missing, so products cannot be saved safely. Connect Render Postgres first.";
+      send(res, 500, JSON.stringify({ ok:false, message, detail:error.message }));
       return true;
     }
 
