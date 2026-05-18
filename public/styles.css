@@ -325,6 +325,7 @@ select:focus{
 .menu-row{
   display:grid;
   grid-template-columns:minmax(0,1fr) clamp(115px, 58%, 166px);
+  grid-template-rows:auto auto;
   align-items:center;
   gap:clamp(3px, .8vw, 8px);
   min-width:0;
@@ -334,13 +335,28 @@ select:focus{
   background:rgba(255,250,244,.38);
 }
 
+.product-name-bar{
+  grid-column:1 / -1;
+  grid-row:1;
+  min-width:0;
+  padding:2px 5px;
+  background:rgba(255,255,255,.74);
+  color:#1f1712;
+  font-size:15px !important;
+  font-weight:750;
+  line-height:1.08;
+  overflow-wrap:anywhere;
+  text-align:left;
+}
+
 .menu-row .img-wrap{
   grid-column:2;
+  grid-row:2;
 }
 
 .menu-row .order-line{
   grid-column:1;
-  grid-row:1;
+  grid-row:2;
 }
 
 .menu-row.is-empty .order-line{
@@ -434,23 +450,6 @@ select:focus{
 
 .no-product-image{
   background:linear-gradient(135deg, #f8f3ed, #ebe0d6);
-}
-
-.overlay-name{
-  position:absolute;
-  top:4px;
-  left:4px;
-  right:4px;
-  max-width:none;
-  background:rgba(255,255,255,.62);
-  color:#1f1712;
-  font-size:15px !important;
-  padding:3px 5px;
-  font-weight:750;
-  line-height:1.08;
-  overflow-wrap:anywhere;
-  text-align:left;
-  text-shadow:0 1px 0 rgba(255,255,255,.85), 0 0 3px rgba(255,255,255,.7);
 }
 
 .overlay-price{

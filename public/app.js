@@ -243,9 +243,9 @@ function renderMenu(){
         ? `<img class="product-img" src="${image}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.style.display='none';this.parentElement.classList.add('no-product-image')">`
         : `<div class="product-img product-img-empty" aria-hidden="true"></div>`;
       row.innerHTML = `
+        <div class="product-name-bar">${item.name}</div>
         <div class="img-wrap" role="button" tabindex="0" aria-label="Add one ${item.name}" onclick="changeQty('${item.id}',1)" onkeydown="addFromImage(event,'${item.id}')">
           ${productMedia}
-          <div class="overlay-name">${item.name}</div>
           <div class="overlay-price">P${item.price}</div>
         </div>
 
