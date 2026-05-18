@@ -29,7 +29,7 @@
     "price": 60,
     "theme": "latte",
     "category": "Drinks",
-    "image": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=420&q=80"
+    "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MjAiIGhlaWdodD0iMjgwIiB2aWV3Qm94PSIwIDAgNDIwIDI4MCI+PHJlY3Qgd2lkdGg9IjQyMCIgaGVpZ2h0PSIyODAiIGZpbGw9IiNlZmUyZDQiLz48cmVjdCB4PSIxMzMiIHk9IjUyIiB3aWR0aD0iMTU0IiBoZWlnaHQ9IjE4NCIgcng9IjI1IiBmaWxsPSIjZjhlZmUzIiBzdHJva2U9IiM3ZDU3M2UiIHN0cm9rZS13aWR0aD0iOCIvPjxyZWN0IHg9IjE0NSIgeT0iMTI0IiB3aWR0aD0iMTMwIiBoZWlnaHQ9IjkwIiBmaWxsPSIjZDZhMzZlIi8+PHJlY3QgeD0iMTQ1IiB5PSI4MiIgd2lkdGg9IjEzMCIgaGVpZ2h0PSI0NyIgZmlsbD0iI2Y2ZThkNCIvPjxjaXJjbGUgY3g9IjE2NSIgY3k9IjgyIiByPSIxMyIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iLjciLz48Y2lyY2xlIGN4PSIyMDMiIGN5PSI3NSIgcj0iMTIiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii43Ii8+PGNpcmNsZSBjeD0iMjQ4IiBjeT0iODYiIHI9IjE0IiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuNyIvPjx0ZXh0IHg9IjIxMCIgeT0iMjUzIiBmb250LWZhbWlseT0iQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyOCIgZm9udC13ZWlnaHQ9IjgwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzU1MzcyMSI+U3BhbmlzaCBMYXR0ZTwvdGV4dD48L3N2Zz4="
   },
   {
     "id": "new-product-1778125921250",
@@ -37,7 +37,7 @@
     "price": 70,
     "theme": "latte",
     "category": "Drinks",
-    "image": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=420&q=80"
+    "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MjAiIGhlaWdodD0iMjgwIiB2aWV3Qm94PSIwIDAgNDIwIDI4MCI+PHJlY3Qgd2lkdGg9IjQyMCIgaGVpZ2h0PSIyODAiIGZpbGw9IiNlZmUyZDQiLz48cmVjdCB4PSIxMzMiIHk9IjUyIiB3aWR0aD0iMTU0IiBoZWlnaHQ9IjE4NCIgcng9IjI1IiBmaWxsPSIjZjhlZmUzIiBzdHJva2U9IiM3ZDU3M2UiIHN0cm9rZS13aWR0aD0iOCIvPjxyZWN0IHg9IjE0NSIgeT0iMTI0IiB3aWR0aD0iMTMwIiBoZWlnaHQ9IjkwIiBmaWxsPSIjZDZhMzZlIi8+PHJlY3QgeD0iMTQ1IiB5PSI4MiIgd2lkdGg9IjEzMCIgaGVpZ2h0PSI0NyIgZmlsbD0iI2Y2ZThkNCIvPjxjaXJjbGUgY3g9IjE2NSIgY3k9IjgyIiByPSIxMyIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iLjciLz48Y2lyY2xlIGN4PSIyMDMiIGN5PSI3NSIgcj0iMTIiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii43Ii8+PGNpcmNsZSBjeD0iMjQ4IiBjeT0iODYiIHI9IjE0IiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuNyIvPjx0ZXh0IHg9IjIxMCIgeT0iMjUzIiBmb250LWZhbWlseT0iQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyOCIgZm9udC13ZWlnaHQ9IjgwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzU1MzcyMSI+U3BhbmlzaCBMYXR0ZTwvdGV4dD48L3N2Zz4="
   },
   {
     "id": "new-product-1778367957241",
@@ -181,7 +181,7 @@
     "price": 60,
     "theme": "americano",
     "category": "Sandwiches",
-    "image": ""
+    "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MjAiIGhlaWdodD0iMjgwIiB2aWV3Qm94PSIwIDAgNDIwIDI4MCI+PHJlY3Qgd2lkdGg9IjQyMCIgaGVpZ2h0PSIyODAiIGZpbGw9IiNkODIxMjgiLz48cmVjdCB4PSIzNSIgeT0iNzAiIHdpZHRoPSIzNTAiIGhlaWdodD0iMTQwIiByeD0iMjQiIGZpbGw9IiNmN2RmYWQiLz48dGV4dCB4PSIyMTAiIHk9IjEzMiIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNTYiIGZvbnQtd2VpZ2h0PSI4MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPkJpc2NvZmY8L3RleHQ+PHRleHQgeD0iMjEwIiB5PSIxNzQiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjMwIiBmb250LXdlaWdodD0iNzAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNmYyZjE5Ij5TYW5kd2ljaDwvdGV4dD48L3N2Zz4="
   },
   {
     "id": "bottled-water",
@@ -189,6 +189,6 @@
     "price": 20,
     "theme": "latte",
     "category": "Drinks",
-    "image": ""
+    "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MjAiIGhlaWdodD0iMjgwIiB2aWV3Qm94PSIwIDAgNDIwIDI4MCI+PHJlY3Qgd2lkdGg9IjQyMCIgaGVpZ2h0PSIyODAiIGZpbGw9IiNlOGY3ZmYiLz48cGF0aCBkPSJNMTczIDUyaDc0bDEyIDQyYzI2IDIxIDQzIDU3IDQzIDk4IDAgMzEtMTEgNTUtMzEgNjlIMTQ5Yy0yMC0xNC0zMS0zOC0zMS02OSAwLTQxIDE3LTc3IDQzLTk4bDEyLTQyeiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjNjViN2RmIiBzdHJva2Utd2lkdGg9IjkiLz48cGF0aCBkPSJNMTUwIDE3NmM0NCAxOSA3Ni0xOSAxMjAgMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjODdkNGYyIiBzdHJva2Utd2lkdGg9IjEzIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48dGV4dCB4PSIyMTAiIHk9IjIzMiIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNDQiIGZvbnQtd2VpZ2h0PSI5MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMxZDg4YjgiPldBVEVSPC90ZXh0Pjwvc3ZnPg=="
   }
 ]
