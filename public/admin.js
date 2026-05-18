@@ -42,6 +42,7 @@ async function loadMenu(){
       item.category = normalizeCategory(item.category);
     });
     renderEditor();
+    scrollAdminToBottom();
 
     if(menu.length === 0){
       statusText("No products loaded. Do not save yet. Refresh after deploy finishes.");
@@ -49,7 +50,6 @@ async function loadMenu(){
       saveMenu();
     }else if(!draftIsNewer && !backupHasMorePictures){
       statusText("Loaded saved online products. Admin will not auto-reload while you edit.");
-      scrollAdminToBottom();
     }
   }finally{
     isLoadingMenu = false;
@@ -60,6 +60,9 @@ function scrollAdminToBottom(){
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{
       window.scrollTo({ top:document.documentElement.scrollHeight, behavior:"auto" });
+      setTimeout(()=>{
+        window.scrollTo({ top:document.documentElement.scrollHeight, behavior:"auto" });
+      }, 250);
     });
   });
 }
