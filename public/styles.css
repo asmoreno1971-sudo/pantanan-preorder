@@ -1513,6 +1513,25 @@ button:disabled{
   text-align:center;
 }
 
+.daily-sales-sheet th:first-child{
+  width:74%;
+}
+
+.daily-sales-sheet th:nth-child(2){
+  width:9%;
+}
+
+.daily-sales-sheet th:nth-child(3){
+  width:17%;
+}
+
+.daily-sales-sheet th:nth-child(2),
+.daily-sales-sheet th:nth-child(3),
+.daily-sales-sheet td:nth-child(2),
+.daily-sales-sheet td:nth-child(3){
+  text-align:center !important;
+}
+
 .transaction-toolbar{
   align-items:center;
 }
