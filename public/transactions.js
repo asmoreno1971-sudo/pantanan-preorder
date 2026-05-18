@@ -72,15 +72,20 @@ function renderTransactions(report){
     return;
   }
 
-  transactionRows.innerHTML = report.rows.map(row=>`
+  transactionRows.innerHTML = report.rows.map((row, index)=>{
+    const nextRow = report.rows[index + 1];
+    const showTransactionTotal = !nextRow || nextRow.orderId !== row.orderId;
+
+    return `
     <tr>
       <td><span class="transaction-order">#${String(row.orderNumber || 0).padStart(3, "0")}</span>${escapeHtml(formatTimestamp(row.timestamp))}</td>
       <td>${escapeHtml(row.product)}</td>
       <td>${numberText(row.quantity)}</td>
       <td>${numberText(row.amount)}</td>
-      <td>${numberText(row.transactionTotal)}</td>
+      <td class="${showTransactionTotal ? "transaction-total-cell" : "transaction-total-empty"}">${showTransactionTotal ? numberText(row.transactionTotal) : ""}</td>
     </tr>
-  `).join("");
+  `;
+  }).join("");
 }
 
 function startAutoRefresh(){

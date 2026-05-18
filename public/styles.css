@@ -1484,15 +1484,15 @@ button:disabled{
 }
 
 .sales-sheet th:first-child{
-  width:55%;
+  width:68%;
 }
 
 .sales-sheet th:nth-child(2){
-  width:18%;
+  width:12%;
 }
 
 .sales-sheet th:nth-child(3){
-  width:27%;
+  width:20%;
 }
 
 .sales-sheet td:first-child{
@@ -1510,7 +1510,7 @@ button:disabled{
 
 .sales-sheet td:nth-child(2),
 .sales-sheet td:nth-child(3){
-  text-align:right;
+  text-align:center;
 }
 
 .transaction-toolbar{
@@ -1612,6 +1612,10 @@ button:disabled{
 .transaction-sheet th:nth-child(5),
 .transaction-sheet td:nth-child(5){
   text-align:right;
+}
+
+.transaction-total-empty{
+  color:transparent;
 }
 
 .transaction-order{
