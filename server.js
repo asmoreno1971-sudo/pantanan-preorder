@@ -8,6 +8,7 @@ const publicDir = path.join(root, "public");
 const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : root;
 const menuPath = path.resolve(process.env.ADMIN_PRODUCTS_PATH || path.join(dataDir, "admin-products.json"));
 const ordersPath = path.resolve(process.env.ORDERS_PATH || path.join(dataDir, "orders.json"));
+const databaseUrl = process.env.DATABASE_URL || "";
 const port = Number(process.env.PORT) || 3001;
 const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
 const semaphoreSenderName = process.env.SEMAPHORE_SENDER_NAME || "";
@@ -16,6 +17,8 @@ let cachedMenuMtime = 0;
 const cachedImages = new Map();
 let menuFileReady = null;
 let ordersFileReady = null;
+let dbPool = null;
+let dbReady = null;
 const legacyMenuPaths = [...new Set([
   path.join(root, "menu.json"),
   path.join(dataDir, "menu.json")
@@ -57,25 +60,122 @@ async function readBody(req){
 }
 
 async function readOrders(){
-  await ensureOrdersFile();
+  const orders = await readDataRecord("orders", ordersPath, []);
 
-  try{
-    return JSON.parse(await fs.readFile(ordersPath, "utf8"));
-  }catch{
-    return [];
+  if(!Array.isArray(orders)){
+    throw new Error("Orders storage is not an array. Write blocked to protect records.");
   }
+
+  return orders;
 }
 
 async function writeOrders(orders){
-  await fs.mkdir(path.dirname(ordersPath), { recursive:true });
-  await fs.writeFile(ordersPath, JSON.stringify(orders, null, 2));
+  if(!Array.isArray(orders)){
+    throw new Error("Orders write blocked: invalid order data.");
+  }
+
+  await writeDataRecord("orders", ordersPath, orders);
+}
+
+async function getDbPool(){
+  if(!databaseUrl){
+    return null;
+  }
+
+  if(!dbPool){
+    const { Pool } = require("pg");
+    dbPool = new Pool({
+      connectionString:databaseUrl,
+      ssl: databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1") ? false : { rejectUnauthorized:false }
+    });
+  }
+
+  if(!dbReady){
+    dbReady = dbPool.query(`
+      create table if not exists app_data (
+        key text primary key,
+        value jsonb not null,
+        updated_at timestamptz not null default now()
+      )
+    `);
+  }
+
+  await dbReady;
+  return dbPool;
+}
+
+async function readDataRecord(key, filePath, fallbackValue){
+  const pool = await getDbPool();
+
+  if(pool){
+    const existing = await pool.query("select value from app_data where key = $1", [key]);
+
+    if(existing.rows.length){
+      return existing.rows[0].value;
+    }
+
+    const seededValue = await readJsonSeed(filePath, fallbackValue);
+    await pool.query(
+      "insert into app_data (key, value, updated_at) values ($1, $2::jsonb, now()) on conflict (key) do nothing",
+      [key, JSON.stringify(seededValue)]
+    );
+    return seededValue;
+  }
+
+  await ensureJsonFile(filePath, null, fallbackValue);
+
+  try{
+    return JSON.parse(await fs.readFile(filePath, "utf8"));
+  }catch(error){
+    throw new Error(`${path.basename(filePath)} could not be read safely: ${error.message}`);
+  }
+}
+
+async function writeDataRecord(key, filePath, value){
+  const pool = await getDbPool();
+
+  if(pool){
+    await pool.query(
+      "insert into app_data (key, value, updated_at) values ($1, $2::jsonb, now()) on conflict (key) do update set value = excluded.value, updated_at = now()",
+      [key, JSON.stringify(value)]
+    );
+    return;
+  }
+
+  await writeJsonFile(filePath, value);
+}
+
+async function readJsonSeed(filePath, fallbackValue){
+  if(!await fileExists(filePath)){
+    return fallbackValue;
+  }
+
+  try{
+    return JSON.parse(await fs.readFile(filePath, "utf8"));
+  }catch{
+    return fallbackValue;
+  }
 }
 
 async function writeJsonFile(filePath, value){
   await fs.mkdir(path.dirname(filePath), { recursive:true });
+  await backupJsonFile(filePath);
   const tempPath = `${filePath}.tmp`;
   await fs.writeFile(tempPath, JSON.stringify(value, null, 2));
   await fs.rename(tempPath, filePath);
+}
+
+async function backupJsonFile(filePath){
+  if(!await fileExists(filePath)){
+    return;
+  }
+
+  const backupPath = `${filePath}.bak`;
+  try{
+    await fs.copyFile(filePath, backupPath);
+  }catch{
+    // The main write is still atomic; backup failure should not block orders.
+  }
 }
 
 async function fileExists(filePath){
@@ -104,7 +204,11 @@ async function ensureJsonFile(filePath, seedPath, fallbackValue){
 
 function ensureMenuFile(){
   if(!menuFileReady){
-    menuFileReady = removeLegacyMenuFiles().then(()=>ensureJsonFile(menuPath, null, []));
+    menuFileReady = removeLegacyMenuFiles().then(async ()=>{
+      if(!databaseUrl){
+        await ensureJsonFile(menuPath, null, []);
+      }
+    });
   }
 
   return menuFileReady;
@@ -122,7 +226,7 @@ async function removeLegacyMenuFiles(){
 
 function ensureOrdersFile(){
   if(!ordersFileReady){
-    ordersFileReady = ensureJsonFile(ordersPath, null, []);
+    ordersFileReady = databaseUrl ? Promise.resolve() : ensureJsonFile(ordersPath, null, []);
   }
 
   return ordersFileReady;
@@ -136,13 +240,22 @@ function clearMenuCache(){
 
 async function readMenu(){
   await ensureMenuFile();
+
+  if(databaseUrl){
+    cachedMenu = normalizeMenu(await readDataRecord("admin-products", menuPath, []));
+    cachedMenuMtime = Date.now();
+    cachedImages.clear();
+    return cachedMenu;
+  }
+
   const stats = await fs.stat(menuPath);
 
   if(cachedMenu && cachedMenuMtime === stats.mtimeMs){
     return cachedMenu;
   }
 
-  cachedMenu = normalizeMenu(JSON.parse(await fs.readFile(menuPath, "utf8")));
+  const menuData = await readDataRecord("admin-products", menuPath, []);
+  cachedMenu = normalizeMenu(menuData);
   cachedMenuMtime = stats.mtimeMs;
   cachedImages.clear();
   return cachedMenu;
@@ -568,7 +681,7 @@ async function handleApi(req, res){
     const cleanMenu = normalizeMenu(menu);
 
     try{
-      await writeJsonFile(menuPath, cleanMenu);
+      await writeDataRecord("admin-products", menuPath, cleanMenu);
       clearMenuCache();
     }catch{
       send(res, 500, JSON.stringify({ ok:false, message:"Server could not save products. Your browser backup is still available." }));

@@ -8,6 +8,9 @@
     "start": "node server.js",
     "check": "node --check server.js && node --check public/app.js && node --check public/admin.js && node --check public/kitchen.js && node --check public/qr.js && node --check public/sales.js && node --check public/transactions.js"
   },
+  "dependencies": {
+    "pg": "^8.11.5"
+  },
   "engines": {
     "node": ">=20"
   }

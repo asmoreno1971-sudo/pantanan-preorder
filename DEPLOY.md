@@ -6,19 +6,16 @@ Set these on the hosting platform:
 
 ```text
 NODE_ENV=production
+DATABASE_URL=<Render Postgres connection string>
 PANTANAN_WHATSAPP_LINK=https://wa.me/639695093050
 PANTANAN_MESSENGER_LINK=https://m.me/your-page-username
 ```
 
 `PORT` is usually provided by the host. Locally it defaults to `3001`.
 
-For production menu/order persistence, attach persistent storage and set:
+For production menu/order persistence, use Render Postgres. The included `render.yaml` creates a free Postgres database and passes `DATABASE_URL` to the web service.
 
-```text
-DATA_DIR=/var/data
-```
-
-The app stores Admin product changes in `DATA_DIR/admin-products.json` and orders in `DATA_DIR/orders.json`. Customer and Cashier pages read that same Admin product file.
+When `DATABASE_URL` is present, the app stores Admin products and orders in Postgres. Local JSON files are only a development fallback.
 
 ## Local Start
 
@@ -35,8 +32,8 @@ Open:
 
 ## Production Notes
 
-- Admin product changes must be saved to persistent storage. On Render, attach a persistent disk mounted at `/var/data` and set `DATA_DIR=/var/data`. Without persistent storage, a redeploy can reset products back to the repository seed file.
-- For a higher-volume public deployment, move `admin-products.json` and `orders.json` to PostgreSQL or another hosted database.
+- Admin product changes and order records must be saved to Postgres. Without `DATABASE_URL`, Render's free web service filesystem can reset on redeploy, restart, or spin-down.
+- Customer and Cashier pages read the same Admin product record from the server. The Admin page no longer pushes old browser backups back into the server on page load.
 - Use the official Pantanan Facebook Page Messenger link for `PANTANAN_MESSENGER_LINK`.
 - Use the official Pantanan WhatsApp Business number for `PANTANAN_WHATSAPP_LINK`.
 - Deploy on HTTPS so QR scans and browser features work reliably.

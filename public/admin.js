@@ -21,27 +21,8 @@ async function loadMenu(){
   try{
     const res = await fetch(`/api/menu?fresh=${Date.now()}`, { cache:"no-store" });
     const serverMenu = await res.json();
-    const savedAt = Number(localStorage.getItem("adminMenuServerSavedAt") || 0);
-    const draft = readStoredMenu(menuDraftKey);
-    const backup = readStoredMenu(menuBackupKey);
-    const draftIsNewer = draft && draft.savedAt > savedAt;
-    const backupDiffersFromServer = backup && publicMenuSignature(backup.items) !== publicMenuSignature(serverMenu);
-    const backupLooksComplete = backup && backup.items.length >= serverMenu.length && countProductPictures(backup.items) >= countProductPictures(serverMenu);
-    const shouldRestoreBackup = backupDiffersFromServer && backupLooksComplete;
-    let restoredFromBrowser = false;
-
-    if(draftIsNewer){
-      menu = draft.items;
-      restoredFromBrowser = true;
-      statusText("Restored your unsaved browser backup. Press Save Products when ready.");
-    }else if(shouldRestoreBackup){
-      menu = backup.items;
-      restoredFromBrowser = true;
-      statusText("Restoring your last saved Admin products to Customer and Cashier...");
-    }else{
-      menu = serverMenu;
-      localStorage.removeItem(menuDraftKey);
-    }
+    menu = serverMenu;
+    localStorage.removeItem(menuDraftKey);
 
     menu.forEach(item=>{
       item.category = normalizeCategory(item.category);
@@ -51,9 +32,7 @@ async function loadMenu(){
 
     if(menu.length === 0){
       statusText("No products loaded. Do not save yet. Refresh after deploy finishes.");
-    }else if(restoredFromBrowser && shouldRestoreBackup && !draftIsNewer){
-      saveMenu();
-    }else if(!draftIsNewer && !shouldRestoreBackup){
+    }else{
       statusText("Loaded saved online products. Admin will not auto-reload while you edit.");
       lastSavedSignature = publicMenuSignature(menu);
     }
