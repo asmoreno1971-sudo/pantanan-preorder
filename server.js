@@ -42,7 +42,9 @@ function send(res, status, body, type = "application/json; charset=utf-8"){
     ? "no-store"
     : type.includes("text/html")
       ? "no-cache"
-      : "public, max-age=86400";
+      : type.includes("application/javascript") || type.includes("text/css")
+        ? "no-cache, max-age=0, must-revalidate"
+        : "public, max-age=86400";
 
   res.writeHead(status, {
     "Content-Type": type,

@@ -30,6 +30,32 @@ let activeOrderVisible = Boolean(activeOrderId);
 let orderSubmitted = false;
 let currentTotal = 0;
 
+function eraseLegacyMenuMemory(){
+  [
+    "pantananCustomerMenuV1",
+    "pantananCashierMenuV1",
+    "menu",
+    "menu.json",
+    "products",
+    "posRwMenu",
+    "adminMenuDraft",
+    "adminMenuLastGood",
+    "adminMenuServerSavedAt"
+  ].forEach(key=>localStorage.removeItem(key));
+
+  if("caches" in window){
+    caches.keys()
+      .then(keys=>Promise.all(keys.filter(key=>/menu|preorder|pantanan|pos|roadworthy/i.test(key)).map(key=>caches.delete(key))))
+      .catch(()=>{});
+  }
+
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.getRegistrations()
+      .then(registrations=>Promise.all(registrations.map(registration=>registration.unregister())))
+      .catch(()=>{});
+  }
+}
+
 function loadSavedCustomer(){
   localStorage.removeItem("customerNickname");
   localStorage.removeItem("customerContact");
@@ -44,9 +70,13 @@ function saveCustomer(){
 
 async function loadMenu(){
   try{
-    localStorage.removeItem("pantananCustomerMenuV1");
     const menuView = isCashierPage ? "cashier" : "customer";
-    const res = await fetch(`/api/menu?view=${menuView}&fresh=${Date.now()}`, { cache:"no-store" });
+    const res = await fetch(`/api/menu?view=${menuView}&fresh=${Date.now()}`, {
+      cache:"no-store",
+      headers:{
+        "Cache-Control":"no-cache"
+      }
+    });
     const menuSource = res.headers.get("X-Menu-Source");
 
     if(menuSource !== "admin-persistent-menu"){
@@ -801,6 +831,7 @@ document.addEventListener("visibilitychange", ()=>{
 });
 updateNowTime();
 generateTimes();
+eraseLegacyMenuMemory();
 loadSavedCustomer();
 updatePaymentVisibility();
 updateCashInputWidth();
