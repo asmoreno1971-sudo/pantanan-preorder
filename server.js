@@ -850,6 +850,7 @@ async function serveStatic(req, res){
     "/cashier": "cashier.html",
     "/kitchen": "kitchen.html",
     "/sales": "sales.html",
+    "/transaction": "transactions.html",
     "/transactions": "transactions.html",
     "/qr": "qr.html"
   };
