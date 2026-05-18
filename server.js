@@ -143,6 +143,8 @@ async function readDataRecord(key, filePath, fallbackValue){
     return seed;
   }
 
+  requirePersistentStorageForProduction(key, "read");
+
   await ensureJsonFile(filePath, null, fallbackValue);
 
   try{
@@ -283,6 +285,7 @@ function transactionLineKey(line){
 }
 
 async function writeDataRecord(key, filePath, value){
+  requirePersistentStorageForProduction(key, "write");
   const pool = await getDbPool();
 
   if(pool){
@@ -294,6 +297,28 @@ async function writeDataRecord(key, filePath, value){
   }
 
   await writeJsonFile(filePath, value);
+}
+
+function requirePersistentStorageForProduction(key, operation){
+  const protectedKeys = new Set([
+    "admin-products",
+    "orders",
+    "orders-watermark",
+    "transaction-ledger"
+  ]);
+  const writeOnlyProtectedKeys = new Set(["admin-products"]);
+
+  if(!isProduction || databaseUrl || !protectedKeys.has(key)){
+    return;
+  }
+
+  if(operation === "read" && writeOnlyProtectedKeys.has(key)){
+    return;
+  }
+
+  if(isProduction && !databaseUrl && protectedKeys.has(key)){
+    throw new Error(`${key} storage is not persistent. Set DATABASE_URL before writing live business data.`);
+  }
 }
 
 async function readJsonSeed(filePath, fallbackValue){
@@ -423,6 +448,23 @@ function menuFingerprint(menu){
     .update(JSON.stringify(normalizeMenu(menu)))
     .digest("hex")
     .slice(0, 16);
+}
+
+async function readLiveRecordCount(reader){
+  try{
+    const records = await reader();
+    const values = Array.isArray(records) ? records : [];
+
+    return {
+      count:values.length,
+      transactionCount:new Set(values.map(item=>item.orderId || item.id)).size
+    };
+  }catch{
+    return {
+      count:0,
+      transactionCount:0
+    };
+  }
 }
 
 function localOrderDate(){
@@ -783,17 +825,19 @@ async function handleApi(req, res){
 
   if(pathname === "/api/storage-status" && req.method === "GET"){
     const menu = await readMenu();
-    const orders = await readOrders();
-    const transactionLines = await readReportingTransactionLines();
+    const orders = await readLiveRecordCount(()=>readOrders());
+    const transactionLines = await readLiveRecordCount(()=>readReportingTransactionLines());
     send(res, 200, JSON.stringify({
       ok:true,
       menuContractVersion,
       storageMode:storageMode(),
+      storagePersistent:Boolean(databaseUrl),
       menuCount:menu.length,
       menuFingerprint:menuFingerprint(menu),
-      orderCount:orders.length,
-      transactionLineCount:transactionLines.length,
-      transactionCount:new Set(transactionLines.map(line=>line.orderId)).size
+      orderCount:orders.count,
+      transactionLineCount:transactionLines.count,
+      transactionCount:transactionLines.transactionCount,
+      storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. Live transaction writes are blocked to prevent record loss."
     }));
     return true;
   }

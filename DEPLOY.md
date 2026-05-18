@@ -36,6 +36,7 @@ Open:
 - Customer and Cashier pages read the same Admin product record from the server. The Admin page no longer pushes old browser backups back into the server on page load.
 - Transaction history is protected with a high-water mark. In production, the server refuses to create a fresh empty `orders` record if storage is missing, and refuses writes that would drop existing order IDs or shrink transaction history.
 - Sales and Transactions use a separate append-only `transaction-ledger` record. Cashier orders append immediately; customer orders append when completed. Use `POST /api/transactions/backfill` after a storage change to copy any surviving completed orders into the ledger.
+- In production, live writes to Admin products, orders, and transaction ledger are blocked when `DATABASE_URL` is missing. This prevents new records from being accepted into Render's disposable filesystem.
 - Use the official Pantanan Facebook Page Messenger link for `PANTANAN_MESSENGER_LINK`.
 - Use the official Pantanan WhatsApp Business number for `PANTANAN_WHATSAPP_LINK`.
 - Deploy on HTTPS so QR scans and browser features work reliably.
