@@ -1,6 +1,9 @@
 let menu = [];
 let isSaving = false;
 let isLoadingMenu = false;
+let autosaveTimer = null;
+let saveQueued = false;
+let lastSavedSignature = "";
 
 const menuDraftKey = "adminMenuDraft";
 const menuBackupKey = "adminMenuLastGood";
@@ -52,6 +55,7 @@ async function loadMenu(){
       saveMenu();
     }else if(!draftIsNewer && !shouldRestoreBackup){
       statusText("Loaded saved online products. Admin will not auto-reload while you edit.");
+      lastSavedSignature = publicMenuSignature(menu);
     }
   }finally{
     isLoadingMenu = false;
@@ -145,7 +149,7 @@ function renderEditor(){
       imageInput.value = "";
       setEditorImage(card.querySelector(".product-image-editor"), img, "");
       saveMenuDraft();
-      statusText("Picture cleared. Press Save Products when ready.");
+      scheduleAutosave("Picture cleared. Autosaving...");
     });
     card.querySelector(".remove-btn").addEventListener("click", ()=>removeProduct(index));
 
@@ -176,6 +180,7 @@ function updateItem(index, field, value){
   }
 
   saveMenuDraft();
+  scheduleAutosave("Autosaving product changes...");
 }
 
 function addProduct(){
@@ -192,14 +197,14 @@ function addProduct(){
 
   renderEditor();
   saveMenuDraft();
-  statusText("New product added. Press Save Products when ready.");
+  scheduleAutosave("New product added. Autosaving...");
 }
 
 function removeProduct(index){
   menu.splice(index, 1);
   renderEditor();
   saveMenuDraft();
-  statusText("Product removed. Press Save Products when ready.");
+  scheduleAutosave("Product removed. Autosaving...");
 }
 
 function uploadImage(index, fileInput, imageInput, img){
@@ -217,7 +222,7 @@ function uploadImage(index, fileInput, imageInput, img){
         imageInput.value = image;
         setEditorImage(img.closest(".product-image-editor"), img, image);
         saveMenuDraft();
-        statusText("Picture loaded. Press Save Products when ready.");
+        scheduleAutosave("Picture loaded. Autosaving...");
         return true;
       })
       .catch(()=>{
@@ -259,8 +264,13 @@ async function saveMenu(options = {}){
     localStorage.setItem("adminMenuServerSavedAt", String(savedAt));
     saveStoredMenu(menuBackupKey, savedAt, menu);
     localStorage.removeItem(menuDraftKey);
+    lastSavedSignature = publicMenuSignature(menu);
     renderEditor();
     const synced = await verifyCustomerMenuSync(options);
+    if(saveQueued){
+      saveQueued = false;
+      scheduleAutosave("Saving latest changes...");
+    }
     return synced;
   }catch{
     saveMenuDraft();
@@ -269,6 +279,27 @@ async function saveMenu(options = {}){
   }finally{
     isSaving = false;
   }
+}
+
+function scheduleAutosave(message){
+  if(isLoadingMenu){
+    return;
+  }
+
+  if(publicMenuSignature(menu) === lastSavedSignature){
+    return;
+  }
+
+  statusText(message || "Autosaving...");
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(()=>{
+    if(isSaving){
+      saveQueued = true;
+      return;
+    }
+
+    saveMenu({ autosave:true });
+  }, 1200);
 }
 
 async function verifyCustomerMenuSync(options = {}){
