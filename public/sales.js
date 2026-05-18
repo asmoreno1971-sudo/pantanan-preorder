@@ -1,11 +1,7 @@
-let salesToken = localStorage.getItem("adminToken") || "";
 let salesRefreshTimer = null;
 let salesLoading = false;
 
-const salesLoginPanel = document.getElementById("salesLoginPanel");
 const salesPanel = document.getElementById("salesPanel");
-const salesPassword = document.getElementById("salesPassword");
-const salesLoginStatus = document.getElementById("salesLoginStatus");
 const salesDate = document.getElementById("salesDate");
 const salesDateLabel = document.getElementById("salesDateLabel");
 const salesGrandTotal = document.getElementById("salesGrandTotal");
@@ -21,32 +17,12 @@ function todayValue(){
 }
 
 function showSales(){
-  salesLoginPanel.classList.add("hidden");
   salesPanel.classList.remove("hidden");
   startAutoRefresh();
 }
 
-async function loginSales(){
-  const res = await fetch("/api/admin/login", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ password:salesPassword.value })
-  });
-  const data = await res.json();
-
-  if(!data.ok){
-    salesLoginStatus.innerText = "Wrong password";
-    return;
-  }
-
-  salesToken = data.token;
-  localStorage.setItem("adminToken", salesToken);
-  showSales();
-  loadSales();
-}
-
 async function loadSales(){
-  if(!salesToken || salesLoading){
+  if(salesLoading){
     return;
   }
 
@@ -57,7 +33,6 @@ async function loadSales(){
 
   try{
     const res = await fetch(`/api/sales/daily?date=${encodeURIComponent(salesDate.value)}`, {
-      headers:{ Authorization:`Bearer ${salesToken}` },
       cache:"no-store"
     });
     data = await res.json();
@@ -69,8 +44,6 @@ async function loadSales(){
 
   if(!data.ok){
     salesStatus.innerText = data.message || "Unable to load sales";
-    salesLoginPanel.classList.remove("hidden");
-    salesPanel.classList.add("hidden");
     salesLoading = false;
     return;
   }
@@ -152,18 +125,9 @@ function escapeHtml(value){
     .replace(/'/g, "&#039;");
 }
 
-salesPassword.addEventListener("keydown", function(event){
-  if(event.key === "Enter"){
-    loginSales();
-  }
-});
-
 salesDate.value = todayValue();
-
-if(salesToken){
-  showSales();
-  loadSales();
-}
+showSales();
+loadSales();
 
 document.addEventListener("visibilitychange", function(){
   if(document.visibilityState === "visible"){

@@ -173,7 +173,7 @@ function orderSalesDate(order){
 }
 
 function orderCountsAsSale(order){
-  return ["Paid", "Done"].includes(order.status);
+  return ["Paid", "Done"].includes(order.status) || order.source === "cashier";
 }
 
 function orderSoldAt(order){
