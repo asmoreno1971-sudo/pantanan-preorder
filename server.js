@@ -114,7 +114,8 @@ async function readDataRecord(key, filePath, fallbackValue){
       return existing.rows[0].value;
     }
 
-    const seededValue = await readJsonSeed(filePath, fallbackValue);
+    const seed = await readJsonSeed(filePath, fallbackValue);
+    const seededValue = key === "admin-products" ? normalizeMenu(seed) : seed;
     await pool.query(
       "insert into app_data (key, value, updated_at) values ($1, $2::jsonb, now()) on conflict (key) do nothing",
       [key, JSON.stringify(seededValue)]
@@ -242,7 +243,23 @@ async function readMenu(){
   await ensureMenuFile();
 
   if(databaseUrl){
-    cachedMenu = normalizeMenu(await readDataRecord("admin-products", menuPath, []));
+    let storedMenu = await readDataRecord("admin-products", menuPath, []);
+
+    if(!Array.isArray(storedMenu) || storedMenu.length === 0){
+      const seedMenu = normalizeMenu(await readJsonSeed(menuPath, []));
+
+      if(seedMenu.length){
+        storedMenu = seedMenu;
+        await writeDataRecord("admin-products", menuPath, seedMenu);
+      }
+    }
+
+    cachedMenu = normalizeMenu(storedMenu);
+
+    if(menuRecordChanged(storedMenu, cachedMenu)){
+      await writeDataRecord("admin-products", menuPath, cachedMenu);
+    }
+
     cachedMenuMtime = Date.now();
     cachedImages.clear();
     return cachedMenu;
@@ -256,9 +273,18 @@ async function readMenu(){
 
   const menuData = await readDataRecord("admin-products", menuPath, []);
   cachedMenu = normalizeMenu(menuData);
+
+  if(menuRecordChanged(menuData, cachedMenu)){
+    await writeDataRecord("admin-products", menuPath, cachedMenu);
+  }
+
   cachedMenuMtime = stats.mtimeMs;
   cachedImages.clear();
   return cachedMenu;
+}
+
+function menuRecordChanged(originalMenu, cleanMenu){
+  return JSON.stringify(Array.isArray(originalMenu) ? originalMenu : []) !== JSON.stringify(cleanMenu);
 }
 
 function localOrderDate(){
@@ -480,7 +506,20 @@ function isForbiddenLegacyImage(image){
 }
 
 function normalizeMenu(menu){
-  return (Array.isArray(menu) ? menu : []).map(normalizeMenuItem);
+  return (Array.isArray(menu) ? menu : [])
+    .filter(item=>!isForbiddenLegacyProduct(item))
+    .map(normalizeMenuItem);
+}
+
+function isForbiddenLegacyProduct(item){
+  const name = String(item && item.name || "").trim().toLowerCase();
+  const id = String(item && item.id || "").trim().toLowerCase();
+  const forbiddenNames = new Set([
+    "cookies & cream cookie1",
+    "cookies and cream cookie1"
+  ]);
+
+  return forbiddenNames.has(name) || id === "new-product-1778126157710";
 }
 
 function imageFingerprint(value){
