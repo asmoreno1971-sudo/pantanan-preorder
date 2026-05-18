@@ -499,18 +499,35 @@ async function readLiveMenuStatus(){
 }
 
 function localOrderDate(){
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return formatLocalDate(new Date());
 }
 
 function formatLocalDate(date){
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone:"Asia/Manila",
+    year:"numeric",
+    month:"2-digit",
+    day:"2-digit"
+  }).formatToParts(date).reduce((items, part)=>{
+    items[part.type] = part.value;
+    return items;
+  }, {});
+
+  const year = parts.year;
+  const month = parts.month;
+  const day = parts.day;
   return `${year}-${month}-${day}`;
+}
+
+function lineSalesDate(line){
+  const timestamp = line.timestamp || line.completedAt || line.doneAt || line.createdAt;
+  const soldAt = new Date(timestamp);
+
+  if(!Number.isNaN(soldAt.getTime())){
+    return formatLocalDate(soldAt);
+  }
+
+  return line.orderDate || localOrderDate();
 }
 
 function orderSalesDate(order){
@@ -538,7 +555,7 @@ function dailySalesReportFromLines(lines, date){
   const rows = [];
 
   lines
-    .filter(line=>line.orderDate === date)
+    .filter(line=>lineSalesDate(line) === date)
     .forEach(line=>{
       const name = String(line.product || "Item").trim();
       const qty = Math.max(0, Number(line.quantity) || 0);
@@ -626,8 +643,11 @@ function transactionLedgerFromLines(lines, options = {}){
   const rows = (Array.isArray(lines) ? lines : []).filter(line=>{
     const transactionAt = line.timestamp || line.completedAt || line.doneAt || line.createdAt;
     const transactionDate = new Date(transactionAt);
+    const transactionLocalDate = Number.isNaN(transactionDate.getTime())
+      ? parseDateValue(line.orderDate)
+      : parseDateValue(formatLocalDate(transactionDate));
 
-    if(range && (Number.isNaN(transactionDate.getTime()) || transactionDate < range.start || transactionDate >= range.end)){
+    if(range && (!transactionLocalDate || transactionLocalDate < range.start || transactionLocalDate >= range.end)){
       return false;
     }
 
