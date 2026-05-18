@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Transaction Reservoir</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<link rel="stylesheet" href="/styles.css?v=20260518-transactions-page">
+</head>
+<body>
+<div class="sales-shell">
+<div class="sales-top">
+<div>
+<h3>Transaction Reservoir</h3>
+<p class="admin-help">Raw order lines for daily, weekly, and monthly reporting.</p>
+</div>
+<div class="sales-links">
+<a href="/admin">Admin</a>
+<a href="/sales">Daily Sales</a>
+<a href="/kitchen">Kitchen</a>
+<a href="/cashier">Cashier</a>
+</div>
+</div>
+
+<div class="sales-panel">
+<div class="sales-toolbar transaction-toolbar">
+<label for="transactionDate">Date</label>
+<input id="transactionDate" type="date" onchange="loadTransactions()">
+<div class="period-tabs" aria-label="Transaction period">
+<button type="button" data-period="day" onclick="setTransactionPeriod('day')">Day</button>
+<button type="button" data-period="week" onclick="setTransactionPeriod('week')">Week</button>
+<button type="button" data-period="month" onclick="setTransactionPeriod('month')">Month</button>
+<button type="button" data-period="all" onclick="setTransactionPeriod('all')">All</button>
+</div>
+<button class="secondary-btn" onclick="loadTransactions()">Refresh</button>
+<span id="transactionStatus" class="status"></span>
+</div>
+
+<div class="transaction-summary">
+<div><span id="transactionCount">0</span><small>Transactions</small></div>
+<div><span id="lineCount">0</span><small>Product Lines</small></div>
+<div><span>P <b id="transactionTotal">0</b></span><small>Total Amount</small></div>
+</div>
+
+<div class="sales-sheet-wrap">
+<table class="sales-sheet transaction-sheet">
+<thead>
+<tr>
+<th>Timestamp</th>
+<th>Product</th>
+<th>Qty</th>
+<th>Amount</th>
+<th>Txn Total</th>
+</tr>
+</thead>
+<tbody id="transactionRows">
+<tr><td colspan="5">No transactions yet</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<script src="/transactions.js?v=20260518-transactions-page"></script>
+</body>
+</html>

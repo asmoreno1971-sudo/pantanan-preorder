@@ -223,6 +223,98 @@ function dailySalesReport(orders, date){
   };
 }
 
+function parseDateValue(value){
+  const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if(!match){
+    return null;
+  }
+
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function periodRange(dateValue, period){
+  const base = parseDateValue(dateValue) || parseDateValue(localOrderDate());
+  const start = new Date(base);
+  const end = new Date(base);
+
+  if(period === "week"){
+    const day = start.getDay();
+    const offset = day === 0 ? -6 : 1 - day;
+    start.setDate(start.getDate() + offset);
+    end.setTime(start.getTime());
+    end.setDate(end.getDate() + 7);
+  }else if(period === "month"){
+    start.setDate(1);
+    end.setFullYear(start.getFullYear(), start.getMonth() + 1, 1);
+  }else{
+    end.setDate(end.getDate() + 1);
+  }
+
+  return { start, end };
+}
+
+function orderTransactionAt(order){
+  return order.completedAt || order.doneAt || order.createdAt || new Date().toISOString();
+}
+
+function transactionLedger(orders, options = {}){
+  const period = ["day", "week", "month", "all"].includes(options.period) ? options.period : "day";
+  const date = options.date || localOrderDate();
+  const range = period === "all" ? null : periodRange(date, period);
+  const rows = [];
+
+  orders.forEach(order=>{
+    const transactionAt = orderTransactionAt(order);
+    const transactionDate = new Date(transactionAt);
+
+    if(range && (Number.isNaN(transactionDate.getTime()) || transactionDate < range.start || transactionDate >= range.end)){
+      return;
+    }
+
+    const items = Array.isArray(order.items) ? order.items : [];
+    const transactionTotal = Number(order.total) || items.reduce((sum, item)=>{
+      const qty = Math.max(0, Number(item.qty) || 0);
+      return sum + (Number(item.subtotal) || qty * (Number(item.price) || 0));
+    }, 0);
+
+    items.forEach(item=>{
+      const qty = Math.max(0, Number(item.qty) || 0);
+      const price = Math.max(0, Number(item.price) || 0);
+      const amount = Number(item.subtotal) || qty * price;
+
+      rows.push({
+        orderId:order.id,
+        orderNumber:Number(order.orderNumber) || 0,
+        timestamp:transactionAt,
+        product:String(item.name || item.product || "Item").trim(),
+        quantity:qty,
+        amount,
+        transactionTotal,
+        source:order.source === "cashier" ? "Cashier" : "Customer",
+        status:order.status || ""
+      });
+    });
+  });
+
+  rows.sort((a, b)=>
+    String(b.timestamp).localeCompare(String(a.timestamp)) ||
+    b.orderNumber - a.orderNumber ||
+    a.product.localeCompare(b.product)
+  );
+
+  return {
+    date,
+    period,
+    rows,
+    transactionCount:new Set(rows.map(row=>row.orderId)).size,
+    lineCount:rows.length,
+    totalAmount:rows.reduce((sum, row)=>sum + row.amount, 0)
+  };
+}
+
 function nextDailyOrderNumber(orders){
   const today = localOrderDate();
   const todaysOrders = orders.filter(order=>order.orderDate === today);
@@ -541,6 +633,18 @@ async function handleApi(req, res){
     return true;
   }
 
+  if(pathname === "/api/transactions" && req.method === "GET"){
+    const orders = await readOrders();
+    send(res, 200, JSON.stringify({
+      ok:true,
+      report:transactionLedger(orders, {
+        date:url.searchParams.get("date") || localOrderDate(),
+        period:url.searchParams.get("period") || "day"
+      })
+    }));
+    return true;
+  }
+
   if(pathname.startsWith("/api/orders/") && req.method === "GET"){
     const id = pathname.split("/")[3];
     const orders = await readOrders();
@@ -730,6 +834,7 @@ async function serveStatic(req, res){
     "/cashier": "cashier.html",
     "/kitchen": "kitchen.html",
     "/sales": "sales.html",
+    "/transactions": "transactions.html",
     "/qr": "qr.html"
   };
 

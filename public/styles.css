@@ -756,7 +756,7 @@ button:disabled{
 
 .admin-action-boxes{
   display:grid;
-  grid-template-columns:repeat(4, minmax(0, 1fr));
+  grid-template-columns:repeat(5, minmax(0, 1fr));
   gap:12px;
   margin:18px 0 10px;
 }
@@ -779,7 +779,7 @@ button:disabled{
   background:#fffaf4;
   color:#2f1d13;
   box-shadow:0 10px 24px rgba(74,47,28,.09);
-  font-size:22px !important;
+  font-size:18px !important;
   font-weight:900;
   line-height:1.1;
   text-align:center;
@@ -810,6 +810,11 @@ button:disabled{
 .admin-action-sales{
   border-color:#c8d6c2;
   background:linear-gradient(135deg, #f3fbef, #dcebd5);
+}
+
+.admin-action-transactions{
+  border-color:#d7d1bb;
+  background:linear-gradient(135deg, #fffbe9, #ece4c7);
 }
 
 .admin-action-kitchen{
@@ -1508,6 +1513,89 @@ button:disabled{
   text-align:right;
 }
 
+.transaction-toolbar{
+  align-items:center;
+}
+
+.period-tabs{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.period-tabs button{
+  min-height:36px;
+  margin:0;
+  padding:8px 12px;
+  border:1px solid #d7c8bb;
+  background:#fffaf4;
+  color:#4a3224;
+  box-shadow:none;
+}
+
+.period-tabs button.active{
+  border-color:#1f8f4d;
+  background:#e8f7ef;
+  color:#13714a;
+}
+
+.transaction-summary{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.transaction-summary div{
+  padding:12px;
+  border:1px solid #dccfc3;
+  border-radius:8px;
+  background:#fffaf4;
+}
+
+.transaction-summary span{
+  display:block;
+  color:#13714a;
+  font-size:24px !important;
+  font-weight:900;
+}
+
+.transaction-summary small{
+  color:#6f5a4a;
+  font-size:12px !important;
+  font-weight:800;
+  text-transform:uppercase;
+}
+
+.transaction-sheet th,
+.transaction-sheet td{
+  white-space:nowrap;
+}
+
+.transaction-sheet th:first-child,
+.transaction-sheet td:first-child,
+.transaction-sheet th:nth-child(2),
+.transaction-sheet td:nth-child(2){
+  text-align:left;
+}
+
+.transaction-sheet th:nth-child(3),
+.transaction-sheet td:nth-child(3),
+.transaction-sheet th:nth-child(4),
+.transaction-sheet td:nth-child(4),
+.transaction-sheet th:nth-child(5),
+.transaction-sheet td:nth-child(5){
+  text-align:right;
+}
+
+.transaction-order{
+  display:inline-block;
+  min-width:42px;
+  margin-right:8px;
+  color:#7a5a43;
+  font-weight:850;
+}
+
 @media (max-width:760px){
   body{
     padding:16px;
@@ -1573,6 +1661,10 @@ button:disabled{
   }
 
   .admin-action-boxes{
+    grid-template-columns:1fr;
+  }
+
+  .transaction-summary{
     grid-template-columns:1fr;
   }
 
