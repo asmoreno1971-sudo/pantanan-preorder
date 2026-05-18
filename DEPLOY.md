@@ -34,6 +34,7 @@ Open:
 
 - Admin product changes and order records must be saved to Postgres. Without `DATABASE_URL`, Render's free web service filesystem can reset on redeploy, restart, or spin-down.
 - Customer and Cashier pages read the same Admin product record from the server. The Admin page no longer pushes old browser backups back into the server on page load.
+- Transaction history is protected with a high-water mark. In production, the server refuses to create a fresh empty `orders` record if storage is missing, and refuses writes that would drop existing order IDs or shrink transaction history.
 - Use the official Pantanan Facebook Page Messenger link for `PANTANAN_MESSENGER_LINK`.
 - Use the official Pantanan WhatsApp Business number for `PANTANAN_WHATSAPP_LINK`.
 - Deploy on HTTPS so QR scans and browser features work reliably.

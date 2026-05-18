@@ -8,11 +8,14 @@ const publicDir = path.join(root, "public");
 const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : root;
 const menuPath = path.resolve(process.env.ADMIN_PRODUCTS_PATH || path.join(dataDir, "admin-products.json"));
 const ordersPath = path.resolve(process.env.ORDERS_PATH || path.join(dataDir, "orders.json"));
+const ordersWatermarkPath = path.resolve(process.env.ORDERS_WATERMARK_PATH || path.join(dataDir, "orders-watermark.json"));
 const databaseUrl = process.env.DATABASE_URL || "";
 const port = Number(process.env.PORT) || 3001;
 const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
 const semaphoreSenderName = process.env.SEMAPHORE_SENDER_NAME || "";
 const menuContractVersion = "20260518-admin-canonical-menu";
+const isProduction = process.env.NODE_ENV === "production";
+const allowEmptyOrderStorage = process.env.ALLOW_EMPTY_ORDER_STORAGE === "true";
 let cachedMenu = null;
 let cachedMenuMtime = 0;
 const cachedImages = new Map();
@@ -69,6 +72,12 @@ async function readOrders(){
     throw new Error("Orders storage is not an array. Write blocked to protect records.");
   }
 
+  const watermark = await readOrderWatermark();
+
+  if(watermark > orders.length){
+    throw new Error("Order storage appears truncated. Refusing to serve incomplete transaction history.");
+  }
+
   return orders;
 }
 
@@ -77,7 +86,7 @@ async function writeOrders(orders){
     throw new Error("Orders write blocked: invalid order data.");
   }
 
-  await writeDataRecord("orders", ordersPath, orders);
+  await writeOrdersRecord(orders);
 }
 
 async function getDbPool(){
@@ -117,6 +126,10 @@ async function readDataRecord(key, filePath, fallbackValue){
       return existing.rows[0].value;
     }
 
+    if(key === "orders" && isProduction && !allowEmptyOrderStorage){
+      throw new Error("Order storage is missing. Refusing to create empty transaction history in production.");
+    }
+
     if(key === "admin-products"){
       return fallbackValue;
     }
@@ -136,6 +149,39 @@ async function readDataRecord(key, filePath, fallbackValue){
   }catch(error){
     throw new Error(`${path.basename(filePath)} could not be read safely: ${error.message}`);
   }
+}
+
+async function writeOrdersRecord(nextOrders){
+  const currentOrders = await readDataRecord("orders", ordersPath, []);
+
+  if(!Array.isArray(currentOrders)){
+    throw new Error("Orders write blocked: current storage is not an array.");
+  }
+
+  const watermark = await readOrderWatermark();
+
+  if(nextOrders.length < Math.max(currentOrders.length, watermark)){
+    throw new Error("Orders write blocked: refusing to shrink transaction history.");
+  }
+
+  const nextIds = new Set(nextOrders.map(order=>String(order.id || "")));
+  const missingExistingOrder = currentOrders.some(order=>order.id && !nextIds.has(String(order.id)));
+
+  if(missingExistingOrder){
+    throw new Error("Orders write blocked: refusing to drop existing transaction IDs.");
+  }
+
+  await writeDataRecord("orders", ordersPath, nextOrders);
+  await writeOrderWatermark(Math.max(watermark, nextOrders.length));
+}
+
+async function readOrderWatermark(){
+  const value = await readDataRecord("orders-watermark", ordersWatermarkPath, 0);
+  return Math.max(0, Number(value) || 0);
+}
+
+async function writeOrderWatermark(value){
+  await writeDataRecord("orders-watermark", ordersWatermarkPath, Math.max(0, Number(value) || 0));
 }
 
 async function writeDataRecord(key, filePath, value){
