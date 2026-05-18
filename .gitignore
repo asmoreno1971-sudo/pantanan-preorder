@@ -1,6 +1,7 @@
 node_modules/
 .env
 *.log
+menu.json
 orders.json
 preorder-preview.html
 start-pantanan-server.cmd

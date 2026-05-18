@@ -16,6 +16,10 @@ let cachedMenuMtime = 0;
 const cachedImages = new Map();
 let menuFileReady = null;
 let ordersFileReady = null;
+const legacyMenuPaths = [...new Set([
+  path.join(root, "menu.json"),
+  path.join(dataDir, "menu.json")
+])].filter(filePath=>path.resolve(filePath) !== menuPath);
 
 const types = {
   ".html": "text/html; charset=utf-8",
@@ -100,10 +104,20 @@ async function ensureJsonFile(filePath, seedPath, fallbackValue){
 
 function ensureMenuFile(){
   if(!menuFileReady){
-    menuFileReady = ensureJsonFile(menuPath, null, []);
+    menuFileReady = removeLegacyMenuFiles().then(()=>ensureJsonFile(menuPath, null, []));
   }
 
   return menuFileReady;
+}
+
+async function removeLegacyMenuFiles(){
+  await Promise.all(legacyMenuPaths.map(async filePath=>{
+    try{
+      await fs.rm(filePath, { force:true });
+    }catch{
+      // Best-effort cleanup only. Product data must come from admin-products.json.
+    }
+  }));
 }
 
 function ensureOrdersFile(){
