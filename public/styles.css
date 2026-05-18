@@ -1572,15 +1572,41 @@ button:disabled{
   white-space:nowrap;
 }
 
+.transaction-sheet th:first-child{
+  width:27%;
+}
+
+.transaction-sheet th:nth-child(2){
+  width:40%;
+}
+
+.transaction-sheet th:nth-child(3){
+  width:7%;
+}
+
+.transaction-sheet th:nth-child(4){
+  width:13%;
+}
+
+.transaction-sheet th:nth-child(5){
+  width:13%;
+}
+
 .transaction-sheet th:first-child,
-.transaction-sheet td:first-child,
+.transaction-sheet td:first-child{
+  text-align:left;
+}
+
 .transaction-sheet th:nth-child(2),
 .transaction-sheet td:nth-child(2){
   text-align:left;
 }
 
 .transaction-sheet th:nth-child(3),
-.transaction-sheet td:nth-child(3),
+.transaction-sheet td:nth-child(3){
+  text-align:center;
+}
+
 .transaction-sheet th:nth-child(4),
 .transaction-sheet td:nth-child(4),
 .transaction-sheet th:nth-child(5),
@@ -1590,8 +1616,8 @@ button:disabled{
 
 .transaction-order{
   display:inline-block;
-  min-width:42px;
-  margin-right:8px;
+  min-width:38px;
+  margin-right:6px;
   color:#7a5a43;
   font-weight:850;
 }
