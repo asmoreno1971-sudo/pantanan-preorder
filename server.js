@@ -9,6 +9,7 @@ const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : root
 const menuPath = path.resolve(process.env.ADMIN_PRODUCTS_PATH || path.join(dataDir, "admin-products.json"));
 const ordersPath = path.resolve(process.env.ORDERS_PATH || path.join(dataDir, "orders.json"));
 const ordersWatermarkPath = path.resolve(process.env.ORDERS_WATERMARK_PATH || path.join(dataDir, "orders-watermark.json"));
+const transactionLedgerPath = path.resolve(process.env.TRANSACTION_LEDGER_PATH || path.join(dataDir, "transaction-ledger.json"));
 const databaseUrl = process.env.DATABASE_URL || "";
 const port = Number(process.env.PORT) || 3001;
 const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
@@ -182,6 +183,103 @@ async function readOrderWatermark(){
 
 async function writeOrderWatermark(value){
   await writeDataRecord("orders-watermark", ordersWatermarkPath, Math.max(0, Number(value) || 0));
+}
+
+async function readTransactionLines(){
+  const lines = await readDataRecord("transaction-ledger", transactionLedgerPath, []);
+
+  if(!Array.isArray(lines)){
+    throw new Error("Transaction ledger is not an array. Refusing to serve incomplete records.");
+  }
+
+  return lines;
+}
+
+async function readReportingTransactionLines(){
+  const lines = await readTransactionLines();
+
+  if(lines.length){
+    return lines;
+  }
+
+  return ordersToTransactionLines(await readOrders());
+}
+
+async function appendTransactionLinesForOrder(order){
+  const lines = transactionLinesForOrder(order);
+
+  if(!lines.length){
+    return;
+  }
+
+  const existingLines = await readTransactionLines();
+  const baseLines = existingLines.length ? existingLines : ordersToTransactionLines(await readOrders());
+  const existingKeys = new Set(baseLines.map(line=>transactionLineKey(line)));
+  const newLines = lines.filter(line=>!existingKeys.has(transactionLineKey(line)));
+
+  if(!newLines.length){
+    return;
+  }
+
+  await writeDataRecord("transaction-ledger", transactionLedgerPath, [...newLines, ...baseLines]);
+}
+
+async function backfillTransactionLedgerFromOrders(){
+  const orders = await readOrders();
+  const existingLines = await readTransactionLines();
+  const existingKeys = new Set(existingLines.map(line=>transactionLineKey(line)));
+  const backfillLines = ordersToTransactionLines(orders)
+    .filter(line=>!existingKeys.has(transactionLineKey(line)));
+
+  if(!backfillLines.length){
+    return { added:0, total:existingLines.length };
+  }
+
+  const nextLines = [...backfillLines, ...existingLines];
+  await writeDataRecord("transaction-ledger", transactionLedgerPath, nextLines);
+  return { added:backfillLines.length, total:nextLines.length };
+}
+
+function transactionLinesForOrder(order){
+  const items = Array.isArray(order.items) ? order.items : [];
+  const transactionTotal = Number(order.total) || items.reduce((sum, item)=>{
+    const qty = Math.max(0, Number(item.qty) || 0);
+    return sum + (Number(item.subtotal) || qty * (Number(item.price) || 0));
+  }, 0);
+  const timestamp = order.completedAt || order.doneAt || order.createdAt || new Date().toISOString();
+
+  return items
+    .map(item=>{
+      const qty = Math.max(0, Number(item.qty) || 0);
+      const price = Math.max(0, Number(item.price) || 0);
+      const amount = Number(item.subtotal) || qty * price;
+      const productId = String(item.id || item.productId || item.name || item.product || "item").trim();
+
+      if(!qty || !productId){
+        return null;
+      }
+
+      return {
+        id:`${order.id}:${productId}`,
+        orderId:order.id,
+        orderNumber:Number(order.orderNumber) || 0,
+        orderDate:order.orderDate || formatLocalDate(new Date(timestamp)),
+        timestamp,
+        productId,
+        product:String(item.name || item.product || "Item").trim(),
+        quantity:qty,
+        price,
+        amount,
+        transactionTotal,
+        source:order.source === "cashier" ? "Cashier" : "Customer",
+        status:order.status || ""
+      };
+    })
+    .filter(Boolean);
+}
+
+function transactionLineKey(line){
+  return String(line.id || `${line.orderId}:${line.productId}:${line.product}`);
 }
 
 async function writeDataRecord(key, filePath, value){
@@ -360,30 +458,29 @@ function orderSoldAt(order){
 }
 
 function dailySalesReport(orders, date){
+  return dailySalesReportFromLines(ordersToTransactionLines(orders), date);
+}
+
+function dailySalesReportFromLines(lines, date){
   const rows = [];
 
-  orders
-    .filter(order=>orderCountsAsSale(order) && orderSalesDate(order) === date)
-    .forEach(order=>{
-      const soldAt = orderSoldAt(order);
-      const orderNumber = Number(order.orderNumber) || 0;
+  lines
+    .filter(line=>line.orderDate === date)
+    .forEach(line=>{
+      const name = String(line.product || "Item").trim();
+      const qty = Math.max(0, Number(line.quantity) || 0);
+      const subtotal = Number(line.amount) || qty * (Number(line.price) || 0);
 
-      (Array.isArray(order.items) ? order.items : []).forEach(item=>{
-        const name = String(item.name || item.product || "Item").trim();
-        const qty = Math.max(0, Number(item.qty) || 0);
-        const subtotal = Number(item.subtotal) || qty * (Number(item.price) || 0);
+      if(!name || !qty){
+        return;
+      }
 
-        if(!name || !qty){
-          return;
-        }
-
-        rows.push({
-          name,
-          soldAt,
-          orderNumber,
-          frequency:qty,
-          total:subtotal
-        });
+      rows.push({
+        name,
+        soldAt:line.timestamp,
+        orderNumber:Number(line.orderNumber) || 0,
+        frequency:qty,
+        total:subtotal
       });
     });
 
@@ -440,43 +537,39 @@ function orderTransactionAt(order){
 }
 
 function transactionLedger(orders, options = {}){
+  return transactionLedgerFromLines(ordersToTransactionLines(orders), options);
+}
+
+function ordersToTransactionLines(orders){
+  return (Array.isArray(orders) ? orders : [])
+    .filter(order=>orderCountsAsSale(order))
+    .flatMap(transactionLinesForOrder);
+}
+
+function transactionLedgerFromLines(lines, options = {}){
   const period = ["day", "week", "month", "all"].includes(options.period) ? options.period : "day";
   const date = options.date || localOrderDate();
   const range = period === "all" ? null : periodRange(date, period);
-  const rows = [];
-
-  orders.forEach(order=>{
-    const transactionAt = orderTransactionAt(order);
+  const rows = (Array.isArray(lines) ? lines : []).filter(line=>{
+    const transactionAt = line.timestamp || line.completedAt || line.doneAt || line.createdAt;
     const transactionDate = new Date(transactionAt);
 
     if(range && (Number.isNaN(transactionDate.getTime()) || transactionDate < range.start || transactionDate >= range.end)){
-      return;
+      return false;
     }
 
-    const items = Array.isArray(order.items) ? order.items : [];
-    const transactionTotal = Number(order.total) || items.reduce((sum, item)=>{
-      const qty = Math.max(0, Number(item.qty) || 0);
-      return sum + (Number(item.subtotal) || qty * (Number(item.price) || 0));
-    }, 0);
-
-    items.forEach(item=>{
-      const qty = Math.max(0, Number(item.qty) || 0);
-      const price = Math.max(0, Number(item.price) || 0);
-      const amount = Number(item.subtotal) || qty * price;
-
-      rows.push({
-        orderId:order.id,
-        orderNumber:Number(order.orderNumber) || 0,
-        timestamp:transactionAt,
-        product:String(item.name || item.product || "Item").trim(),
-        quantity:qty,
-        amount,
-        transactionTotal,
-        source:order.source === "cashier" ? "Cashier" : "Customer",
-        status:order.status || ""
-      });
-    });
-  });
+    return true;
+  }).map(line=>({
+    orderId:line.orderId,
+    orderNumber:Number(line.orderNumber) || 0,
+    timestamp:line.timestamp,
+    product:String(line.product || "Item").trim(),
+    quantity:Math.max(0, Number(line.quantity) || 0),
+    amount:Number(line.amount) || 0,
+    transactionTotal:Number(line.transactionTotal) || 0,
+    source:line.source || "",
+    status:line.status || ""
+  }));
 
   rows.sort((a, b)=>
     String(b.timestamp).localeCompare(String(a.timestamp)) ||
@@ -691,13 +784,16 @@ async function handleApi(req, res){
   if(pathname === "/api/storage-status" && req.method === "GET"){
     const menu = await readMenu();
     const orders = await readOrders();
+    const transactionLines = await readReportingTransactionLines();
     send(res, 200, JSON.stringify({
       ok:true,
       menuContractVersion,
       storageMode:storageMode(),
       menuCount:menu.length,
       menuFingerprint:menuFingerprint(menu),
-      orderCount:orders.length
+      orderCount:orders.length,
+      transactionLineCount:transactionLines.length,
+      transactionCount:new Set(transactionLines.map(line=>line.orderId)).size
     }));
     return true;
   }
@@ -855,20 +951,26 @@ async function handleApi(req, res){
 
   if(pathname === "/api/sales/daily" && req.method === "GET"){
     const date = url.searchParams.get("date") || localOrderDate();
-    const orders = await readOrders();
-    send(res, 200, JSON.stringify({ ok:true, report:dailySalesReport(orders, date) }));
+    const transactionLines = await readReportingTransactionLines();
+    send(res, 200, JSON.stringify({ ok:true, report:dailySalesReportFromLines(transactionLines, date) }));
     return true;
   }
 
   if(pathname === "/api/transactions" && req.method === "GET"){
-    const orders = await readOrders();
+    const transactionLines = await readReportingTransactionLines();
     send(res, 200, JSON.stringify({
       ok:true,
-      report:transactionLedger(orders, {
+      report:transactionLedgerFromLines(transactionLines, {
         date:url.searchParams.get("date") || localOrderDate(),
         period:url.searchParams.get("period") || "day"
       })
     }));
+    return true;
+  }
+
+  if(pathname === "/api/transactions/backfill" && req.method === "POST"){
+    const result = await backfillTransactionLedgerFromOrders();
+    send(res, 200, JSON.stringify({ ok:true, ...result }));
     return true;
   }
 
@@ -959,6 +1061,9 @@ async function handleApi(req, res){
 
     orders.unshift(order);
     await writeOrders(orders);
+    if(isCashierOrder){
+      await appendTransactionLinesForOrder(order);
+    }
     send(res, 200, JSON.stringify({ ok:true, order }));
     return true;
   }
@@ -1012,6 +1117,7 @@ async function handleApi(req, res){
     order.status = "Done";
     order.completedAt = new Date().toISOString();
     await writeOrders(orders);
+    await appendTransactionLinesForOrder(order);
     send(res, 200, JSON.stringify({ ok:true, order }));
     return true;
   }
