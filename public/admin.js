@@ -31,6 +31,22 @@ async function loadMenu(){
     }
 
     const serverMenu = await res.json();
+    const restore = latestStoredMenu();
+
+    if(shouldRestoreStoredMenu(restore, serverMenu)){
+      menu = restore.items;
+      menu.forEach(item=>{
+        item.category = normalizeCategory(item.category);
+      });
+      renderEditor();
+      scrollAdminToBottom();
+      lastSavedSignature = publicMenuSignature(menu);
+      lastSavedCount = menu.length;
+      statusText("Server menu reverted. Restoring your latest Admin backup...");
+      await saveMenu({ restore:true });
+      return;
+    }
+
     menu = serverMenu;
     localStorage.removeItem(menuDraftKey);
 
@@ -457,6 +473,37 @@ function readStoredMenu(key){
     localStorage.removeItem(key);
     return null;
   }
+}
+
+function latestStoredMenu(){
+  return [readStoredMenu(menuDraftKey), readStoredMenu(menuBackupKey)]
+    .filter(Boolean)
+    .sort((a, b)=>(Number(b.savedAt) || 0) - (Number(a.savedAt) || 0))[0] || null;
+}
+
+function shouldRestoreStoredMenu(stored, serverMenu){
+  if(!stored || !Array.isArray(stored.items)){
+    return false;
+  }
+
+  const storedItems = stored.items;
+  const storedSignature = publicMenuSignature(storedItems);
+  const serverSignature = publicMenuSignature(serverMenu);
+
+  if(!storedSignature || storedSignature === serverSignature){
+    return false;
+  }
+
+  if(storedItems.length < Math.max(1, (Array.isArray(serverMenu) ? serverMenu.length : 0) - 1)){
+    return false;
+  }
+
+  const savedAt = Number(stored.savedAt) || 0;
+  const serverSavedAt = Number(localStorage.getItem("adminMenuServerSavedAt")) || 0;
+  const storedPictures = countProductPictures(storedItems);
+  const serverPictures = countProductPictures(serverMenu);
+
+  return savedAt >= serverSavedAt || storedPictures > serverPictures;
 }
 
 function countProductPictures(items){
