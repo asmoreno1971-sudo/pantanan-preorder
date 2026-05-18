@@ -12,6 +12,7 @@ const databaseUrl = process.env.DATABASE_URL || "";
 const port = Number(process.env.PORT) || 3001;
 const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
 const semaphoreSenderName = process.env.SEMAPHORE_SENDER_NAME || "";
+const menuContractVersion = "20260518-admin-canonical-menu";
 let cachedMenu = null;
 let cachedMenuMtime = 0;
 const cachedImages = new Map();
@@ -41,9 +42,9 @@ function send(res, status, body, type = "application/json; charset=utf-8"){
   const cacheControl = type.includes("application/json")
     ? "no-store"
     : type.includes("text/html")
-      ? "no-cache"
+      ? "no-store, max-age=0, must-revalidate"
       : type.includes("application/javascript") || type.includes("text/css")
-        ? "no-cache, max-age=0, must-revalidate"
+        ? "no-store, max-age=0, must-revalidate"
         : "public, max-age=86400";
 
   res.writeHead(status, {
@@ -241,6 +242,10 @@ function clearMenuCache(){
   cachedImages.clear();
 }
 
+function storageMode(){
+  return databaseUrl ? "postgres" : "json-fallback";
+}
+
 async function readMenu(){
   await ensureMenuFile();
 
@@ -287,6 +292,14 @@ async function readMenu(){
 
 function menuRecordChanged(originalMenu, cleanMenu){
   return JSON.stringify(Array.isArray(originalMenu) ? originalMenu : []) !== JSON.stringify(cleanMenu);
+}
+
+function menuFingerprint(menu){
+  return crypto
+    .createHash("sha256")
+    .update(JSON.stringify(normalizeMenu(menu)))
+    .digest("hex")
+    .slice(0, 16);
 }
 
 function localOrderDate(){
@@ -650,6 +663,20 @@ async function handleApi(req, res){
     return true;
   }
 
+  if(pathname === "/api/storage-status" && req.method === "GET"){
+    const menu = await readMenu();
+    const orders = await readOrders();
+    send(res, 200, JSON.stringify({
+      ok:true,
+      menuContractVersion,
+      storageMode:storageMode(),
+      menuCount:menu.length,
+      menuFingerprint:menuFingerprint(menu),
+      orderCount:orders.length
+    }));
+    return true;
+  }
+
   if(pathname === "/api/config" && req.method === "GET"){
     send(res, 200, JSON.stringify({
       messengerLink:process.env.PANTANAN_MESSENGER_LINK || "https://facebook.com/alexander.moreno.2929",
@@ -667,6 +694,10 @@ async function handleApi(req, res){
       "Cache-Control":"no-store",
       "X-Menu-Source":"admin-persistent-menu",
       "X-Menu-File":"admin-products",
+      "X-Menu-Storage":storageMode(),
+      "X-Menu-Version":menuContractVersion,
+      "X-Menu-Fingerprint":menuFingerprint(responseMenu),
+      "X-Menu-Count":String(responseMenu.length),
       "X-Menu-View":view || "admin"
     });
     res.end(JSON.stringify(responseMenu));

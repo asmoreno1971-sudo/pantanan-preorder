@@ -29,6 +29,7 @@ let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
 let activeOrderVisible = Boolean(activeOrderId);
 let orderSubmitted = false;
 let currentTotal = 0;
+const requiredMenuVersion = "20260518-admin-canonical-menu";
 
 function eraseLegacyMenuMemory(){
   [
@@ -78,9 +79,10 @@ async function loadMenu(){
       }
     });
     const menuSource = res.headers.get("X-Menu-Source");
+    const menuVersion = res.headers.get("X-Menu-Version");
 
-    if(menuSource !== "admin-persistent-menu"){
-      throw new Error("Wrong menu source");
+    if(menuSource !== "admin-persistent-menu" || menuVersion !== requiredMenuVersion){
+      throw new Error("Wrong menu source or version");
     }
 
     const freshMenu = await res.json();

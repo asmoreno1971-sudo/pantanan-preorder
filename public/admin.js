@@ -8,6 +8,7 @@ let lastSavedSignature = "";
 const autosaveDelayMs = 10000;
 const menuDraftKey = "adminMenuDraft";
 const menuBackupKey = "adminMenuLastGood";
+const requiredMenuVersion = "20260518-admin-canonical-menu";
 const categories = ["Sandwiches", "Drinks", "Dimsum", "Noodle", "Other"];
 const editorBox = document.getElementById("editorPanel");
 const editorList = document.getElementById("productEditor");
@@ -21,6 +22,13 @@ async function loadMenu(){
   isLoadingMenu = true;
   try{
     const res = await fetch(`/api/menu?fresh=${Date.now()}`, { cache:"no-store" });
+    const menuSource = res.headers.get("X-Menu-Source");
+    const menuVersion = res.headers.get("X-Menu-Version");
+
+    if(menuSource !== "admin-persistent-menu" || menuVersion !== requiredMenuVersion){
+      throw new Error("Wrong menu source or version");
+    }
+
     const serverMenu = await res.json();
     menu = serverMenu;
     localStorage.removeItem(menuDraftKey);
@@ -301,6 +309,11 @@ async function verifyCustomerMenuSync(options = {}){
 
     if(customerRes.headers.get("X-Menu-Source") !== "admin-persistent-menu" || cashierRes.headers.get("X-Menu-Source") !== "admin-persistent-menu"){
       statusText("Save rejected: customer or cashier is using the wrong menu source.");
+      return false;
+    }
+
+    if(customerRes.headers.get("X-Menu-Version") !== requiredMenuVersion || cashierRes.headers.get("X-Menu-Version") !== requiredMenuVersion){
+      statusText("Save rejected: customer or cashier has stale menu version.");
       return false;
     }
 
