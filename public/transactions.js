@@ -9,6 +9,7 @@ const transactionCount = document.getElementById("transactionCount");
 const lineCount = document.getElementById("lineCount");
 const transactionTotal = document.getElementById("transactionTotal");
 const periodButtons = [...document.querySelectorAll("[data-period]")];
+const transactionBackupPrefix = "transactionBackup:";
 
 function todayValue(){
   const now = new Date();
@@ -53,8 +54,17 @@ async function loadTransactions(){
       return;
     }
 
-    renderTransactions(data.report);
-    transactionStatus.innerText = `Auto updated ${currentTimeText()}`;
+    if(data.report && data.report.rows && data.report.rows.length){
+      saveTransactionBackup(data.report);
+      renderTransactions(data.report);
+      transactionStatus.innerText = `Auto updated ${currentTimeText()}`;
+    }else{
+      const backup = readTransactionBackup(transactionDate.value || todayValue(), transactionPeriod);
+      renderTransactions(backup || data.report);
+      transactionStatus.innerText = backup
+        ? `Showing browser backup from ${currentTimeText()}`
+        : `Auto updated ${currentTimeText()}`;
+    }
   }catch{
     transactionStatus.innerText = "Offline. Retrying...";
   }finally{
@@ -86,6 +96,35 @@ function renderTransactions(report){
     </tr>
   `;
   }).join("");
+}
+
+function transactionBackupKey(date, period){
+  return `${transactionBackupPrefix}${period}:${date}`;
+}
+
+function saveTransactionBackup(report){
+  try{
+    localStorage.setItem(transactionBackupKey(report.date, report.period), JSON.stringify({
+      savedAt:Date.now(),
+      report
+    }));
+  }catch{
+    // Keep rendering even when browser storage is full.
+  }
+}
+
+function readTransactionBackup(date, period){
+  try{
+    const stored = JSON.parse(localStorage.getItem(transactionBackupKey(date, period)) || "null");
+
+    if(!stored || !stored.report || !Array.isArray(stored.report.rows) || !stored.report.rows.length){
+      return null;
+    }
+
+    return stored.report;
+  }catch{
+    return null;
+  }
 }
 
 function startAutoRefresh(){

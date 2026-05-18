@@ -7,6 +7,7 @@ const salesDateLabel = document.getElementById("salesDateLabel");
 const salesGrandTotal = document.getElementById("salesGrandTotal");
 const salesRows = document.getElementById("salesRows");
 const salesStatus = document.getElementById("salesStatus");
+const salesBackupPrefix = "dailySalesBackup:";
 
 function todayValue(){
   const now = new Date();
@@ -48,8 +49,17 @@ async function loadSales(){
     return;
   }
 
-  renderSales(data.report);
-  salesStatus.innerText = `Auto updated ${currentTimeText()}`;
+  if(data.report && data.report.rows && data.report.rows.length){
+    saveSalesBackup(data.report);
+    renderSales(data.report);
+    salesStatus.innerText = `Auto updated ${currentTimeText()}`;
+  }else{
+    const backup = readSalesBackup(salesDate.value);
+    renderSales(backup || data.report);
+    salesStatus.innerText = backup
+      ? `Showing browser backup from ${currentTimeText()}`
+      : `Auto updated ${currentTimeText()}`;
+  }
   salesLoading = false;
 }
 
@@ -90,6 +100,31 @@ function renderSales(report){
       <td>${numberText(row.total)}</td>
     </tr>
   `).join("");
+}
+
+function saveSalesBackup(report){
+  try{
+    localStorage.setItem(`${salesBackupPrefix}${report.date}`, JSON.stringify({
+      savedAt:Date.now(),
+      report
+    }));
+  }catch{
+    // Browser storage can fill up; sales display should keep working.
+  }
+}
+
+function readSalesBackup(date){
+  try{
+    const stored = JSON.parse(localStorage.getItem(`${salesBackupPrefix}${date}`) || "null");
+
+    if(!stored || !stored.report || !Array.isArray(stored.report.rows) || !stored.report.rows.length){
+      return null;
+    }
+
+    return stored.report;
+  }catch{
+    return null;
+  }
 }
 
 function formatReportDate(value){
