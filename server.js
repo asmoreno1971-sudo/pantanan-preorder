@@ -325,10 +325,6 @@ function requirePersistentStorageForProduction(key, operation){
     return;
   }
 
-  if(operation === "write" && key === "admin-products"){
-    throw new Error("Admin product storage is not persistent. Set DATABASE_URL before writing live product data.");
-  }
-
   if(key === "admin-products"){
     return;
   }
@@ -872,7 +868,7 @@ async function handleApi(req, res){
       orderCount:orders.count,
       transactionLineCount:transactionLines.count,
       transactionCount:transactionLines.transactionCount,
-      storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. Customer and Cashier are using the cleaned canonical menu. Orders can run on fallback storage, but Admin product saves need Render Postgres for safe persistence."
+      storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. Admin, Customer, Cashier, and Kitchen are using the same cleaned fallback storage. Render Postgres is still recommended for permanent records."
     }));
     return true;
   }
