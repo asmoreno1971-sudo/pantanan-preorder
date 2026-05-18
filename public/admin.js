@@ -5,6 +5,7 @@ let autosaveTimer = null;
 let saveQueued = false;
 let lastSavedSignature = "";
 
+const autosaveDelayMs = 10000;
 const menuDraftKey = "adminMenuDraft";
 const menuBackupKey = "adminMenuLastGood";
 const categories = ["Sandwiches", "Drinks", "Dimsum", "Noodle", "Other"];
@@ -269,7 +270,7 @@ function scheduleAutosave(message){
     return;
   }
 
-  statusText(message || "Autosaving...");
+  statusText(message || "Autosaving in 10 seconds...");
   clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(()=>{
     if(isSaving){
@@ -278,7 +279,7 @@ function scheduleAutosave(message){
     }
 
     saveMenu({ autosave:true });
-  }, 1200);
+  }, autosaveDelayMs);
 }
 
 async function verifyCustomerMenuSync(options = {}){
