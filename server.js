@@ -117,13 +117,16 @@ async function readDataRecord(key, filePath, fallbackValue){
       return existing.rows[0].value;
     }
 
+    if(key === "admin-products"){
+      return fallbackValue;
+    }
+
     const seed = await readJsonSeed(filePath, fallbackValue);
-    const seededValue = key === "admin-products" ? normalizeMenu(seed) : seed;
     await pool.query(
       "insert into app_data (key, value, updated_at) values ($1, $2::jsonb, now()) on conflict (key) do nothing",
-      [key, JSON.stringify(seededValue)]
+      [key, JSON.stringify(seed)]
     );
-    return seededValue;
+    return seed;
   }
 
   await ensureJsonFile(filePath, null, fallbackValue);
@@ -250,23 +253,8 @@ async function readMenu(){
   await ensureMenuFile();
 
   if(databaseUrl){
-    let storedMenu = await readDataRecord("admin-products", menuPath, []);
-
-    if(!Array.isArray(storedMenu) || storedMenu.length === 0){
-      const seedMenu = normalizeMenu(await readJsonSeed(menuPath, []));
-
-      if(seedMenu.length){
-        storedMenu = seedMenu;
-        await writeDataRecord("admin-products", menuPath, seedMenu);
-      }
-    }
-
+    const storedMenu = await readDataRecord("admin-products", menuPath, []);
     cachedMenu = normalizeMenu(storedMenu);
-
-    if(menuRecordChanged(storedMenu, cachedMenu)){
-      await writeDataRecord("admin-products", menuPath, cachedMenu);
-    }
-
     cachedMenuMtime = Date.now();
     cachedImages.clear();
     return cachedMenu;
@@ -280,18 +268,9 @@ async function readMenu(){
 
   const menuData = await readDataRecord("admin-products", menuPath, []);
   cachedMenu = normalizeMenu(menuData);
-
-  if(menuRecordChanged(menuData, cachedMenu)){
-    await writeDataRecord("admin-products", menuPath, cachedMenu);
-  }
-
   cachedMenuMtime = stats.mtimeMs;
   cachedImages.clear();
   return cachedMenu;
-}
-
-function menuRecordChanged(originalMenu, cleanMenu){
-  return JSON.stringify(Array.isArray(originalMenu) ? originalMenu : []) !== JSON.stringify(cleanMenu);
 }
 
 function menuFingerprint(menu){

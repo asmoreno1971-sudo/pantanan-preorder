@@ -4,6 +4,7 @@ let isLoadingMenu = false;
 let autosaveTimer = null;
 let saveQueued = false;
 let lastSavedSignature = "";
+let lastSavedCount = 0;
 
 const autosaveDelayMs = 10000;
 const menuDraftKey = "adminMenuDraft";
@@ -44,6 +45,7 @@ async function loadMenu(){
     }else{
       statusText("Loaded saved online products. Admin will not auto-reload while you edit.");
       lastSavedSignature = publicMenuSignature(menu);
+      lastSavedCount = menu.length;
     }
   }finally{
     isLoadingMenu = false;
@@ -236,6 +238,14 @@ async function saveMenu(options = {}){
     return false;
   }
 
+  const validationError = validateMenuBeforeSave(options);
+
+  if(validationError){
+    statusText(validationError);
+    saveMenuDraft();
+    return false;
+  }
+
   isSaving = true;
   statusText("Saving...");
 
@@ -263,6 +273,7 @@ async function saveMenu(options = {}){
     saveStoredMenu(menuBackupKey, savedAt, menu);
     localStorage.removeItem(menuDraftKey);
     lastSavedSignature = publicMenuSignature(menu);
+    lastSavedCount = menu.length;
     renderEditor();
     const synced = await verifyCustomerMenuSync(options);
     if(saveQueued){
@@ -298,6 +309,30 @@ function scheduleAutosave(message){
 
     saveMenu({ autosave:true });
   }, autosaveDelayMs);
+}
+
+function validateMenuBeforeSave(options = {}){
+  const cleanMenu = prepareMenuForSave();
+  const hasBadName = cleanMenu.some(item=>{
+    const name = String(item.name || "").trim();
+    return !name || name === "Untitled Product";
+  });
+
+  if(hasBadName){
+    return "Autosave blocked: finish the product name first.";
+  }
+
+  const hasBadExistingPrice = cleanMenu.some(item=>!String(item.id || "").startsWith("new-product-") && Number(item.price) <= 0);
+
+  if(hasBadExistingPrice){
+    return "Autosave blocked: an existing product has zero price.";
+  }
+
+  if(options.autosave && lastSavedCount && cleanMenu.length < Math.max(1, lastSavedCount - 1)){
+    return "Autosave blocked: too many products disappeared. Press Save Products if intentional.";
+  }
+
+  return "";
 }
 
 async function verifyCustomerMenuSync(options = {}){
