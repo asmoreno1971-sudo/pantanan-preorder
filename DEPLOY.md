@@ -15,7 +15,7 @@ PANTANAN_MESSENGER_LINK=https://m.me/your-page-username
 
 For production menu/order persistence, use Render Postgres. The included `render.yaml` creates a free Postgres database and passes `DATABASE_URL` to the web service.
 
-When `DATABASE_URL` is present, the app stores Admin products and orders in Postgres. Local JSON files are only a development fallback. In production without `DATABASE_URL`, the cleaned canonical menu can be served read-only so customers can still order from the deployed menu, but live saves and transactions are blocked.
+When `DATABASE_URL` is present, the app stores Admin products and orders in Postgres. Local JSON files are only a development fallback. In production without `DATABASE_URL`, the cleaned canonical menu can be served read-only and orders can run on fallback storage so the kiosk remains usable, but Admin product saves are blocked.
 
 ## Local Start
 
@@ -36,7 +36,7 @@ Open:
 - Customer and Cashier pages read the same Admin product record from the server. The Admin page no longer pushes old browser backups back into the server on page load.
 - Transaction history is protected with a high-water mark. In production, the server refuses to create a fresh empty `orders` record if storage is missing, and refuses writes that would drop existing order IDs or shrink transaction history.
 - Sales and Transactions use a separate append-only `transaction-ledger` record. Cashier orders append immediately; customer orders append when completed. Use `POST /api/transactions/backfill` after a storage change to copy any surviving completed orders into the ledger.
-- In production, Admin product saves, order writes, and transaction ledger writes are blocked when `DATABASE_URL` is missing. Customer and Cashier may read the cleaned canonical menu, but cannot receive stale `menu.json` data.
+- In production, Admin product saves are blocked when `DATABASE_URL` is missing. Customer and Cashier may read the cleaned canonical menu, and cannot receive stale `menu.json` data.
 - Do not set `ADMIN_PRODUCTS_PATH` in production. The server always uses the canonical `admin-products.json` record and treats `menu.json` as a legacy file to remove.
 - Use the official Pantanan Facebook Page Messenger link for `PANTANAN_MESSENGER_LINK`.
 - Use the official Pantanan WhatsApp Business number for `PANTANAN_WHATSAPP_LINK`.

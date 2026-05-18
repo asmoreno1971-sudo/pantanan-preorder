@@ -325,11 +325,15 @@ function requirePersistentStorageForProduction(key, operation){
     return;
   }
 
-  if(operation === "read" && key === "admin-products"){
+  if(operation === "write" && key === "admin-products"){
+    throw new Error("Admin product storage is not persistent. Set DATABASE_URL before writing live product data.");
+  }
+
+  if(key === "admin-products"){
     return;
   }
 
-  throw new Error(`${key} storage is not persistent. Set DATABASE_URL before ${operation === "read" ? "serving" : "writing"} live business data.`);
+  return;
 }
 
 async function readJsonSeed(filePath, fallbackValue){
@@ -430,7 +434,7 @@ function storageMode(){
     return "postgres";
   }
 
-  return isProduction ? "canonical-readonly-menu" : "json-fallback";
+  return isProduction ? "canonical-menu-json-orders" : "json-fallback";
 }
 
 async function readMenu(){
@@ -868,7 +872,7 @@ async function handleApi(req, res){
       orderCount:orders.count,
       transactionLineCount:transactionLines.count,
       transactionCount:transactionLines.transactionCount,
-      storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. Customer and Cashier are using the cleaned canonical menu read-only. Saving products and transactions is blocked until Render Postgres is connected."
+      storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. Customer and Cashier are using the cleaned canonical menu. Orders can run on fallback storage, but Admin product saves need Render Postgres for safe persistence."
     }));
     return true;
   }
