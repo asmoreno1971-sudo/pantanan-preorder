@@ -58,7 +58,7 @@ function renderEditor(){
 
   menu.forEach((item, index)=>{
     const card = document.createElement("div");
-    card.className = "product-card-editor";
+    card.className = `product-card-editor ${item.available === false ? "product-unavailable" : ""}`;
 
     card.innerHTML = `
       <div class="product-image-editor">
@@ -90,6 +90,7 @@ function renderEditor(){
             <input class="file-input" type="file" accept="image/*">
           </label>
           <button class="secondary-btn clear-image-btn" type="button">Clear picture</button>
+          <button class="availability-btn ${item.available === false ? "unavailable" : "available"}" type="button">${item.available === false ? "Unavailable" : "Available"}</button>
           <button class="danger-btn remove-btn" type="button">Remove</button>
         </div>
       </div>
@@ -131,6 +132,7 @@ function renderEditor(){
       saveMenuDraft();
       scheduleAutosave("Picture cleared. Autosaving...");
     });
+    card.querySelector(".availability-btn").addEventListener("click", ()=>toggleAvailability(index));
     card.querySelector(".remove-btn").addEventListener("click", ()=>removeProduct(index));
 
     editorList.appendChild(card);
@@ -172,7 +174,8 @@ function addProduct(){
     price:0,
     theme:"latte",
     category:"Drinks",
-    image:""
+    image:"",
+    available:true
   });
 
   renderEditor();
@@ -185,6 +188,13 @@ function removeProduct(index){
   renderEditor();
   saveMenuDraft();
   scheduleAutosave("Product removed. Autosaving...");
+}
+
+function toggleAvailability(index){
+  menu[index].available = menu[index].available === false;
+  renderEditor();
+  saveMenuDraft();
+  scheduleAutosave(menu[index].available ? "Product available. Autosaving..." : "Product hidden from customer page. Autosaving...");
 }
 
 function uploadImage(index, fileInput, imageInput, img){
@@ -408,7 +418,8 @@ function countProductPictures(items){
 function prepareMenuForSave(){
   return menu.map(item=>({
     ...item,
-    category:normalizeCategory(item.category)
+    category:normalizeCategory(item.category),
+    available:item.available !== false
   }));
 }
 

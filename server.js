@@ -487,7 +487,8 @@ function normalizeMenuItem(item, index = 0){
     price: Math.max(0, Number(item.price) || 0),
     theme: String(item.theme || "latte"),
     category: normalizeMenuCategory(item.category),
-    image: normalizeMenuImage(item.image)
+    image: normalizeMenuImage(item.image),
+    available: item.available !== false
   };
 }
 

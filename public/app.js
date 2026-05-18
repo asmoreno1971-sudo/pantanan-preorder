@@ -89,8 +89,10 @@ async function loadMenu(){
       return;
     }
 
-    if(menuSignature(freshMenu) !== menuSignature(menu)){
-      menu = freshMenu;
+    const orderableMenu = freshMenu.filter(item=>item.available !== false);
+
+    if(menuSignature(orderableMenu) !== menuSignature(menu)){
+      menu = orderableMenu;
       renderMenu();
     }
   }catch{
@@ -102,7 +104,7 @@ async function loadMenu(){
 
 function menuSignature(items){
   return (Array.isArray(items) ? items : [])
-    .map(item=>`${item.id}|${item.name}|${item.price}|${item.category}|${item.image}|${item.imageFingerprint || ""}`)
+    .map(item=>`${item.id}|${item.name}|${item.price}|${item.category}|${item.available !== false}|${item.image}|${item.imageFingerprint || ""}`)
     .join("\n");
 }
 

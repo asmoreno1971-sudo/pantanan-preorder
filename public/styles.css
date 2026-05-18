@@ -635,6 +635,10 @@ button:disabled{
   padding-bottom:0;
 }
 
+.product-card-editor.product-unavailable{
+  opacity:.62;
+}
+
 .product-image-editor{
   position:relative;
   width:168px;
@@ -714,6 +718,17 @@ button:disabled{
   font-size:14px;
   font-weight:850;
   text-transform:none;
+}
+
+.availability-btn{
+  background:#1f8f4d;
+  color:#fff;
+}
+
+.availability-btn.unavailable{
+  background:#eee3d9;
+  color:#4a3224;
+  border:1px solid #d7c8bb;
 }
 
 .product-fields-editor .upload-btn input{
