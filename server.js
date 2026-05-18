@@ -346,8 +346,24 @@ function normalizeMenuItem(item, index = 0){
     price: Math.max(0, Number(item.price) || 0),
     theme: String(item.theme || "latte"),
     category: normalizeMenuCategory(item.category),
-    image: String(item.image || "").trim()
+    image: normalizeMenuImage(item.image)
   };
+}
+
+function normalizeMenuImage(image){
+  const value = String(image || "").trim();
+  return isForbiddenLegacyImage(value) ? "" : value;
+}
+
+function isForbiddenLegacyImage(image){
+  const value = String(image || "").toLowerCase();
+  const forbiddenPatterns = [
+    "images.unsplash.com/photo-1499636136210-6f4ee915583e",
+    "upload.wikimedia.org/wikipedia/commons/8/8b/bottle_of_water.png",
+    "lotusbiscoff.com/sites/default/files/styles/image_style_scale_width_xs/public/2023-10/biscoff%20hero%20image%20classic%20250g.jpg"
+  ];
+
+  return forbiddenPatterns.some(pattern=>value.includes(pattern));
 }
 
 function normalizeMenu(menu){
