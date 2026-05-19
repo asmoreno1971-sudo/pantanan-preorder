@@ -1437,6 +1437,8 @@ button:disabled{
 
 .sales-links a,
 .sales-toolbar button{
+  position:relative;
+  overflow:hidden;
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -1448,6 +1450,14 @@ button:disabled{
   color:#4f3525;
   font-weight:850;
   text-decoration:none;
+}
+
+.sales-links a{
+  min-width:108px;
+  border-radius:8px;
+  font-size:18px !important;
+  font-weight:900;
+  box-shadow:0 10px 24px rgba(74,47,28,.09);
 }
 
 .sales-login-panel{
