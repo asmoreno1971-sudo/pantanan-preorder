@@ -771,7 +771,7 @@ button:disabled{
 
 .admin-action-boxes{
   display:grid;
-  grid-template-columns:repeat(5, minmax(0, 1fr));
+  grid-template-columns:repeat(6, minmax(0, 1fr));
   gap:12px;
   margin:18px 0 10px;
 }
@@ -840,6 +840,11 @@ button:disabled{
 .admin-action-customer{
   border-color:#c8d4e4;
   background:linear-gradient(135deg, #f2f7ff, #dbe7f6);
+}
+
+.admin-action-cashier{
+  border-color:#cbd8d7;
+  background:linear-gradient(135deg, #effbf9, #d8ece9);
 }
 
 .admin-action-box:hover{
