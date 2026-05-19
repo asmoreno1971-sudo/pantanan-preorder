@@ -9,7 +9,8 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Warm customer page
+      - name: Keep preorder app warm
         run: |
+          curl --silent --show-error --fail --max-time 20 --retry 2 https://pantanan-preorder.onrender.com/health >/dev/null
           curl --silent --show-error --fail --max-time 20 --retry 2 https://pantanan-preorder.onrender.com/ >/dev/null
-          curl --silent --show-error --fail --max-time 20 --retry 2 "https://pantanan-preorder.onrender.com/api/menu?view=customer" >/dev/null
+          curl --silent --show-error --fail --max-time 20 --retry 2 https://pantanan-preorder.onrender.com/cashier >/dev/null
