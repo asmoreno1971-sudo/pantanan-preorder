@@ -6,7 +6,7 @@ const crypto = require("node:crypto");
 const root = __dirname;
 const publicDir = path.join(root, "public");
 const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : root;
-const databaseUrl = process.env.DATABASE_URL || "";
+const databaseUrl = process.env.EXTERNAL_DATABASE_URL || process.env.DATABASE_URL || "";
 const isProduction = process.env.NODE_ENV === "production";
 const menuPath = resolveAdminProductsPath();
 const ordersPath = path.resolve(process.env.ORDERS_PATH || path.join(dataDir, "orders.json"));
