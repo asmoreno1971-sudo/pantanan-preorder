@@ -29,6 +29,8 @@ let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
 let activeOrderVisible = Boolean(activeOrderId);
 let orderSubmitted = false;
 let currentTotal = 0;
+let storageWriteReady = true;
+let storageWarning = "";
 const requiredMenuVersion = "20260518-admin-canonical-menu";
 
 function eraseLegacyMenuMemory(){
@@ -388,8 +390,23 @@ function validate(){
   const valid = needsCustomerFields
     ? nameVal && (!contactInput || normalizeMobileNumber(contactVal)) && hasItem && hasDeliveryTime && cashValid
     : hasItem && cashValid;
-  orderButton.disabled = orderSubmitted || !valid;
-  orderButton.style.background = valid && !orderSubmitted ? "#1f8f4d" : "#ccc";
+  orderButton.disabled = orderSubmitted || !valid || !storageWriteReady;
+  orderButton.innerText = storageWriteReady ? orderButtonReadyText : "Database Required";
+  orderButton.style.background = valid && !orderSubmitted && storageWriteReady ? "#1f8f4d" : "#ccc";
+}
+
+async function loadStorageStatus(){
+  try{
+    const res = await fetch(`/api/storage-status?fresh=${Date.now()}`, { cache:"no-store" });
+    const data = await res.json();
+    storageWriteReady = !data.writeProtected;
+    storageWarning = data.storageWarning || "";
+  }catch{
+    storageWriteReady = true;
+    storageWarning = "";
+  }
+
+  validate();
 }
 
 function updateChange(){
@@ -492,6 +509,12 @@ async function openSummary(){
 
   if(!items.length){
     alert("Please tap a product photo to add an item.");
+    return;
+  }
+
+  if(!storageWriteReady){
+    alert(storageWarning || "Database is required before sending live orders.");
+    validate();
     return;
   }
 
@@ -840,5 +863,6 @@ loadSavedCustomer();
 updatePaymentVisibility();
 updateCashInputWidth();
 loadMenu();
+loadStorageStatus();
 checkActiveOrder();
 validate();

@@ -5,6 +5,8 @@ let autosaveTimer = null;
 let saveQueued = false;
 let lastSavedSignature = "";
 let lastSavedCount = 0;
+let storageWriteReady = true;
+let storageWarning = "";
 
 const autosaveDelayMs = 10000;
 const menuDraftKey = "adminMenuDraft";
@@ -249,6 +251,12 @@ function uploadImage(index, fileInput, imageInput, img){
 }
 
 async function saveMenu(options = {}){
+  if(!storageWriteReady){
+    statusText(storageWarning || "Database is required before saving live products.");
+    saveMenuDraft();
+    return false;
+  }
+
   if(menu.length === 0){
     statusText("Save blocked: product list is empty. Refresh the page first.");
     return false;
@@ -549,7 +557,24 @@ function resizeImage(src, maxSize, quality){
 
 async function startAdmin(){
   editorBox.classList.remove("hidden");
+  await loadStorageStatus();
   await loadMenu();
+}
+
+async function loadStorageStatus(){
+  try{
+    const res = await fetch(`/api/storage-status?fresh=${Date.now()}`, { cache:"no-store" });
+    const data = await res.json();
+    storageWriteReady = !data.writeProtected;
+    storageWarning = data.storageWarning || "";
+
+    if(!storageWriteReady){
+      statusText(storageWarning || "Database is required before saving live products.");
+    }
+  }catch{
+    storageWriteReady = true;
+    storageWarning = "";
+  }
 }
 
 startAdmin();

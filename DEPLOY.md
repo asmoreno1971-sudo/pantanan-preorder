@@ -15,7 +15,7 @@ PANTANAN_MESSENGER_LINK=https://m.me/your-page-username
 
 For production menu/order persistence, use Render Postgres. The included `render.yaml` creates a free Postgres database and passes `DATABASE_URL` to the web service.
 
-When `DATABASE_URL` is present, the app stores Admin products and orders in Postgres. Local JSON files are only a development fallback. In production without `DATABASE_URL`, Admin, Customer, Cashier, Kitchen, Sales, and Transactions all use the same cleaned fallback storage so the kiosk remains usable.
+When `DATABASE_URL` is present, the app stores Admin products, orders, and transaction ledgers in Postgres. Local JSON files are only a development fallback. In production without `DATABASE_URL`, the app enters read-only safety mode for live business data: menu pages can load, but product saves and order/transaction writes are blocked so temporary storage cannot silently lose records.
 
 ## Local Start
 
@@ -36,7 +36,8 @@ Open:
 - Customer and Cashier pages read the same Admin product record from the server. The Admin page no longer pushes old browser backups back into the server on page load.
 - Transaction history is protected with a high-water mark. In production, the server refuses to create a fresh empty `orders` record if storage is missing, and refuses writes that would drop existing order IDs or shrink transaction history.
 - Sales and Transactions use a separate append-only `transaction-ledger` record. Cashier orders append immediately; customer orders append when completed. Use `POST /api/transactions/backfill` after a storage change to copy any surviving completed orders into the ledger.
-- In production without `DATABASE_URL`, Admin product saves update the same cleaned fallback storage that Customer and Cashier read. Customer and Cashier cannot receive stale `menu.json` data.
+- In production without `DATABASE_URL`, Admin product saves, order writes, and transaction writes are blocked. This is intentional: it prevents new sales from being accepted into disposable Render storage.
+- After attaching Render Postgres, open `/api/storage-status`. It must show `"storagePersistent":true` before real selling.
 - Do not set `ADMIN_PRODUCTS_PATH` in production. The server always uses the canonical `admin-products.json` record and treats `menu.json` as a legacy file to remove.
 - Use the official Pantanan Facebook Page Messenger link for `PANTANAN_MESSENGER_LINK`.
 - Use the official Pantanan WhatsApp Business number for `PANTANAN_WHATSAPP_LINK`.

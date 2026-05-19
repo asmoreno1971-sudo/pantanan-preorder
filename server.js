@@ -141,10 +141,6 @@ async function readDataRecord(key, filePath, fallbackValue){
       return existing.rows[0].value;
     }
 
-    if(key === "orders" && isProduction && !allowEmptyOrderStorage){
-      throw new Error("Order storage is missing. Refusing to create empty transaction history in production.");
-    }
-
     if(key === "admin-products"){
       return fallbackValue;
     }
@@ -325,11 +321,9 @@ function requirePersistentStorageForProduction(key, operation){
     return;
   }
 
-  if(key === "admin-products"){
-    return;
+  if(operation === "write"){
+    throw new Error("Persistent database is required before saving live products, orders, or transactions. Connect Render Postgres DATABASE_URL first.");
   }
-
-  return;
 }
 
 async function readJsonSeed(filePath, fallbackValue){
@@ -883,12 +877,13 @@ async function handleApi(req, res){
       menuContractVersion,
       storageMode:storageMode(),
       storagePersistent:Boolean(databaseUrl),
+      writeProtected:isProduction && !databaseUrl,
       menuCount:menu.count,
       menuFingerprint:menu.fingerprint,
       orderCount:orders.count,
       transactionLineCount:transactionLines.count,
       transactionCount:transactionLines.transactionCount,
-      storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. Admin, Customer, Cashier, and Kitchen are using the same cleaned fallback storage. Render Postgres is still recommended for permanent records."
+      storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. The app is in read-only safety mode for live business data so transactions cannot be accepted into temporary storage."
     }));
     return true;
   }
