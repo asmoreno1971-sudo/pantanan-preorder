@@ -321,8 +321,12 @@ function requirePersistentStorageForProduction(key, operation){
     return;
   }
 
+  if(key === "admin-products"){
+    return;
+  }
+
   if(operation === "write"){
-    throw new Error("Persistent database is required before saving live products, orders, or transactions. Connect Render Postgres DATABASE_URL first.");
+    throw new Error("Persistent database is required before saving live orders or transactions. Connect Render Postgres DATABASE_URL first.");
   }
 }
 
@@ -717,13 +721,30 @@ function normalizeMenuImage(image){
 
 function isForbiddenLegacyImage(image){
   const value = String(image || "").toLowerCase();
+  const decodedSvg = decodeSvgDataUrl(value);
   const forbiddenPatterns = [
     "images.unsplash.com/photo-1499636136210-6f4ee915583e",
     "upload.wikimedia.org/wikipedia/commons/8/8b/bottle_of_water.png",
     "lotusbiscoff.com/sites/default/files/styles/image_style_scale_width_xs/public/2023-10/biscoff%20hero%20image%20classic%20250g.jpg"
   ];
 
-  return forbiddenPatterns.some(pattern=>value.includes(pattern));
+  return forbiddenPatterns.some(pattern=>value.includes(pattern)) ||
+    decodedSvg.includes("biscoff sandwich") ||
+    decodedSvg.includes(">water<");
+}
+
+function decodeSvgDataUrl(value){
+  const match = String(value || "").match(/^data:image\/svg\+xml;base64,(.+)$/i);
+
+  if(!match){
+    return "";
+  }
+
+  try{
+    return Buffer.from(match[1], "base64").toString("utf8").toLowerCase();
+  }catch{
+    return "";
+  }
 }
 
 function normalizeMenu(menu){
@@ -878,12 +899,14 @@ async function handleApi(req, res){
       storageMode:storageMode(),
       storagePersistent:Boolean(databaseUrl),
       writeProtected:isProduction && !databaseUrl,
+      productWriteProtected:false,
+      orderWriteProtected:isProduction && !databaseUrl,
       menuCount:menu.count,
       menuFingerprint:menu.fingerprint,
       orderCount:orders.count,
       transactionLineCount:transactionLines.count,
       transactionCount:transactionLines.transactionCount,
-      storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. The app is in read-only safety mode for live business data so transactions cannot be accepted into temporary storage."
+      storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. Product saves are allowed, but live orders and transactions are blocked until Render Postgres is connected."
     }));
     return true;
   }

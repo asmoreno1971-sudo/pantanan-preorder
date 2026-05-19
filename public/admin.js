@@ -565,7 +565,7 @@ async function loadStorageStatus(){
   try{
     const res = await fetch(`/api/storage-status?fresh=${Date.now()}`, { cache:"no-store" });
     const data = await res.json();
-    storageWriteReady = !data.writeProtected;
+    storageWriteReady = !data.productWriteProtected;
     storageWarning = data.storageWarning || "";
 
     if(!storageWriteReady){

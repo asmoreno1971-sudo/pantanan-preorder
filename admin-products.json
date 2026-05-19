@@ -203,7 +203,7 @@
     "price": 60,
     "theme": "americano",
     "category": "Sandwiches",
-    "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MjAiIGhlaWdodD0iMjgwIiB2aWV3Qm94PSIwIDAgNDIwIDI4MCI+PHJlY3Qgd2lkdGg9IjQyMCIgaGVpZ2h0PSIyODAiIGZpbGw9IiNkODIxMjgiLz48cmVjdCB4PSIzNSIgeT0iNzAiIHdpZHRoPSIzNTAiIGhlaWdodD0iMTQwIiByeD0iMjQiIGZpbGw9IiNmN2RmYWQiLz48dGV4dCB4PSIyMTAiIHk9IjEzMiIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNTYiIGZvbnQtd2VpZ2h0PSI4MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPkJpc2NvZmY8L3RleHQ+PHRleHQgeD0iMjEwIiB5PSIxNzQiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjMwIiBmb250LXdlaWdodD0iNzAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNmYyZjE5Ij5TYW5kd2ljaDwvdGV4dD48L3N2Zz4=",
+    "image": "",
     "available": true
   },
   {
@@ -212,7 +212,7 @@
     "price": 20,
     "theme": "latte",
     "category": "Drinks",
-    "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MjAiIGhlaWdodD0iMjgwIiB2aWV3Qm94PSIwIDAgNDIwIDI4MCI+PHJlY3Qgd2lkdGg9IjQyMCIgaGVpZ2h0PSIyODAiIGZpbGw9IiNlOGY3ZmYiLz48cGF0aCBkPSJNMTczIDUyaDc0bDEyIDQyYzI2IDIxIDQzIDU3IDQzIDk4IDAgMzEtMTEgNTUtMzEgNjlIMTQ5Yy0yMC0xNC0zMS0zOC0zMS02OSAwLTQxIDE3LTc3IDQzLTk4bDEyLTQyeiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjNjViN2RmIiBzdHJva2Utd2lkdGg9IjkiLz48cGF0aCBkPSJNMTUwIDE3NmM0NCAxOSA3Ni0xOSAxMjAgMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjODdkNGYyIiBzdHJva2Utd2lkdGg9IjEzIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48dGV4dCB4PSIyMTAiIHk9IjIzMiIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNDQiIGZvbnQtd2VpZ2h0PSI5MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMxZDg4YjgiPldBVEVSPC90ZXh0Pjwvc3ZnPg==",
+    "image": "",
     "available": true
   }
 ]
