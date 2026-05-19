@@ -1460,6 +1460,26 @@ button:disabled{
   box-shadow:0 10px 24px rgba(74,47,28,.09);
 }
 
+.sales-links a.admin-action-add{
+  border-color:#dfc5aa;
+  background:linear-gradient(135deg, #fff7ed, #efd8c2);
+}
+
+.sales-links a.admin-action-sales{
+  border-color:#c8d6c2;
+  background:linear-gradient(135deg, #f3fbef, #dcebd5);
+}
+
+.sales-links a.admin-action-kitchen{
+  border-color:#d5c9e7;
+  background:linear-gradient(135deg, #f8f5ff, #e7ddf7);
+}
+
+.sales-links a.admin-action-customer{
+  border-color:#c8d4e4;
+  background:linear-gradient(135deg, #f2f7ff, #dbe7f6);
+}
+
 .sales-login-panel{
   max-width:420px;
 }
