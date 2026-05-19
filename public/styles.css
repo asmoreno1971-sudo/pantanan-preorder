@@ -1606,6 +1606,10 @@ button:disabled{
   white-space:nowrap;
 }
 
+.transaction-sheet{
+  min-width:0;
+}
+
 .transaction-sheet th:first-child{
   width:27%;
 }
@@ -1658,6 +1662,73 @@ button:disabled{
   margin-right:6px;
   color:#7a5a43;
   font-weight:850;
+}
+
+@media (max-width:520px){
+  .sales-shell{
+    padding:8px;
+  }
+
+  .sales-panel{
+    gap:8px;
+  }
+
+  .sales-sheet-wrap{
+    width:100%;
+    overflow-x:hidden;
+  }
+
+  .transaction-sheet{
+    width:100%;
+    min-width:0;
+    table-layout:fixed;
+    font-size:11px !important;
+  }
+
+  .transaction-sheet th,
+  .transaction-sheet td{
+    padding:5px 3px;
+    white-space:normal;
+    word-break:normal;
+    overflow-wrap:anywhere;
+    font-size:11px !important;
+    line-height:1.12;
+  }
+
+  .transaction-sheet th:first-child{
+    width:27%;
+  }
+
+  .transaction-sheet th:nth-child(2){
+    width:39%;
+  }
+
+  .transaction-sheet th:nth-child(3){
+    width:8%;
+  }
+
+  .transaction-sheet th:nth-child(4){
+    width:13%;
+  }
+
+  .transaction-sheet th:nth-child(5){
+    width:13%;
+  }
+
+  .transaction-sheet th:nth-child(3),
+  .transaction-sheet td:nth-child(3),
+  .transaction-sheet th:nth-child(4),
+  .transaction-sheet td:nth-child(4),
+  .transaction-sheet th:nth-child(5),
+  .transaction-sheet td:nth-child(5){
+    text-align:center;
+  }
+
+  .transaction-order{
+    display:block;
+    min-width:0;
+    margin:0 0 2px;
+  }
 }
 
 @media (max-width:760px){
