@@ -846,14 +846,22 @@ async function checkActiveOrder(){
 }
 
 setInterval(updateNowTime, 1000);
+setInterval(loadStorageStatus, 5000);
 setInterval(checkActiveOrder, 5000);
 setInterval(refreshMenuIfIdle, 60000);
-window.addEventListener("focus", refreshMenuIfIdle);
-window.addEventListener("pageshow", refreshMenuIfIdle);
+window.addEventListener("focus", ()=>{
+  refreshMenuIfIdle();
+  loadStorageStatus();
+});
+window.addEventListener("pageshow", ()=>{
+  refreshMenuIfIdle();
+  loadStorageStatus();
+});
 window.addEventListener("online", refreshMenuIfIdle);
 document.addEventListener("visibilitychange", ()=>{
   if(document.visibilityState === "visible"){
     refreshMenuIfIdle();
+    loadStorageStatus();
   }
 });
 updateNowTime();
