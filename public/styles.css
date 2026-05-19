@@ -915,6 +915,19 @@ button:disabled{
   margin:-10px 0 18px;
 }
 
+.cashier-shortcuts{
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:8px;
+  margin:0 0 12px;
+}
+
+.cashier-shortcuts .admin-action-box{
+  min-height:34px;
+  height:34px;
+  padding:7px 8px;
+  font-size:12px !important;
+}
+
 .sound-control button.sound-on{
   background:#6f4e37;
 }
