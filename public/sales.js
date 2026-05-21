@@ -7,7 +7,13 @@ const salesDateLabel = document.getElementById("salesDateLabel");
 const salesGrandTotal = document.getElementById("salesGrandTotal");
 const salesRows = document.getElementById("salesRows");
 const salesStatus = document.getElementById("salesStatus");
+const profitPeriodLabel = document.getElementById("profitPeriodLabel");
+const profitSales = document.getElementById("profitSales");
+const profitExpenses = document.getElementById("profitExpenses");
+const profitNet = document.getElementById("profitNet");
+const profitStatus = document.getElementById("profitStatus");
 const salesBackupPrefix = "dailySalesBackup:";
+let profitPeriod = "day";
 
 function todayValue(){
   const now = new Date();
@@ -60,6 +66,7 @@ async function loadSales(){
       ? `Showing browser backup from ${currentTimeText()}`
       : `Auto updated ${currentTimeText()}`;
   }
+  loadProfit();
   salesLoading = false;
 }
 
@@ -100,6 +107,75 @@ function renderSales(report){
       <td>${numberText(row.total)}</td>
     </tr>
   `).join("");
+}
+
+function setProfitPeriod(period){
+  profitPeriod = ["day", "week", "month", "all"].includes(period) ? period : "day";
+  updateProfitTabs();
+  loadProfit();
+}
+
+async function loadProfit(){
+  profitStatus.innerText = "Loading...";
+
+  try{
+    const res = await fetch(`/api/sales/profit?date=${encodeURIComponent(salesDate.value)}&period=${encodeURIComponent(profitPeriod)}`, {
+      cache:"no-store"
+    });
+    const data = await res.json();
+
+    if(!data.ok){
+      profitStatus.innerText = data.message || "Unable to load profit";
+      return;
+    }
+
+    renderProfit(data.report);
+    profitStatus.innerText = `Updated ${currentTimeText()}`;
+  }catch{
+    profitStatus.innerText = "Offline. Retrying...";
+  }
+}
+
+function renderProfit(report){
+  profitPeriodLabel.innerText = profitLabel(report.date, report.period);
+  profitSales.innerText = numberText(report.salesTotal);
+  profitExpenses.innerText = numberText(report.expenseTotal);
+  profitNet.innerText = numberText(report.netProfit);
+  document.querySelector(".profit-net").classList.toggle("is-negative", Number(report.netProfit) < 0);
+}
+
+function updateProfitTabs(){
+  document.querySelectorAll("[data-profit-period]").forEach(button=>{
+    button.classList.toggle("active", button.dataset.profitPeriod === profitPeriod);
+  });
+}
+
+function profitLabel(date, period){
+  if(period === "all"){
+    return "All records";
+  }
+
+  const [year, month, day] = String(date).split("-").map(Number);
+  const base = new Date(year, month - 1, day);
+
+  if(period === "week"){
+    const start = new Date(base);
+    const offset = start.getDay() === 0 ? -6 : 1 - start.getDay();
+    start.setDate(start.getDate() + offset);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    return `${shortDate(start)} - ${shortDate(end)}`;
+  }
+
+  if(period === "month"){
+    return base.toLocaleDateString("en-US", { month:"long", year:"numeric" });
+  }
+
+  return formatReportDate(date);
+}
+
+function shortDate(date){
+  return date.toLocaleDateString("en-US", { month:"short", day:"numeric" });
 }
 
 function saveSalesBackup(report){
@@ -161,6 +237,7 @@ function escapeHtml(value){
 }
 
 salesDate.value = todayValue();
+updateProfitTabs();
 showSales();
 loadSales();
 
@@ -168,5 +245,6 @@ document.addEventListener("visibilitychange", function(){
   if(document.visibilityState === "visible"){
     keepTodayCurrent();
     loadSales();
+    loadProfit();
   }
 });

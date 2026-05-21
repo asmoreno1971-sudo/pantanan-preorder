@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<link rel="stylesheet" href="/styles.css?v=20260518-daily-sales-tight-columns">
+<link rel="stylesheet" href="/styles.css?v=20260522-sales-profit">
 </head>
 <body>
 <div class="sales-shell">
@@ -46,9 +46,42 @@
 </tbody>
 </table>
 </div>
+
+<section class="profit-panel" aria-label="Sales profit summary">
+<div class="profit-head">
+<div>
+<h4>Profit Summary</h4>
+<p id="profitPeriodLabel">Today</p>
+</div>
+<div class="period-tabs" aria-label="Profit period">
+<button type="button" data-profit-period="day" onclick="setProfitPeriod('day')">Day</button>
+<button type="button" data-profit-period="week" onclick="setProfitPeriod('week')">Week</button>
+<button type="button" data-profit-period="month" onclick="setProfitPeriod('month')">Month</button>
+<button type="button" data-profit-period="all" onclick="setProfitPeriod('all')">All</button>
+</div>
+</div>
+<div class="profit-grid">
+<div class="profit-card profit-sales">
+<small>Sales</small>
+<span>P <b id="profitSales">0</b></span>
+</div>
+<div class="profit-card profit-expenses">
+<small>Expenses</small>
+<span>P <b id="profitExpenses">0</b></span>
+</div>
+<div class="profit-card profit-net">
+<small>Net Profit</small>
+<span>P <b id="profitNet">0</b></span>
+</div>
+</div>
+<div class="profit-actions">
+<a href="/expenses">Open Expenses</a>
+<span id="profitStatus" class="status"></span>
+</div>
+</section>
 </div>
 </div>
 
-<script src="/sales.js?v=20260518-no-sales-password"></script>
+<script src="/sales.js?v=20260522-sales-profit"></script>
 </body>
 </html>

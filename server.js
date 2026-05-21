@@ -708,6 +708,32 @@ function transactionLedgerFromLines(lines, options = {}){
   };
 }
 
+function profitReport(transactionLines, expenses, options = {}){
+  const period = ["day", "week", "month", "all"].includes(options.period) ? options.period : "day";
+  const date = options.date || localOrderDate();
+  const salesReport = transactionLedgerFromLines(transactionLines, { date, period });
+  const range = period === "all" ? null : periodRange(date, period);
+  const expenseRows = (Array.isArray(expenses) ? expenses : []).filter(expense=>{
+    const expenseDate = parseDateValue(expense.date);
+
+    if(range && (!expenseDate || expenseDate < range.start || expenseDate >= range.end)){
+      return false;
+    }
+
+    return true;
+  });
+  const expenseTotal = expenseRows.reduce((sum, expense)=>sum + (Number(expense.amount) || 0), 0);
+
+  return {
+    date,
+    period,
+    salesTotal:salesReport.totalAmount,
+    expenseTotal,
+    netProfit:salesReport.totalAmount - expenseTotal,
+    expenseCount:expenseRows.length
+  };
+}
+
 function nextDailyOrderNumber(orders){
   const today = localOrderDate();
   const todaysOrders = orders.filter(order=>order.orderDate === today);
@@ -1099,6 +1125,19 @@ async function handleApi(req, res){
     const date = url.searchParams.get("date") || localOrderDate();
     const transactionLines = await readReportingTransactionLines();
     send(res, 200, JSON.stringify({ ok:true, report:dailySalesReportFromLines(transactionLines, date) }));
+    return true;
+  }
+
+  if(pathname === "/api/sales/profit" && req.method === "GET"){
+    const transactionLines = await readReportingTransactionLines();
+    const expenses = await readExpenses();
+    send(res, 200, JSON.stringify({
+      ok:true,
+      report:profitReport(transactionLines, expenses, {
+        date:url.searchParams.get("date") || localOrderDate(),
+        period:url.searchParams.get("period") || "day"
+      })
+    }));
     return true;
   }
 

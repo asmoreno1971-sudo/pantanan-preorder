@@ -1599,6 +1599,96 @@ button:disabled{
   text-align:center !important;
 }
 
+.profit-panel{
+  display:grid;
+  gap:12px;
+  border:1px solid #d9cfc5;
+  border-radius:8px;
+  background:#fffaf4;
+  padding:12px;
+}
+
+.profit-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.profit-head h4{
+  margin:0;
+  color:#2f2218;
+  font-size:18px !important;
+}
+
+.profit-head p{
+  margin:3px 0 0;
+  color:#6f5a4a;
+  font-size:13px !important;
+  font-weight:800;
+}
+
+.profit-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+
+.profit-card{
+  border:1px solid #dccfc3;
+  border-radius:8px;
+  padding:12px;
+  background:#fff;
+}
+
+.profit-card small{
+  display:block;
+  margin-bottom:6px;
+  color:#6f5a4a;
+  font-size:12px !important;
+  font-weight:900;
+  text-transform:uppercase;
+}
+
+.profit-card span{
+  display:block;
+  color:#13714a;
+  font-size:24px !important;
+  font-weight:900;
+}
+
+.profit-expenses span{
+  color:#a44939;
+}
+
+.profit-net.is-negative span{
+  color:#a44939;
+}
+
+.profit-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.profit-actions a{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:36px;
+  padding:8px 14px;
+  border:1px solid #d6c9a8;
+  border-radius:8px;
+  background:linear-gradient(135deg, #fffdf3, #efe8c9);
+  color:#2f2218;
+  font-size:14px !important;
+  font-weight:900;
+  text-decoration:none;
+}
+
 .transaction-toolbar{
   align-items:center;
 }
@@ -1962,6 +2052,18 @@ button:disabled{
 
   .transaction-summary{
     grid-template-columns:1fr;
+  }
+
+  .profit-grid{
+    grid-template-columns:1fr;
+  }
+
+  .profit-card{
+    padding:10px;
+  }
+
+  .profit-card span{
+    font-size:20px !important;
   }
 
   .product-card-editor{
