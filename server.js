@@ -12,6 +12,7 @@ const menuPath = resolveAdminProductsPath();
 const ordersPath = path.resolve(process.env.ORDERS_PATH || path.join(dataDir, "orders.json"));
 const ordersWatermarkPath = path.resolve(process.env.ORDERS_WATERMARK_PATH || path.join(dataDir, "orders-watermark.json"));
 const transactionLedgerPath = path.resolve(process.env.TRANSACTION_LEDGER_PATH || path.join(dataDir, "transaction-ledger.json"));
+const expensesPath = path.resolve(process.env.EXPENSES_PATH || path.join(dataDir, "expenses.json"));
 const port = Number(process.env.PORT) || 3001;
 const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
 const semaphoreSenderName = process.env.SEMAPHORE_SENDER_NAME || "";
@@ -217,6 +218,34 @@ async function readReportingTransactionLines(){
   return ordersToTransactionLines(await readOrders());
 }
 
+async function readExpenses(){
+  const expenses = await readDataRecord("expenses", expensesPath, []);
+
+  if(!Array.isArray(expenses)){
+    throw new Error("Expenses storage is not an array. Refusing to serve incomplete records.");
+  }
+
+  return expenses.map(normalizeExpense).filter(Boolean);
+}
+
+function normalizeExpense(expense){
+  const date = String(expense.date || localOrderDate()).trim();
+  const item = String(expense.item || expense.items || "").trim();
+  const amount = Math.max(0, Number(expense.amount) || 0);
+
+  if(!item && !amount){
+    return null;
+  }
+
+  return {
+    id:String(expense.id || crypto.randomUUID()),
+    date,
+    item,
+    amount,
+    createdAt:expense.createdAt || new Date().toISOString()
+  };
+}
+
 async function appendTransactionLinesForOrder(order){
   const lines = transactionLinesForOrder(order);
 
@@ -314,7 +343,8 @@ function requirePersistentStorageForProduction(key, operation){
     "admin-products",
     "orders",
     "orders-watermark",
-    "transaction-ledger"
+    "transaction-ledger",
+    "expenses"
   ]);
 
   if(!isProduction || databaseUrl || !protectedKeys.has(key)){
@@ -1090,6 +1120,39 @@ async function handleApi(req, res){
     return true;
   }
 
+  if(pathname === "/api/expenses" && req.method === "GET"){
+    const date = url.searchParams.get("date") || "";
+    const expenses = await readExpenses();
+    const rows = date ? expenses.filter(expense=>expense.date === date) : expenses;
+    send(res, 200, JSON.stringify({
+      ok:true,
+      expenses:rows.sort((a, b)=>String(b.createdAt || "").localeCompare(String(a.createdAt || ""))),
+      total:rows.reduce((sum, expense)=>sum + (Number(expense.amount) || 0), 0)
+    }));
+    return true;
+  }
+
+  if(pathname === "/api/expenses" && req.method === "POST"){
+    const body = JSON.parse(await readBody(req) || "{}");
+    const expense = normalizeExpense({
+      date:body.date,
+      item:body.item,
+      amount:body.amount,
+      createdAt:new Date().toISOString()
+    });
+
+    if(!expense || !expense.date || !expense.item || !expense.amount){
+      send(res, 400, JSON.stringify({ ok:false, message:"Please enter date, item, and amount." }));
+      return true;
+    }
+
+    const expenses = await readExpenses();
+    const nextExpenses = [expense, ...expenses];
+    await writeDataRecord("expenses", expensesPath, nextExpenses);
+    send(res, 200, JSON.stringify({ ok:true, expense, expenses:nextExpenses }));
+    return true;
+  }
+
   if(pathname.startsWith("/api/orders/") && req.method === "GET"){
     const id = pathname.split("/")[3];
     const orders = await readOrders();
@@ -1285,6 +1348,7 @@ async function serveStatic(req, res){
     "/sales": "sales.html",
     "/transaction": "transactions.html",
     "/transactions": "transactions.html",
+    "/expenses": "expenses.html",
     "/qr": "qr.html"
   };
 

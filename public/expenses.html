@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Expenses</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<link rel="stylesheet" href="/styles.css?v=20260521-expenses-page">
+</head>
+<body>
+<div class="sales-shell">
+<div class="sales-top">
+<div>
+<h3>Expenses</h3>
+<p class="admin-help">Daily expense record.</p>
+</div>
+<div class="sales-links">
+<a class="admin-action-add" href="/admin">Admin</a>
+<a class="admin-action-sales" href="/sales">Sales</a>
+<a class="admin-action-transactions" href="/transactions">Transactions</a>
+<a class="admin-action-kitchen" href="/kitchen">Kitchen</a>
+<a class="admin-action-customer" href="/cashier">Cashier</a>
+</div>
+</div>
+
+<div class="sales-panel">
+<form class="expense-form" onsubmit="saveExpense(event)">
+<label>
+<span>Date</span>
+<input id="expenseDate" type="date" required>
+</label>
+<label>
+<span>Items</span>
+<input id="expenseItem" type="text" autocomplete="off" placeholder="Item name" required>
+</label>
+<label>
+<span>Amount</span>
+<input id="expenseAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="0" required>
+</label>
+<button type="submit">Add Expense</button>
+</form>
+
+<div class="sales-toolbar expense-toolbar">
+<label for="expenseFilterDate">View Date</label>
+<input id="expenseFilterDate" type="date" onchange="loadExpenses()">
+<button class="secondary-btn" onclick="loadExpenses()">Refresh</button>
+<span id="expenseStatus" class="status"></span>
+</div>
+
+<div class="transaction-summary expense-summary">
+<div><span>P <b id="expenseTotal">0</b></span><small>Total Expenses</small></div>
+</div>
+
+<div class="sales-sheet-wrap">
+<table class="sales-sheet expense-sheet">
+<thead>
+<tr>
+<th>Date</th>
+<th>Items</th>
+<th>Amount</th>
+</tr>
+</thead>
+<tbody id="expenseRows">
+<tr><td colspan="3">No expenses yet</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<script src="/expenses.js?v=20260521-expenses-page"></script>
+</body>
+</html>

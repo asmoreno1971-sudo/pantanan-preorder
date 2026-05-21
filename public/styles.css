@@ -1704,6 +1704,81 @@ button:disabled{
   text-align:center;
 }
 
+.expense-form{
+  display:grid;
+  grid-template-columns:150px minmax(180px, 1fr) 140px 160px;
+  gap:10px;
+  align-items:end;
+  margin-bottom:14px;
+}
+
+.expense-form label{
+  display:grid;
+  gap:5px;
+  color:#6b4b35;
+  font-size:13px !important;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.02em;
+}
+
+.expense-form input{
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid #d8c7b8;
+  border-radius:8px;
+  background:#fff;
+  color:#182536;
+  padding:10px 12px;
+  font-size:16px !important;
+  font-weight:800;
+}
+
+.expense-form button{
+  border:1px solid #c8d6c2;
+  border-radius:8px;
+  background:linear-gradient(135deg, #f3fbef, #dcebd5);
+  color:#2f2218;
+  padding:11px 12px;
+  font-size:16px !important;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.expense-toolbar{
+  justify-content:flex-start;
+}
+
+.expense-summary{
+  grid-template-columns:minmax(0, 1fr);
+  max-width:280px;
+}
+
+.expense-sheet{
+  min-width:0;
+}
+
+.expense-sheet th:first-child{
+  width:22%;
+}
+
+.expense-sheet th:nth-child(2){
+  width:58%;
+}
+
+.expense-sheet th:nth-child(3){
+  width:20%;
+}
+
+.expense-sheet td:first-child,
+.expense-sheet td:nth-child(2){
+  text-align:left;
+}
+
+.expense-sheet td:nth-child(3){
+  text-align:center;
+}
+
 .transaction-total-empty{
   color:transparent;
 }
@@ -1780,6 +1855,40 @@ button:disabled{
     display:block;
     min-width:0;
     margin:0 0 2px;
+  }
+
+  .expense-form{
+    grid-template-columns:1fr;
+  }
+
+  .expense-summary{
+    max-width:none;
+  }
+
+  .expense-sheet{
+    width:100%;
+    min-width:0;
+    table-layout:fixed;
+    font-size:12px !important;
+  }
+
+  .expense-sheet th,
+  .expense-sheet td{
+    padding:6px 4px;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+
+  .expense-sheet th:first-child{
+    width:24%;
+  }
+
+  .expense-sheet th:nth-child(2){
+    width:54%;
+  }
+
+  .expense-sheet th:nth-child(3){
+    width:22%;
   }
 }
 
