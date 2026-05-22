@@ -1879,7 +1879,7 @@ button:disabled{
   gap:5px;
   color:#6b4b35;
   font-size:13px !important;
-  font-weight:900;
+  font-weight:500;
   text-transform:uppercase;
   letter-spacing:.02em;
 }
@@ -1894,8 +1894,13 @@ button:disabled{
   color:#182536;
   padding:10px 12px;
   font-size:16px !important;
-  font-weight:800;
+  font-weight:500;
   min-height:50px;
+}
+
+.expense-form input::placeholder{
+  font-weight:500;
+  color:#8a8179;
 }
 
 .expense-form button{
@@ -1907,7 +1912,7 @@ button:disabled{
   color:#2f2218;
   padding:11px 12px;
   font-size:16px !important;
-  font-weight:900;
+  font-weight:500;
   cursor:pointer;
 }
 
@@ -1918,10 +1923,15 @@ button:disabled{
   padding:12px 14px;
 }
 
+.expense-toolbar label{
+  font-weight:500;
+}
+
 .expense-toolbar input{
   min-width:210px;
   min-height:50px;
   box-sizing:border-box;
+  font-weight:500;
 }
 
 .expense-summary{
