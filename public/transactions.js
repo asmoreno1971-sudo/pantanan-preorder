@@ -1,6 +1,7 @@
 let transactionRefreshTimer = null;
 let transactionLoading = false;
 let transactionPeriod = localStorage.getItem("transactionPeriod") || "day";
+const transactionRefreshIntervalMs = 60000;
 
 const transactionDate = document.getElementById("transactionDate");
 const transactionRows = document.getElementById("transactionRows");
@@ -136,7 +137,7 @@ function startAutoRefresh(){
     if(document.visibilityState === "visible"){
       loadTransactions();
     }
-  }, 7000);
+  }, transactionRefreshIntervalMs);
 }
 
 function numberText(value){
