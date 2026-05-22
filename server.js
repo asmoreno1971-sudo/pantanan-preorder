@@ -740,9 +740,8 @@ function profitReport(transactionLines, expenses, options = {}){
   };
 }
 
-function nextDailyOrderNumber(orders){
-  const today = localOrderDate();
-  const todaysOrders = orders.filter(order=>order.orderDate === today);
+function nextDailyOrderNumber(orders, date = localOrderDate()){
+  const todaysOrders = orders.filter(order=>orderSalesDate(order) === date);
   const highest = todaysOrders.reduce((max, order)=>Math.max(max, Number(order.orderNumber) || 0), 0);
   return highest + 1;
 }
@@ -1291,11 +1290,12 @@ async function handleApi(req, res){
     const total = cleanItems.reduce((sum, item)=>sum + item.subtotal, 0);
     const cashReceived = Math.max(0, Number(body.cashReceived) || 0);
     const completedAt = new Date().toISOString();
-    const orderNumber = nextDailyOrderNumber(orders);
+    const orderDate = localOrderDate();
+    const orderNumber = nextDailyOrderNumber(orders, orderDate);
     const order = {
       id: Date.now().toString(),
       orderNumber,
-      orderDate: localOrderDate(),
+      orderDate,
       customerName: String(body.customerName).trim().toUpperCase(),
       customerContact:normalizedContact,
       pickupTime,
