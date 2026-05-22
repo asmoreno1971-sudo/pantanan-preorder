@@ -295,11 +295,9 @@ function playAlertSound(){
 
   const pattern = [0, .16, .32, .62, .78, .94];
 
-  for(let repeat = 0; repeat < 2; repeat += 1){
-    pattern.forEach((patternOffset, index)=>{
-      playAlertTone(now + repeat * 1.25 + patternOffset, index, compressor);
-    });
-  }
+  pattern.forEach((patternOffset, index)=>{
+    playAlertTone(now + patternOffset, index, compressor);
+  });
 }
 
 function playAlertTone(startTime, index, destination){
