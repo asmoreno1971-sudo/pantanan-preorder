@@ -434,16 +434,16 @@ function emptyState(message){
 function notifyButton(order){
   const canNotify = order.status === "Preparing Order";
   const disabled = canNotify ? "" : "disabled";
-  const label = canNotify ? "Order Ready for Payment/Pickup" : "Prepare First";
+  const label = canNotify ? "Done" : "Prepare First";
 
-  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="notifyCustomerReady('${order.id}')">${label}</button>`;
+  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="markPickedUp('${order.id}')">${label}</button>`;
 }
 
 function readyForPickupButton(order){
   const canFinish = order.status === "Preparing Order";
   const disabled = canFinish ? "" : "disabled";
 
-  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="markPickedUp('${order.id}')">Order Ready for Payment/Pickup</button>`;
+  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="markPickedUp('${order.id}')">Done</button>`;
 }
 
 function preparingLabel(order){

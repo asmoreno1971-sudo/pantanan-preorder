@@ -647,7 +647,9 @@ function showCustomerStatus(order){
     return;
   }
 
-  if(order.status === "Done"){
+  const customerFacingStatus = order.customerStatus || order.status;
+
+  if(customerFacingStatus === "Done"){
     dismissCustomerStatus();
     return;
   }
@@ -656,20 +658,20 @@ function showCustomerStatus(order){
     "Order Sent":"Your order has been sent. Wait for confirmation.",
     "Preparing Order":"Your order is now being prepared.",
     "Ready for Payment and Pickup":"Your order is ready for payment and pickup."
-  }[order.status] || order.status;
+  }[customerFacingStatus] || customerFacingStatus;
 
   const displayNumber = String(order.orderNumber || order.id.slice(-3)).padStart(3, "0");
   customerStatusTitle.innerText = `Order #${displayNumber}`;
   customerStatusText.innerText = message;
   customerStatus.classList.remove("status-sent", "status-preparing", "status-ready");
-  customerStatus.classList.add(statusClass(order.status));
+  customerStatus.classList.add(statusClass(customerFacingStatus));
   customerStatus.classList.remove("hidden");
 
-  if(order.status === "Preparing Order"){
+  if(customerFacingStatus === "Preparing Order"){
     notifyCustomer(order, "Pantanan order update", "Your order is now being prepared.");
   }
 
-  if(order.status === "Ready for Payment and Pickup"){
+  if(customerFacingStatus === "Ready for Payment and Pickup"){
     notifyCustomer(order, "Pantanan order ready", "Your order is ready for payment and pickup.");
   }
 }
@@ -803,7 +805,7 @@ function statusClass(status){
 }
 
 function notifyCustomer(order,title,message){
-  const key = `${order.id}:${order.status}`;
+  const key = `${order.id}:${order.customerStatus || order.status}`;
 
   if(lastNotifiedStatus === key){
     return;
