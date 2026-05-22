@@ -443,7 +443,7 @@ function readyForPickupButton(order){
   const canFinish = order.status === "Preparing Order";
   const disabled = canFinish ? "" : "disabled";
 
-  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="markDone('${order.id}')">Order Ready for Payment/Pickup</button>`;
+  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="markPickedUp('${order.id}')">Order Ready for Payment/Pickup</button>`;
 }
 
 function preparingLabel(order){
