@@ -29,7 +29,7 @@ async function loadExpenses(){
     }
 
     renderExpenses(data.expenses || [], data.total || 0);
-    expenseStatus.innerText = `Updated ${currentTimeText()}`;
+    expenseStatus.innerText = "";
   }catch{
     expenseStatus.innerText = "Offline. Try again.";
   }
@@ -62,6 +62,7 @@ async function saveExpense(event){
     expenseAmount.value = "";
     expenseFilterDate.value = body.date;
     await loadExpenses();
+    expenseStatus.innerText = "";
     expenseItem.focus();
   }catch{
     expenseStatus.innerText = "Server could not save expense.";

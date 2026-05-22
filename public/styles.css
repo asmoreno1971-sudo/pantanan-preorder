@@ -1868,10 +1868,10 @@ button:disabled{
 
 .expense-form{
   display:grid;
-  grid-template-columns:150px minmax(180px, 1fr) 140px 160px;
-  gap:10px;
+  grid-template-columns:minmax(210px, .85fr) minmax(260px, 1.7fr) minmax(150px, .65fr) minmax(190px, .75fr);
+  gap:14px;
   align-items:end;
-  margin-bottom:14px;
+  margin-bottom:18px;
 }
 
 .expense-form label{
@@ -1886,6 +1886,7 @@ button:disabled{
 
 .expense-form input{
   width:100%;
+  min-width:0;
   box-sizing:border-box;
   border:1px solid #d8c7b8;
   border-radius:8px;
@@ -1894,9 +1895,12 @@ button:disabled{
   padding:10px 12px;
   font-size:16px !important;
   font-weight:800;
+  min-height:50px;
 }
 
 .expense-form button{
+  width:100%;
+  min-height:50px;
   border:1px solid #c8d6c2;
   border-radius:8px;
   background:linear-gradient(135deg, #f3fbef, #dcebd5);
@@ -1909,6 +1913,15 @@ button:disabled{
 
 .expense-toolbar{
   justify-content:flex-start;
+  align-items:end;
+  gap:14px;
+  padding:12px 14px;
+}
+
+.expense-toolbar input{
+  min-width:210px;
+  min-height:50px;
+  box-sizing:border-box;
 }
 
 .expense-summary{
@@ -2021,6 +2034,13 @@ button:disabled{
 
   .expense-form{
     grid-template-columns:1fr;
+    gap:10px;
+  }
+
+  .expense-form input,
+  .expense-form button,
+  .expense-toolbar input{
+    min-height:44px;
   }
 
   .expense-summary{
