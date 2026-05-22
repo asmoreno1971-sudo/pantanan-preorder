@@ -1460,29 +1460,40 @@ button:disabled{
 .sales-links a{
   min-width:108px;
   border-radius:8px;
-  font-size:18px !important;
-  font-weight:900;
-  box-shadow:0 10px 24px rgba(74,47,28,.09);
+  font-size:15px !important;
+  font-weight:600;
+  color:#3f3128;
+  box-shadow:0 7px 18px rgba(74,47,28,.06);
 }
 
 .sales-links a.admin-action-add{
   border-color:#dfc5aa;
-  background:linear-gradient(135deg, #fff7ed, #efd8c2);
+  background:linear-gradient(135deg, #fffaf5, #f2e3d3);
 }
 
 .sales-links a.admin-action-sales{
   border-color:#c8d6c2;
-  background:linear-gradient(135deg, #f3fbef, #dcebd5);
+  background:linear-gradient(135deg, #f7fcf4, #e6f0df);
+}
+
+.sales-links a.admin-action-transactions{
+  border-color:#d7d1bb;
+  background:linear-gradient(135deg, #fffdf2, #efe9d0);
 }
 
 .sales-links a.admin-action-kitchen{
   border-color:#d5c9e7;
-  background:linear-gradient(135deg, #f8f5ff, #e7ddf7);
+  background:linear-gradient(135deg, #fbf8ff, #ece5f6);
+}
+
+.sales-links a.admin-action-cashier{
+  border-color:#cbd8d7;
+  background:linear-gradient(135deg, #f5fbfa, #e1eeec);
 }
 
 .sales-links a.admin-action-customer{
   border-color:#c8d4e4;
-  background:linear-gradient(135deg, #f2f7ff, #dbe7f6);
+  background:linear-gradient(135deg, #f6faff, #e3edf8);
 }
 
 .sales-login-panel{

@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<link rel="stylesheet" href="/styles.css?v=20260522-sales-profit">
+<link rel="stylesheet" href="/styles.css?v=20260522-sales-expenses-nav">
 </head>
 <body>
 <div class="sales-shell">
@@ -16,11 +16,12 @@
 <p class="admin-help">Completed customer orders and POS sales.</p>
 </div>
 <div class="sales-links">
-<a href="/admin">Admin</a>
-<a href="/transactions.html">Transactions</a>
-<a href="/kitchen">Kitchen</a>
-<a href="/cashier">Cashier</a>
-<a href="/">Customer</a>
+<a class="admin-action-add" href="/admin">Admin</a>
+<a class="admin-action-sales" href="/expenses">Expenses</a>
+<a class="admin-action-transactions" href="/transactions.html">Transactions</a>
+<a class="admin-action-kitchen" href="/kitchen">Kitchen</a>
+<a class="admin-action-cashier" href="/cashier">Cashier</a>
+<a class="admin-action-customer" href="/">Customer</a>
 </div>
 </div>
 
@@ -75,13 +76,12 @@
 </div>
 </div>
 <div class="profit-actions">
-<a href="/expenses">Open Expenses</a>
 <span id="profitStatus" class="status"></span>
 </div>
 </section>
 </div>
 </div>
 
-<script src="/sales.js?v=20260522-sales-profit"></script>
+<script src="/sales.js?v=20260522-sales-expenses-nav"></script>
 </body>
 </html>
