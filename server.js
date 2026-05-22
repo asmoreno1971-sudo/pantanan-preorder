@@ -1370,7 +1370,7 @@ async function handleApi(req, res){
 
     order.status = "Done";
     order.completedAt = new Date().toISOString();
-    order.customerStatus = "Ready for Payment and Pickup";
+    order.customerStatus = "Done";
     order.customerStatusAt = order.completedAt;
     await writeOrders(orders);
     await appendTransactionLinesForOrder(order);
