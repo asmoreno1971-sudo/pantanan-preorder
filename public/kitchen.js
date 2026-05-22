@@ -146,7 +146,7 @@ async function runPrintQueue(){
 
 async function restoreKitchenPrinter(){
   if(!("serial" in navigator)){
-    updatePrinterStatus("Browser print fallback", false);
+    updatePrinterStatus("Use Chrome or Edge for direct printer", false);
     return;
   }
 
@@ -206,13 +206,18 @@ function updatePrinterStatus(message, connected){
 }
 
 async function printKitchenReceiptDirect(order){
-  if(!kitchenPrinterPort || !kitchenPrinterPort.writable){
+  if(!kitchenPrinterPort){
     return false;
   }
 
   let writer;
   try{
     await openKitchenPrinterPort();
+
+    if(!kitchenPrinterPort.writable){
+      return false;
+    }
+
     writer = kitchenPrinterPort.writable.getWriter();
     await writer.write(kitchenReceiptBytes(order));
     updatePrinterStatus("Printed to KPrinter", true);
