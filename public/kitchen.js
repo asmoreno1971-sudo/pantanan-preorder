@@ -434,16 +434,16 @@ function emptyState(message){
 function notifyButton(order){
   const canNotify = order.status === "Preparing Order";
   const disabled = canNotify ? "" : "disabled";
-  const label = canNotify ? "Done" : "Prepare First";
+  const label = canNotify ? "Your order is ready for payment & pickup" : "Prepare First";
 
-  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="markPickedUp('${order.id}')">${label}</button>`;
+  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="notifyCustomerReady('${order.id}')">${label}</button>`;
 }
 
 function readyForPickupButton(order){
   const canFinish = order.status === "Preparing Order";
   const disabled = canFinish ? "" : "disabled";
 
-  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="markPickedUp('${order.id}')">Done</button>`;
+  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="markDone('${order.id}')">Your order is ready for payment & pickup</button>`;
 }
 
 function preparingLabel(order){
@@ -529,7 +529,7 @@ async function finishOrder(id){
 
 function customerMessage(order){
   const orderNumber = String(order.orderNumber || 0).padStart(3, "0");
-  return `Your order #${orderNumber} is ready for payment and pickup.`;
+  return `Your order #${orderNumber} is ready for payment & pickup.`;
 }
 
 function closeMessageModal(){
