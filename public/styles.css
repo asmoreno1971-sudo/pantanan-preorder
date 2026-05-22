@@ -771,7 +771,7 @@ button:disabled{
 
 .admin-action-boxes{
   display:grid;
-  grid-template-columns:repeat(6, minmax(0, 1fr));
+  grid-template-columns:repeat(7, minmax(0, 1fr));
   gap:12px;
   margin:18px 0 10px;
 }
@@ -825,6 +825,11 @@ button:disabled{
 .admin-action-sales{
   border-color:#c8d6c2;
   background:linear-gradient(135deg, #f3fbef, #dcebd5);
+}
+
+.admin-action-expenses{
+  border-color:#d6c8e0;
+  background:linear-gradient(135deg, #fdf8ff, #eadff1);
 }
 
 .admin-action-transactions{
