@@ -12,6 +12,7 @@ const profitSales = document.getElementById("profitSales");
 const profitExpenses = document.getElementById("profitExpenses");
 const profitNet = document.getElementById("profitNet");
 const profitStatus = document.getElementById("profitStatus");
+const profitExpenseRows = document.getElementById("profitExpenseRows");
 const salesBackupPrefix = "dailySalesBackup:";
 let profitPeriod = "day";
 const salesRefreshIntervalMs = 60000;
@@ -76,6 +77,10 @@ function startAutoRefresh(){
 
   salesRefreshTimer = setInterval(function(){
     if(document.visibilityState === "visible"){
+      if(isEditingProfitExpense()){
+        return;
+      }
+
       keepTodayCurrent();
       loadSales();
     }
@@ -88,6 +93,10 @@ function keepTodayCurrent(){
   if(!salesDate.value || salesDate.value > today){
     salesDate.value = today;
   }
+}
+
+function isEditingProfitExpense(){
+  return Boolean(document.activeElement && document.activeElement.closest(".profit-expense-sheet"));
 }
 
 function renderSales(report){
@@ -141,6 +150,63 @@ function renderProfit(report){
   profitExpenses.innerText = numberText(report.expenseTotal);
   profitNet.innerText = numberText(report.netProfit);
   document.querySelector(".profit-net").classList.toggle("is-negative", Number(report.netProfit) < 0);
+  renderProfitExpenses(report.expenseRows || []);
+}
+
+function renderProfitExpenses(expenses){
+  if(!expenses.length){
+    profitExpenseRows.innerHTML = `<tr><td colspan="3">No expenses yet</td></tr>`;
+    return;
+  }
+
+  profitExpenseRows.innerHTML = expenses.map(expense=>`
+    <tr data-expense-id="${escapeHtml(expense.id)}">
+      <td><input class="profit-expense-date" type="date" value="${escapeHtml(expense.date)}"></td>
+      <td><input class="profit-expense-item" type="text" value="${escapeHtml(expense.item)}"></td>
+      <td>
+        <div class="profit-expense-amount-cell">
+          <input class="profit-expense-amount" type="number" min="1" step="1" inputmode="numeric" value="${escapeHtml(expense.amount)}">
+          <button type="button" onclick="saveProfitExpense('${escapeJs(expense.id)}')">Save</button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+}
+
+async function saveProfitExpense(id){
+  const row = [...document.querySelectorAll("[data-expense-id]")]
+    .find(item=>item.dataset.expenseId === id);
+
+  if(!row){
+    return;
+  }
+
+  const body = {
+    date:row.querySelector(".profit-expense-date").value,
+    item:row.querySelector(".profit-expense-item").value.trim(),
+    amount:Number(row.querySelector(".profit-expense-amount").value) || 0
+  };
+
+  profitStatus.innerText = "Saving...";
+
+  try{
+    const res = await fetch(`/api/expenses/${encodeURIComponent(id)}`, {
+      method:"PUT",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify(body)
+    });
+    const data = await res.json();
+
+    if(!data.ok){
+      profitStatus.innerText = data.message || "Unable to save expense";
+      return;
+    }
+
+    profitStatus.innerText = "";
+    loadProfit();
+  }catch{
+    profitStatus.innerText = "Server could not save expense.";
+  }
 }
 
 function updateProfitTabs(){
@@ -233,6 +299,10 @@ function escapeHtml(value){
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function escapeJs(value){
+  return String(value).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
 salesDate.value = todayValue();

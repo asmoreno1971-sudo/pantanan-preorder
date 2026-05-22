@@ -730,7 +730,13 @@ function profitReport(transactionLines, expenses, options = {}){
     salesTotal:salesReport.totalAmount,
     expenseTotal,
     netProfit:salesReport.totalAmount - expenseTotal,
-    expenseCount:expenseRows.length
+    expenseCount:expenseRows.length,
+    expenseRows:expenseRows
+      .slice()
+      .sort((a, b)=>
+        String(b.date).localeCompare(String(a.date)) ||
+        String(b.createdAt || "").localeCompare(String(a.createdAt || ""))
+      )
   };
 }
 
@@ -1189,6 +1195,36 @@ async function handleApi(req, res){
     const nextExpenses = [expense, ...expenses];
     await writeDataRecord("expenses", expensesPath, nextExpenses);
     send(res, 200, JSON.stringify({ ok:true, expense, expenses:nextExpenses }));
+    return true;
+  }
+
+  if(pathname.startsWith("/api/expenses/") && req.method === "PUT"){
+    const id = decodeURIComponent(pathname.split("/").slice(3).join("/"));
+    const body = JSON.parse(await readBody(req) || "{}");
+    const expenses = await readExpenses();
+    const index = expenses.findIndex(expense=>expense.id === id);
+
+    if(index === -1){
+      send(res, 404, JSON.stringify({ ok:false, message:"Expense not found" }));
+      return true;
+    }
+
+    const updatedExpense = normalizeExpense({
+      ...expenses[index],
+      date:body.date,
+      item:body.item,
+      amount:body.amount
+    });
+
+    if(!updatedExpense || !updatedExpense.date || !updatedExpense.item || !updatedExpense.amount){
+      send(res, 400, JSON.stringify({ ok:false, message:"Please enter date, item, and amount." }));
+      return true;
+    }
+
+    const nextExpenses = expenses.slice();
+    nextExpenses[index] = updatedExpense;
+    await writeDataRecord("expenses", expensesPath, nextExpenses);
+    send(res, 200, JSON.stringify({ ok:true, expense:updatedExpense, expenses:nextExpenses }));
     return true;
   }
 

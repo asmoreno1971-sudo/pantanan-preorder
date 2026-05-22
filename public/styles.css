@@ -1700,6 +1700,67 @@ button:disabled{
   text-decoration:none;
 }
 
+.profit-expense-wrap{
+  border-color:#ddd3c9;
+}
+
+.profit-expense-sheet{
+  min-width:0;
+  font-size:18px !important;
+}
+
+.profit-expense-sheet th:first-child{
+  width:22%;
+}
+
+.profit-expense-sheet th:nth-child(2){
+  width:58%;
+}
+
+.profit-expense-sheet th:nth-child(3){
+  width:20%;
+}
+
+.profit-expense-sheet input{
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid transparent;
+  border-radius:6px;
+  background:#fff;
+  color:#111;
+  padding:6px 8px;
+  font:inherit;
+}
+
+.profit-expense-sheet input:focus{
+  border-color:#b9987f;
+  outline:none;
+  box-shadow:0 0 0 2px rgba(185,152,127,.16);
+}
+
+.profit-expense-amount-cell{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto;
+  gap:6px;
+  align-items:center;
+}
+
+.profit-expense-amount-cell button{
+  min-height:34px;
+  border:1px solid #c8d6c2;
+  border-radius:7px;
+  background:#e8f5e3;
+  color:#2f4a2d;
+  padding:6px 10px;
+  font-size:13px !important;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.profit-expense-sheet td:nth-child(3){
+  text-align:left;
+}
+
 .transaction-toolbar{
   align-items:center;
 }
@@ -2075,6 +2136,38 @@ button:disabled{
 
   .profit-card span{
     font-size:20px !important;
+  }
+
+  .profit-expense-sheet{
+    width:100%;
+    min-width:0;
+    table-layout:fixed;
+    font-size:12px !important;
+  }
+
+  .profit-expense-sheet th,
+  .profit-expense-sheet td{
+    padding:5px 3px;
+  }
+
+  .profit-expense-sheet th:first-child{
+    width:26%;
+  }
+
+  .profit-expense-sheet th:nth-child(2){
+    width:45%;
+  }
+
+  .profit-expense-sheet th:nth-child(3){
+    width:29%;
+  }
+
+  .profit-expense-sheet input{
+    padding:5px 4px;
+  }
+
+  .profit-expense-amount-cell{
+    grid-template-columns:1fr;
   }
 
   .product-card-editor{
