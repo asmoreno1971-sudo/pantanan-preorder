@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<link rel="stylesheet" href="/styles.css?v=20260522-sales-edit-expenses">
+<link rel="stylesheet" href="/styles.css?v=20260522-sales-profit-top">
 </head>
 <body>
 <div class="sales-shell">
@@ -26,27 +26,6 @@
 </div>
 
 <div id="salesPanel" class="sales-panel">
-<div class="sales-toolbar">
-<label for="salesDate">Date</label>
-<input id="salesDate" type="date" onchange="loadSales()">
-<span id="salesStatus" class="status"></span>
-</div>
-
-<div class="sales-sheet-wrap">
-<table class="sales-sheet daily-sales-sheet">
-<thead>
-<tr>
-<th id="salesDateLabel">Today</th>
-<th>Frq</th>
-<th>P <span id="salesGrandTotal">0</span></th>
-</tr>
-</thead>
-<tbody id="salesRows">
-<tr><td colspan="3">No sales yet</td></tr>
-</tbody>
-</table>
-</div>
-
 <section class="profit-panel" aria-label="Sales profit summary">
 <div class="profit-head">
 <div>
@@ -92,9 +71,30 @@
 <span id="profitStatus" class="status"></span>
 </div>
 </section>
+
+<div class="sales-toolbar">
+<label for="salesDate">Date</label>
+<input id="salesDate" type="date" onchange="loadSales()">
+<span id="salesStatus" class="status"></span>
+</div>
+
+<div class="sales-sheet-wrap">
+<table class="sales-sheet daily-sales-sheet">
+<thead>
+<tr>
+<th id="salesDateLabel">Today</th>
+<th>Frq</th>
+<th>P <span id="salesGrandTotal">0</span></th>
+</tr>
+</thead>
+<tbody id="salesRows">
+<tr><td colspan="3">No sales yet</td></tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 
-<script src="/sales.js?v=20260522-sales-edit-expenses"></script>
+<script src="/sales.js?v=20260522-sales-profit-top"></script>
 </body>
 </html>
