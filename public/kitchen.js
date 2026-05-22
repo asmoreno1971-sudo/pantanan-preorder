@@ -6,7 +6,7 @@ let kitchenPrinterPort = null;
 let soundEnabled = localStorage.getItem("kitchenSoundEnabled") === "true";
 let audioContext;
 let currentOrders = [];
-let kitchenToken = localStorage.getItem("kitchenToken") || "";
+let kitchenToken = "page-auth";
 const kitchenLoginPanel = document.getElementById("kitchenLoginPanel");
 const kitchenPanel = document.getElementById("kitchenPanel");
 const kitchenPassword = document.getElementById("kitchenPassword");
@@ -17,20 +17,12 @@ const printerBtn = document.getElementById("printerBtn");
 const printerStatus = document.getElementById("printerStatus");
 
 async function loginKitchen(){
-  const res = await fetch("/api/admin/login", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ password:kitchenPassword.value })
-  });
-  const data = await res.json();
-
-  if(!data.ok){
+  if(kitchenPassword.value !== "1111"){
     kitchenLoginStatus.innerText = "Wrong password";
     return;
   }
 
-  kitchenToken = data.token;
-  localStorage.setItem("kitchenToken", kitchenToken);
+  kitchenToken = "page-auth";
   showKitchen();
   await enableSound();
   await loadOrders();
