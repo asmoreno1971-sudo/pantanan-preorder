@@ -1,5 +1,6 @@
 let seenOrderIds = new Set();
 let printedOrderIds = loadPrintedOrderIds();
+let queuedPrintOrderIds = new Set();
 let printQueue = [];
 let printInProgress = false;
 let kitchenPrinterPort = null;
@@ -107,12 +108,11 @@ function savePrintedOrderIds(){
 }
 
 function queueKitchenPrint(order){
-  if(!order || printedOrderIds.has(order.id)){
+  if(!order || printedOrderIds.has(order.id) || queuedPrintOrderIds.has(order.id)){
     return;
   }
 
-  printedOrderIds.add(order.id);
-  savePrintedOrderIds();
+  queuedPrintOrderIds.add(order.id);
   printQueue.push(order);
   runPrintQueue();
 }
@@ -126,7 +126,12 @@ async function runPrintQueue(){
   const order = printQueue.shift();
   const directPrinted = await printKitchenReceiptDirect(order);
 
-  if(!directPrinted){
+  queuedPrintOrderIds.delete(order.id);
+
+  if(directPrinted){
+    printedOrderIds.add(order.id);
+    savePrintedOrderIds();
+  }else{
     updatePrinterStatus("Connect printer for auto-print", false);
   }
 
@@ -152,6 +157,7 @@ async function restoreKitchenPrinter(){
     kitchenPrinterPort = ports[0];
     await openKitchenPrinterPort();
     updatePrinterStatus("Printer connected", true);
+    await loadOrders();
   }catch(err){
     updatePrinterStatus("Tap Connect Printer", false);
   }
@@ -167,6 +173,7 @@ async function connectKitchenPrinter(){
     kitchenPrinterPort = await navigator.serial.requestPort();
     await openKitchenPrinterPort();
     updatePrinterStatus("Printer connected", true);
+    await loadOrders();
   }catch(err){
     updatePrinterStatus("Printer not connected", false);
   }
