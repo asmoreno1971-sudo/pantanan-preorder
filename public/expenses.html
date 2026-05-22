@@ -6,15 +6,11 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<link rel="stylesheet" href="/styles.css?v=20260522-expenses-clean">
+<link rel="stylesheet" href="/styles.css?v=20260522-expenses-compact-head">
 </head>
 <body>
 <div class="sales-shell">
-<div class="sales-top">
-<div>
-<h3>Expenses</h3>
-<p class="admin-help">Daily expense record.</p>
-</div>
+<div class="sales-top expenses-top">
 <div class="sales-links">
 <a class="admin-action-add" href="/admin">Admin</a>
 <a class="admin-action-sales" href="/sales">Sales</a>
@@ -41,6 +37,7 @@
 <button type="submit">Add Expense</button>
 </form>
 
+<div class="expense-filter-summary">
 <div class="sales-toolbar expense-toolbar">
 <label for="expenseFilterDate">View Date</label>
 <input id="expenseFilterDate" type="date" onchange="loadExpenses()">
@@ -49,6 +46,7 @@
 
 <div class="transaction-summary expense-summary">
 <div><span>P <b id="expenseTotal">0</b></span><small>Total Expenses</small></div>
+</div>
 </div>
 
 <div class="sales-sheet-wrap">
@@ -68,6 +66,6 @@
 </div>
 </div>
 
-<script src="/expenses.js?v=20260522-expenses-clean"></script>
+<script src="/expenses.js?v=20260522-expenses-compact-head"></script>
 </body>
 </html>

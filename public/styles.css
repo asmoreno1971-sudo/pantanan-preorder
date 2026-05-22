@@ -1918,9 +1918,11 @@ button:disabled{
 
 .expense-toolbar{
   justify-content:flex-start;
+  border:0;
+  background:transparent;
   align-items:end;
   gap:14px;
-  padding:12px 14px;
+  padding:0;
 }
 
 .expense-toolbar label{
@@ -1937,6 +1939,46 @@ button:disabled{
 .expense-summary{
   grid-template-columns:minmax(0, 1fr);
   max-width:280px;
+  margin:0;
+}
+
+.expenses-top{
+  justify-content:center;
+}
+
+.expenses-top .sales-links{
+  justify-content:center;
+}
+
+.expense-filter-summary{
+  display:grid;
+  grid-template-columns:minmax(300px, 1fr) minmax(220px, 280px);
+  gap:14px;
+  align-items:center;
+  padding:14px;
+  border:1px solid #dccfc3;
+  border-radius:8px;
+  background:#fffaf4;
+}
+
+.expense-filter-summary .expense-toolbar{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.expense-filter-summary .expense-summary div{
+  min-height:50px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+.expense-filter-summary .expense-summary span,
+.expense-filter-summary .expense-summary small{
+  display:inline-flex;
+  margin:0;
 }
 
 .expense-sheet{
@@ -2055,6 +2097,15 @@ button:disabled{
 
   .expense-summary{
     max-width:none;
+  }
+
+  .expense-filter-summary{
+    grid-template-columns:1fr;
+    padding:10px;
+  }
+
+  .expense-filter-summary .expense-toolbar{
+    justify-content:center;
   }
 
   .expense-sheet{
