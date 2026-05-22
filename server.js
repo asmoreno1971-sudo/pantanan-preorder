@@ -891,7 +891,7 @@ function csvCell(value){
 
 function customerReadyMessage(order){
   const orderNumber = String(order.orderNumber || 0).padStart(3, "0");
-  return `Your order #${orderNumber} is ready for payment & pickup.`;
+  return `Your order #${orderNumber} is ready for payment and pickup.`;
 }
 
 function normalizePhilippineMobileNumber(value){

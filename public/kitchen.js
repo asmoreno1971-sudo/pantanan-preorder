@@ -387,21 +387,7 @@ function orderRow(order){
       <span>P${item.subtotal}</span>
     </div>
   `).join("");
-  const messageButton = order.customerContact ? notifyButton(order) : readyForPickupButton(order);
-  const doneButton = order.status === "Ready for Payment and Pickup"
-    ? `<button class="kitchen-action-btn notify-btn final-done-btn" onclick="markPickedUp('${order.id}')">Done</button>`
-    : order.status === "Done"
-      ? `<div class="order-status">Done</div>`
-    : `
-      <div class="kitchen-actions">
-        <div class="workflow-actions">
-          <button class="kitchen-action-btn prepare-btn ${order.status === "Preparing Order" ? "active" : ""}" data-prepare-id="${order.id}" onclick="markPreparing('${order.id}')">${preparingLabel(order)}</button>
-        </div>
-        <div class="notify-actions">
-          ${messageButton}
-        </div>
-      </div>
-    `;
+  const actionButton = kitchenActionButton(order);
 
   return `
     <tr class="${order.status === "Order Sent" ? "new-order-row" : ""}">
@@ -411,7 +397,7 @@ function orderRow(order){
       <td>${order.pickupTime}</td>
       <td><div class="table-items">${items}</div></td>
       <td class="table-total">P${order.total}</td>
-      <td class="table-actions">${doneButton}</td>
+      <td class="table-actions">${actionButton}</td>
     </tr>
   `;
 }
@@ -431,19 +417,20 @@ function emptyState(message){
   return `<div class="empty-state">${message}</div>`;
 }
 
-function notifyButton(order){
-  const canNotify = order.status === "Preparing Order";
-  const disabled = canNotify ? "" : "disabled";
-  const label = canNotify ? "Your order is ready for payment & pickup" : "Prepare First";
+function kitchenActionButton(order){
+  if(order.status === "Done"){
+    return `<div class="order-status">Done</div>`;
+  }
 
-  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="notifyCustomerReady('${order.id}')">${label}</button>`;
-}
+  if(order.status === "Ready for Payment and Pickup"){
+    return `<button class="kitchen-action-btn notify-btn final-done-btn" onclick="markPickedUp('${order.id}')">Done</button>`;
+  }
 
-function readyForPickupButton(order){
-  const canFinish = order.status === "Preparing Order";
-  const disabled = canFinish ? "" : "disabled";
+  if(order.status === "Preparing Order"){
+    return `<button class="kitchen-action-btn prepare-btn active" data-prepare-id="${order.id}" onclick="markDone('${order.id}')">${preparingLabel(order)}</button>`;
+  }
 
-  return `<button class="kitchen-action-btn notify-btn" ${disabled} onclick="markDone('${order.id}')">Your order is ready for payment & pickup</button>`;
+  return `<button class="kitchen-action-btn prepare-btn" onclick="markPreparing('${order.id}')">Prepare Order</button>`;
 }
 
 function preparingLabel(order){
@@ -485,7 +472,7 @@ async function markPickedUp(id){
 }
 
 function orderIsComplete(order){
-  return order.status === "Ready for Payment and Pickup" || order.status === "Done";
+  return order.status === "Done";
 }
 
 async function markPreparing(id){
@@ -529,7 +516,7 @@ async function finishOrder(id){
 
 function customerMessage(order){
   const orderNumber = String(order.orderNumber || 0).padStart(3, "0");
-  return `Your order #${orderNumber} is ready for payment & pickup.`;
+  return `Your order #${orderNumber} is ready for payment and pickup.`;
 }
 
 function closeMessageModal(){

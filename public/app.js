@@ -656,8 +656,8 @@ function showCustomerStatus(order){
 
   const message = {
     "Order Sent":"Your order has been sent. Wait for confirmation.",
-    "Preparing Order":"Your order is now being prepared.",
-    "Ready for Payment and Pickup":"Your order is ready for payment & pickup."
+    "Preparing Order":"Your order has been received and is being prepared.",
+    "Ready for Payment and Pickup":"Your order is ready for payment and pickup."
   }[customerFacingStatus] || customerFacingStatus;
 
   const displayNumber = String(order.orderNumber || order.id.slice(-3)).padStart(3, "0");
@@ -668,11 +668,11 @@ function showCustomerStatus(order){
   customerStatus.classList.remove("hidden");
 
   if(customerFacingStatus === "Preparing Order"){
-    notifyCustomer(order, "Pantanan order update", "Your order is now being prepared.");
+    notifyCustomer(order, "Pantanan order update", "Your order has been received and is being prepared.");
   }
 
   if(customerFacingStatus === "Ready for Payment and Pickup"){
-    notifyCustomer(order, "Pantanan order ready", "Your order is ready for payment & pickup.");
+    notifyCustomer(order, "Pantanan order ready", "Your order is ready for payment and pickup.");
   }
 }
 
