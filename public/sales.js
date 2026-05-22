@@ -14,6 +14,7 @@ const profitNet = document.getElementById("profitNet");
 const profitStatus = document.getElementById("profitStatus");
 const salesBackupPrefix = "dailySalesBackup:";
 let profitPeriod = "day";
+const salesRefreshIntervalMs = 60000;
 
 function todayValue(){
   const now = new Date();
@@ -78,7 +79,7 @@ function startAutoRefresh(){
       keepTodayCurrent();
       loadSales();
     }
-  }, 7000);
+  }, salesRefreshIntervalMs);
 }
 
 function keepTodayCurrent(){
