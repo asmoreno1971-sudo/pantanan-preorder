@@ -8,6 +8,7 @@ let soundEnabled = localStorage.getItem("kitchenSoundEnabled") === "true";
 let audioContext;
 let currentOrders = [];
 let kitchenToken = "page-auth";
+const printedOrdersStorageKey = "kitchenPrintedOrderIds:v20260523-autoprint-recover";
 const kitchenLoginPanel = document.getElementById("kitchenLoginPanel");
 const kitchenPanel = document.getElementById("kitchenPanel");
 const kitchenPassword = document.getElementById("kitchenPassword");
@@ -94,7 +95,8 @@ function notifyNewOrders(orders){
 
 function loadPrintedOrderIds(){
   try{
-    const saved = JSON.parse(localStorage.getItem("kitchenPrintedOrderIds") || "[]");
+    localStorage.removeItem("kitchenPrintedOrderIds");
+    const saved = JSON.parse(localStorage.getItem(printedOrdersStorageKey) || "[]");
     return new Set(Array.isArray(saved) ? saved : []);
   }catch(err){
     return new Set();
@@ -104,7 +106,7 @@ function loadPrintedOrderIds(){
 function savePrintedOrderIds(){
   const recentIds = Array.from(printedOrderIds).slice(-250);
   printedOrderIds = new Set(recentIds);
-  localStorage.setItem("kitchenPrintedOrderIds", JSON.stringify(recentIds));
+  localStorage.setItem(printedOrdersStorageKey, JSON.stringify(recentIds));
 }
 
 function queueKitchenPrint(order){
