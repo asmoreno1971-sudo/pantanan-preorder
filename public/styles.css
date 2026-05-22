@@ -1987,9 +1987,15 @@ button:disabled{
   text-transform:uppercase;
 }
 
+.expense-filter-summary .expense-summary .expense-total-amount{
+  color:#13714a;
+  font-weight:800;
+  text-transform:none;
+}
+
 .expense-filter-summary .expense-summary b{
   font-size:18px !important;
-  font-weight:500;
+  font-weight:800;
   line-height:1.1;
 }
 
