@@ -135,7 +135,7 @@ async function runPrintQueue(){
   const directPrinted = await printKitchenReceiptDirect(order);
 
   if(!directPrinted){
-    printKitchenReceipt(order);
+    updatePrinterStatus("Connect printer for auto-print", false);
   }
 
   setTimeout(()=>{
@@ -263,121 +263,6 @@ function kitchenReceiptBytes(order){
   bytes.set(cut, init.length + payload.length);
 
   return bytes;
-}
-
-function printKitchenReceipt(order){
-  const receiptFrame = document.createElement("iframe");
-  receiptFrame.title = "Kitchen receipt";
-  receiptFrame.className = "print-frame";
-  receiptFrame.setAttribute("aria-hidden", "true");
-  document.body.appendChild(receiptFrame);
-
-  const receiptDoc = receiptFrame.contentDocument || receiptFrame.contentWindow.document;
-  receiptDoc.open();
-  receiptDoc.write(kitchenReceiptHtml(order));
-  receiptDoc.close();
-
-  setTimeout(()=>{
-    try{
-      receiptFrame.contentWindow.focus();
-      receiptFrame.contentWindow.print();
-    }catch(err){
-      console.warn("Kitchen print failed", err);
-    }
-
-    setTimeout(()=>receiptFrame.remove(), 1200);
-  }, 250);
-}
-
-function kitchenReceiptHtml(order){
-  const orderNumber = String(order.orderNumber || order.id.slice(-3)).padStart(3, "0");
-  const created = order.createdAt
-    ? new Date(order.createdAt).toLocaleString([], { month:"short", day:"numeric", hour:"numeric", minute:"2-digit" })
-    : "";
-  const items = (order.items || []).map(item=>`
-    <tr>
-      <td class="qty">${escapeHtml(item.qty)}x</td>
-      <td>${escapeHtml(item.name)}</td>
-      <td class="amount">P${escapeHtml(item.subtotal)}</td>
-    </tr>
-  `).join("");
-
-  return `
-    <!doctype html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Order #${escapeHtml(orderNumber)}</title>
-      <style>
-        @page{ margin:4mm; size:80mm auto; }
-        *{ box-sizing:border-box; }
-        body{
-          width:72mm;
-          margin:0;
-          color:#111;
-          font-family:Arial, sans-serif;
-          font-size:14px;
-        }
-        h1{
-          margin:0 0 6px;
-          font-size:22px;
-          text-align:center;
-        }
-        .meta{
-          margin:2px 0;
-          font-size:13px;
-        }
-        .order-number{
-          margin:8px 0;
-          padding:8px 0;
-          border-top:1px dashed #111;
-          border-bottom:1px dashed #111;
-          font-size:30px;
-          font-weight:800;
-          text-align:center;
-        }
-        table{
-          width:100%;
-          border-collapse:collapse;
-          margin-top:8px;
-        }
-        td{
-          padding:5px 0;
-          border-bottom:1px dashed #bbb;
-          vertical-align:top;
-          font-size:15px;
-        }
-        .qty{
-          width:12mm;
-          font-weight:800;
-        }
-        .amount{
-          width:18mm;
-          text-align:right;
-          font-weight:800;
-        }
-        .total{
-          display:flex;
-          justify-content:space-between;
-          margin-top:10px;
-          padding-top:8px;
-          border-top:2px solid #111;
-          font-size:18px;
-          font-weight:800;
-        }
-      </style>
-    </head>
-    <body>
-      <h1>Food Kiosk</h1>
-      <div class="order-number">#${escapeHtml(orderNumber)}</div>
-      <p class="meta"><strong>Customer:</strong> ${escapeHtml(order.customerName || "Walk-in")}</p>
-      <p class="meta"><strong>Pickup:</strong> ${escapeHtml(order.pickupTime || "")}</p>
-      <p class="meta"><strong>Received:</strong> ${escapeHtml(created)}</p>
-      <table><tbody>${items}</tbody></table>
-      <div class="total"><span>Total</span><span>P${escapeHtml(order.total || 0)}</span></div>
-    </body>
-    </html>
-  `;
 }
 
 function escapeHtml(value){
