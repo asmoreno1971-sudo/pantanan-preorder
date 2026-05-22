@@ -1987,6 +1987,15 @@ button:disabled{
   justify-content:center;
 }
 
+.transactions-top{
+  justify-content:center;
+}
+
+.transactions-top .sales-links{
+  justify-content:center;
+  flex-wrap:nowrap;
+}
+
 .expense-filter-summary{
   display:grid;
   grid-template-columns:minmax(300px, 1fr) minmax(220px, 280px);
