@@ -58,13 +58,11 @@ async function loadTransactions(){
     if(data.report && data.report.rows && data.report.rows.length){
       saveTransactionBackup(data.report);
       renderTransactions(data.report);
-      transactionStatus.innerText = `Auto updated ${currentTimeText()}`;
+      transactionStatus.innerText = "";
     }else{
       const backup = readTransactionBackup(transactionDate.value || todayValue(), transactionPeriod);
       renderTransactions(backup || data.report);
-      transactionStatus.innerText = backup
-        ? `Showing browser backup from ${currentTimeText()}`
-        : `Auto updated ${currentTimeText()}`;
+      transactionStatus.innerText = backup ? "Showing browser backup" : "";
     }
   }catch{
     transactionStatus.innerText = "Offline. Retrying...";
