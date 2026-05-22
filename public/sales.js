@@ -58,13 +58,11 @@ async function loadSales(){
   if(data.report && data.report.rows && data.report.rows.length){
     saveSalesBackup(data.report);
     renderSales(data.report);
-    salesStatus.innerText = `Auto updated ${currentTimeText()}`;
+    salesStatus.innerText = "";
   }else{
     const backup = readSalesBackup(salesDate.value);
     renderSales(backup || data.report);
-    salesStatus.innerText = backup
-      ? `Showing browser backup from ${currentTimeText()}`
-      : `Auto updated ${currentTimeText()}`;
+    salesStatus.innerText = backup ? "Showing browser backup" : "";
   }
   loadProfit();
   salesLoading = false;
@@ -130,7 +128,7 @@ async function loadProfit(){
     }
 
     renderProfit(data.report);
-    profitStatus.innerText = `Updated ${currentTimeText()}`;
+    profitStatus.innerText = "";
   }catch{
     profitStatus.innerText = "Offline. Retrying...";
   }
