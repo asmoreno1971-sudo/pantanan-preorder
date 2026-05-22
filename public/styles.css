@@ -1706,7 +1706,13 @@ button:disabled{
 
 .profit-expense-sheet{
   min-width:0;
-  font-size:18px !important;
+  font-size:14px !important;
+  line-height:1.05;
+}
+
+.profit-expense-sheet th,
+.profit-expense-sheet td{
+  padding:3px 5px;
 }
 
 .profit-expense-sheet th:first-child{
@@ -1725,10 +1731,12 @@ button:disabled{
   width:100%;
   box-sizing:border-box;
   border:1px solid transparent;
-  border-radius:6px;
+  border-radius:4px;
   background:#fff;
   color:#111;
-  padding:6px 8px;
+  min-height:28px;
+  margin:0;
+  padding:3px 5px;
   font:inherit;
 }
 
@@ -1741,19 +1749,20 @@ button:disabled{
 .profit-expense-amount-cell{
   display:grid;
   grid-template-columns:minmax(0, 1fr) auto;
-  gap:6px;
+  gap:4px;
   align-items:center;
 }
 
 .profit-expense-amount-cell button{
-  min-height:34px;
+  min-height:28px;
+  margin:0;
   border:1px solid #c8d6c2;
-  border-radius:7px;
+  border-radius:6px;
   background:#e8f5e3;
   color:#2f4a2d;
-  padding:6px 10px;
-  font-size:13px !important;
-  font-weight:700;
+  padding:3px 8px;
+  font-size:12px !important;
+  font-weight:500;
   cursor:pointer;
 }
 
