@@ -2,6 +2,7 @@ let seenOrderIds = new Set();
 let printedOrderIds = loadPrintedOrderIds();
 let printQueue = [];
 let printInProgress = false;
+let kitchenPrinterPort = null;
 let soundEnabled = localStorage.getItem("kitchenSoundEnabled") === "true";
 let audioContext;
 let currentOrders = [];
@@ -12,6 +13,8 @@ const kitchenPassword = document.getElementById("kitchenPassword");
 const kitchenLoginStatus = document.getElementById("kitchenLoginStatus");
 const soundBtn = document.getElementById("soundBtn");
 const soundStatus = document.getElementById("soundStatus");
+const printerBtn = document.getElementById("printerBtn");
+const printerStatus = document.getElementById("printerStatus");
 
 async function loginKitchen(){
   const res = await fetch("/api/admin/login", {
@@ -36,6 +39,7 @@ async function loginKitchen(){
 function showKitchen(){
   kitchenLoginPanel.classList.add("hidden");
   kitchenPanel.classList.remove("hidden");
+  restoreKitchenPrinter();
 }
 
 async function loadOrders(){
@@ -121,19 +125,144 @@ function queueKitchenPrint(order){
   runPrintQueue();
 }
 
-function runPrintQueue(){
+async function runPrintQueue(){
   if(printInProgress || !printQueue.length){
     return;
   }
 
   printInProgress = true;
   const order = printQueue.shift();
-  printKitchenReceipt(order);
+  const directPrinted = await printKitchenReceiptDirect(order);
+
+  if(!directPrinted){
+    printKitchenReceipt(order);
+  }
 
   setTimeout(()=>{
     printInProgress = false;
     runPrintQueue();
   }, 1400);
+}
+
+async function restoreKitchenPrinter(){
+  if(!("serial" in navigator)){
+    updatePrinterStatus("Browser print fallback", false);
+    return;
+  }
+
+  try{
+    const ports = await navigator.serial.getPorts();
+    if(!ports.length){
+      updatePrinterStatus("Tap Connect Printer once", false);
+      return;
+    }
+
+    kitchenPrinterPort = ports[0];
+    await openKitchenPrinterPort();
+    updatePrinterStatus("Printer connected", true);
+  }catch(err){
+    updatePrinterStatus("Tap Connect Printer", false);
+  }
+}
+
+async function connectKitchenPrinter(){
+  if(!("serial" in navigator)){
+    updatePrinterStatus("Use Chrome or Edge for direct printer", false);
+    return;
+  }
+
+  try{
+    kitchenPrinterPort = await navigator.serial.requestPort();
+    await openKitchenPrinterPort();
+    updatePrinterStatus("Printer connected", true);
+  }catch(err){
+    updatePrinterStatus("Printer not connected", false);
+  }
+}
+
+async function openKitchenPrinterPort(){
+  if(!kitchenPrinterPort || kitchenPrinterPort.readable || kitchenPrinterPort.writable){
+    return;
+  }
+
+  await kitchenPrinterPort.open({
+    baudRate:9600,
+    dataBits:8,
+    stopBits:1,
+    parity:"none",
+    flowControl:"none"
+  });
+}
+
+function updatePrinterStatus(message, connected){
+  if(printerStatus){
+    printerStatus.innerText = message;
+  }
+
+  if(printerBtn){
+    printerBtn.innerText = connected ? "Printer Connected" : "Connect Printer";
+    printerBtn.classList.toggle("connected", Boolean(connected));
+  }
+}
+
+async function printKitchenReceiptDirect(order){
+  if(!kitchenPrinterPort || !kitchenPrinterPort.writable){
+    return false;
+  }
+
+  let writer;
+  try{
+    await openKitchenPrinterPort();
+    writer = kitchenPrinterPort.writable.getWriter();
+    await writer.write(kitchenReceiptBytes(order));
+    updatePrinterStatus("Printed to KPrinter", true);
+    return true;
+  }catch(err){
+    console.warn("Direct kitchen print failed", err);
+    updatePrinterStatus("Printer needs reconnect", false);
+    return false;
+  }finally{
+    if(writer){
+      writer.releaseLock();
+    }
+  }
+}
+
+function kitchenReceiptBytes(order){
+  const encoder = new TextEncoder();
+  const orderNumber = String(order.orderNumber || order.id.slice(-3)).padStart(3, "0");
+  const created = order.createdAt
+    ? new Date(order.createdAt).toLocaleString([], { month:"short", day:"numeric", hour:"numeric", minute:"2-digit" })
+    : "";
+  const lines = [
+    "Food Kiosk - Roadworthy",
+    `ORDER #${orderNumber}`,
+    `Customer: ${order.customerName || "Walk-in"}`,
+    `Pickup: ${order.pickupTime || ""}`,
+    `Received: ${created}`,
+    "------------------------------",
+    ...(order.items || []).map(item=>{
+      const name = String(item.name || "");
+      const amount = `P${item.subtotal || 0}`;
+      return `${item.qty || 0}x ${name}`.padEnd(Math.max(1, 30 - amount.length), " ") + amount;
+    }),
+    "------------------------------",
+    `TOTAL P${order.total || 0}`,
+    "",
+    "",
+    ""
+  ];
+  const text = lines.join("\r\n");
+  const cut = new Uint8Array([29, 86, 66, 0]);
+  const init = new Uint8Array([27, 64]);
+  const payload = encoder.encode(text);
+  const bytes = new Uint8Array(init.length + payload.length + cut.length);
+
+  bytes.set(init, 0);
+  bytes.set(payload, init.length);
+  bytes.set(cut, init.length + payload.length);
+
+  return bytes;
 }
 
 function printKitchenReceipt(order){

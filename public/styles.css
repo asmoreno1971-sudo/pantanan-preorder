@@ -959,6 +959,35 @@ button:disabled{
   font-weight:800;
 }
 
+.printer-control{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.printer-control button{
+  margin:0;
+  min-height:38px;
+  padding:8px 14px;
+  border:1px solid #c5dfc4;
+  background:#eaf8e8;
+  color:#1d5c2f;
+  box-shadow:none;
+}
+
+.printer-control button.connected{
+  background:#dcfce7;
+  color:#14532d;
+}
+
+.printer-control span{
+  color:#7a5a43;
+  font-size:12px;
+  font-weight:700;
+}
+
 .orders-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -2345,6 +2374,10 @@ button:disabled{
 
   .kitchen-top{
     display:grid;
+  }
+
+  .printer-control{
+    justify-content:flex-start;
   }
 
   .kitchen-shortcuts{
