@@ -1978,7 +1978,19 @@ button:disabled{
 .expense-filter-summary .expense-summary span,
 .expense-filter-summary .expense-summary small{
   display:inline-flex;
+  align-items:center;
   margin:0;
+  color:#6b4b35;
+  font-size:18px !important;
+  font-weight:500;
+  line-height:1.1;
+  text-transform:uppercase;
+}
+
+.expense-filter-summary .expense-summary b{
+  font-size:18px !important;
+  font-weight:500;
+  line-height:1.1;
 }
 
 .expense-sheet{
