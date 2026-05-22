@@ -938,10 +938,6 @@ button:disabled{
   font-size:12px !important;
 }
 
-.cashier-customer-shortcut{
-  grid-column:1 / -1;
-}
-
 .sound-control button.sound-on{
   background:#6f4e37;
 }
