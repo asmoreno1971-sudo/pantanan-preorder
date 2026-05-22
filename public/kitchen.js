@@ -254,6 +254,12 @@ function kitchenReceiptBytes(order){
     `TOTAL P${order.total || 0}`,
     "",
     "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
     ""
   ];
   const text = lines.join("\r\n");
