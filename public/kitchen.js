@@ -423,7 +423,7 @@ function kitchenActionButton(order){
   }
 
   if(order.status === "Ready for Payment and Pickup"){
-    return `<button class="kitchen-action-btn notify-btn final-done-btn" onclick="markPickedUp('${order.id}')">Done</button>`;
+    return `<button class="kitchen-action-btn notify-btn final-done-btn" onclick="markPickedUp('${order.id}')">Your order is ready for payment/pickup</button>`;
   }
 
   if(order.status === "Preparing Order"){
@@ -516,7 +516,7 @@ async function finishOrder(id){
 
 function customerMessage(order){
   const orderNumber = String(order.orderNumber || 0).padStart(3, "0");
-  return `Your order #${orderNumber} is ready for payment and pickup.`;
+  return `Your order #${orderNumber} is ready for payment/pickup.`;
 }
 
 function closeMessageModal(){
