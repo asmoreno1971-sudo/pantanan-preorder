@@ -1627,6 +1627,34 @@ button:disabled{
   flex-wrap:wrap;
 }
 
+.profit-date-picker{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:6px 8px;
+  border:1px solid #dccfc3;
+  border-radius:8px;
+  background:#fffaf4;
+}
+
+.profit-date-picker label{
+  color:#4f3525;
+  font-size:13px !important;
+  font-weight:500;
+}
+
+.profit-date-picker input{
+  width:auto;
+  min-width:150px;
+  max-width:none;
+  min-height:36px;
+  margin:0;
+  padding:6px 10px;
+  font-size:14px !important;
+  font-weight:500;
+}
+
 .profit-head h4{
   margin:0;
   color:#2f2218;

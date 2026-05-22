@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<link rel="stylesheet" href="/styles.css?v=20260522-sales-profit-top">
+<link rel="stylesheet" href="/styles.css?v=20260522-sales-profit-date-top">
 </head>
 <body>
 <div class="sales-shell">
@@ -31,6 +31,11 @@
 <div>
 <h4>Profit Summary</h4>
 <p id="profitPeriodLabel">Today</p>
+</div>
+<div class="profit-date-picker">
+<label for="salesDate">Date</label>
+<input id="salesDate" type="date" onchange="loadSales()">
+<span id="salesStatus" class="status"></span>
 </div>
 <div class="period-tabs" aria-label="Profit period">
 <button type="button" data-profit-period="day" onclick="setProfitPeriod('day')">Day</button>
@@ -72,12 +77,6 @@
 </div>
 </section>
 
-<div class="sales-toolbar">
-<label for="salesDate">Date</label>
-<input id="salesDate" type="date" onchange="loadSales()">
-<span id="salesStatus" class="status"></span>
-</div>
-
 <div class="sales-sheet-wrap">
 <table class="sales-sheet daily-sales-sheet">
 <thead>
@@ -95,6 +94,6 @@
 </div>
 </div>
 
-<script src="/sales.js?v=20260522-sales-profit-top"></script>
+<script src="/sales.js?v=20260522-sales-profit-date-top"></script>
 </body>
 </html>
