@@ -31,6 +31,7 @@ let orderSubmitted = false;
 let currentTotal = 0;
 let storageWriteReady = true;
 let storageWarning = "";
+let statusCheckInFlight = false;
 const requiredMenuVersion = "20260518-admin-canonical-menu";
 
 function eraseLegacyMenuMemory(){
@@ -74,12 +75,7 @@ function saveCustomer(){
 async function loadMenu(){
   try{
     const menuView = isCashierPage ? "cashier" : "customer";
-    const res = await fetch(`/api/menu?view=${menuView}&fresh=${Date.now()}`, {
-      cache:"no-store",
-      headers:{
-        "Cache-Control":"no-cache"
-      }
-    });
+    const res = await fetch(`/api/menu?view=${menuView}`, { cache:"no-store" });
     const menuSource = res.headers.get("X-Menu-Source");
     const menuVersion = res.headers.get("X-Menu-Version");
 
@@ -396,14 +392,21 @@ function validate(){
 }
 
 async function loadStorageStatus(){
+  if(statusCheckInFlight){
+    return;
+  }
+
+  statusCheckInFlight = true;
   try{
-    const res = await fetch(`/api/storage-status?fresh=${Date.now()}`, { cache:"no-store" });
+    const res = await fetch("/api/storage-status", { cache:"no-store" });
     const data = await res.json();
     storageWriteReady = !data.orderWriteProtected;
     storageWarning = data.storageWarning || "";
   }catch{
     storageWriteReady = true;
     storageWarning = "";
+  }finally{
+    statusCheckInFlight = false;
   }
 
   validate();
@@ -845,9 +848,9 @@ async function checkActiveOrder(){
   }
 }
 
-setInterval(updateNowTime, 1000);
-setInterval(loadStorageStatus, 5000);
-setInterval(checkActiveOrder, 5000);
+setInterval(updateNowTime, 60000);
+setInterval(loadStorageStatus, 60000);
+setInterval(checkActiveOrder, 7000);
 setInterval(refreshMenuIfIdle, 60000);
 window.addEventListener("focus", ()=>{
   refreshMenuIfIdle();
@@ -871,6 +874,6 @@ loadSavedCustomer();
 updatePaymentVisibility();
 updateCashInputWidth();
 loadMenu();
-loadStorageStatus();
+setTimeout(loadStorageStatus, 1200);
 checkActiveOrder();
 validate();
