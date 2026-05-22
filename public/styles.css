@@ -871,6 +871,17 @@ button:disabled{
   display:none;
 }
 
+.print-frame{
+  position:fixed;
+  right:0;
+  bottom:0;
+  width:0;
+  height:0;
+  border:0;
+  opacity:0;
+  pointer-events:none;
+}
+
 .kitchen-shell{
   max-width:1100px;
   margin:0 auto;
