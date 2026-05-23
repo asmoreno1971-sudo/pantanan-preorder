@@ -161,6 +161,51 @@ body{
   color:#33483a;
 }
 
+.teacher-sheet{
+  margin-top:16px;
+  padding:18px;
+}
+
+.teacher-sheet h2{
+  margin:0 0 14px;
+  color:#213a2a;
+  font-family:var(--font-display);
+  font-size:24px;
+  line-height:1.1;
+}
+
+.teacher-field-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:12px;
+}
+
+.teacher-field-grid label{
+  display:grid;
+  gap:6px;
+  color:#44574a;
+  font-size:13px;
+  font-weight:650;
+}
+
+.teacher-field-grid input,
+.teacher-field-grid select{
+  width:100%;
+  max-width:none;
+  min-height:46px;
+  margin:0;
+  border-color:#cddacb;
+  background:#fff;
+  color:#1f2a24;
+  font-weight:600;
+}
+
+.teacher-field-grid input:focus,
+.teacher-field-grid select:focus{
+  border-color:#4b875e;
+  box-shadow:0 0 0 3px rgba(75,135,94,.14);
+}
+
 .page{
   display:flex;
   gap:24px;
@@ -2395,6 +2440,10 @@ button:disabled{
   }
 
   .profile-grid{
+    grid-template-columns:1fr;
+  }
+
+  .teacher-field-grid{
     grid-template-columns:1fr;
   }
 

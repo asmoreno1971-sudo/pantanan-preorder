@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<link rel="stylesheet" href="/styles.css?v=20260523-teacher-profile">
+<link rel="stylesheet" href="/styles.css?v=20260523-teacher-profile-fields">
 </head>
 <body class="teacher-profile-body">
 <main class="teacher-profile">
@@ -19,42 +19,41 @@
 </div>
 </section>
 
-<section class="teacher-card profile-main">
-<div class="teacher-photo" aria-hidden="true">Teacher</div>
-<div class="teacher-details">
-<p class="profile-label">Name</p>
-<h2>Teacher Name</h2>
-<p>Position: Classroom Teacher</p>
-<p>Department: Basic Education</p>
-<p>Advisory Class: Grade / Section</p>
+<section class="teacher-card teacher-sheet">
+<h2>Personal Information</h2>
+<div class="teacher-field-grid">
+<label>Family Name<input type="text"></label>
+<label>First Name<input type="text"></label>
+<label>Middle Name<input type="text"></label>
+<label>Birthday<input type="date"></label>
+<label>Sex<select><option value="">Select</option><option>Female</option><option>Male</option></select></label>
+<label>School Year<input type="text" placeholder="2026-2027"></label>
 </div>
 </section>
 
-<section class="profile-grid">
-<div class="teacher-card">
-<h3>Teaching Assignment</h3>
-<p>Subjects handled, grade levels, learning areas, and classroom responsibilities.</p>
+<section class="teacher-card teacher-sheet">
+<h2>Education and Teaching Assignment</h2>
+<div class="teacher-field-grid">
+<label>Highest Educational Attainment<input type="text"></label>
+<label>Major in<input type="text"></label>
+<label>Subject/s Taught<input type="text"></label>
+<label>Grade Level / Advisory<input type="text"></label>
+<label>Position<input type="text" placeholder="Teacher"></label>
+<label>Department<input type="text"></label>
 </div>
+</section>
 
-<div class="teacher-card">
-<h3>Education</h3>
-<p>Degree, major, school graduated from, certifications, and professional development trainings.</p>
-</div>
-
-<div class="teacher-card">
-<h3>Core Strengths</h3>
-<ul>
-<li>Classroom management</li>
-<li>Learner support</li>
-<li>Instructional planning</li>
-<li>Parent communication</li>
-</ul>
-</div>
-
-<div class="teacher-card">
-<h3>Contact</h3>
-<p>Email: teacher@bakhawintegratedschool.edu</p>
-<p>Office Hours: Monday to Friday</p>
+<section class="teacher-card teacher-sheet">
+<h2>Government and Employee IDs</h2>
+<div class="teacher-field-grid id-grid">
+<label>Employee No.<input type="text"></label>
+<label>GSIS<input type="text"></label>
+<label>PhilHealth<input type="text"></label>
+<label>TIN<input type="text"></label>
+<label>SSS<input type="text"></label>
+<label>PAG-IBIG<input type="text"></label>
+<label>PRC License No.<input type="text"></label>
+<label>DepEd Email<input type="email"></label>
 </div>
 </section>
 </main>
