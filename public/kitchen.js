@@ -6,6 +6,8 @@ let printInProgress = false;
 let kitchenPrinterPort = null;
 let kitchenBluetoothDevice = null;
 let kitchenBluetoothCharacteristic = null;
+let kitchenWakeLock = null;
+let printerReconnectInProgress = false;
 let soundEnabled = localStorage.getItem("kitchenSoundEnabled") === "true";
 let audioContext;
 let currentOrders = [];
@@ -41,6 +43,7 @@ async function loginKitchen(){
 function showKitchen(){
   kitchenLoginPanel.classList.add("hidden");
   kitchenPanel.classList.remove("hidden");
+  keepKitchenAwake();
   restoreKitchenPrinter();
 }
 
@@ -152,19 +155,27 @@ async function runPrintQueue(){
 }
 
 async function restoreKitchenPrinter(){
+  if(printerReconnectInProgress){
+    return;
+  }
+
+  printerReconnectInProgress = true;
   const serialRestored = await restoreSerialPrinter();
 
   if(serialRestored){
+    printerReconnectInProgress = false;
     return;
   }
 
   const bluetoothRestored = await restoreBluetoothPrinter();
 
   if(bluetoothRestored){
+    printerReconnectInProgress = false;
     return;
   }
 
   updatePrinterStatus(printerSupportMessage(), false);
+  printerReconnectInProgress = false;
 }
 
 async function connectKitchenPrinter(){
@@ -279,6 +290,11 @@ async function openBluetoothPrinter(device){
       if(writable){
         kitchenBluetoothCharacteristic = writable;
         updatePrinterStatus(`Bluetooth printer connected: ${device.name || "Printer"}`, true);
+        device.addEventListener("gattserverdisconnected", function(){
+          kitchenBluetoothCharacteristic = null;
+          updatePrinterStatus("Printer disconnected. Reconnecting...", false);
+          setTimeout(restoreKitchenPrinter, 1200);
+        }, { once:true });
         await loadOrders();
         return;
       }
@@ -300,6 +316,21 @@ function printerSupportMessage(){
   }
 
   return "Use Chrome/Edge with Bluetooth";
+}
+
+async function keepKitchenAwake(){
+  if(!("wakeLock" in navigator) || kitchenWakeLock){
+    return;
+  }
+
+  try{
+    kitchenWakeLock = await navigator.wakeLock.request("screen");
+    kitchenWakeLock.addEventListener("release", function(){
+      kitchenWakeLock = null;
+    });
+  }catch(err){
+    // Wake lock is helpful on phones, but printing can still work without it.
+  }
 }
 
 async function openKitchenPrinterPort(){
@@ -743,4 +774,23 @@ if(kitchenToken){
 }
 
 setInterval(loadOrders, 5000);
+setInterval(function(){
+  if(kitchenPanel && !kitchenPanel.classList.contains("hidden") && !kitchenPrinterPort && !kitchenBluetoothCharacteristic){
+    restoreKitchenPrinter();
+  }
+}, 15000);
 setInterval(updatePreparingTimers, 1000);
+
+document.addEventListener("visibilitychange", function(){
+  if(document.visibilityState === "visible"){
+    keepKitchenAwake();
+    restoreKitchenPrinter();
+    loadOrders();
+  }
+});
+
+window.addEventListener("focus", function(){
+  keepKitchenAwake();
+  restoreKitchenPrinter();
+  loadOrders();
+});
