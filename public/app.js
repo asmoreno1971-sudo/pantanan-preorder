@@ -36,7 +36,7 @@ const requiredMenuVersion = "20260518-admin-canonical-menu";
 
 function kioskBranchName(){
   const host = window.location.hostname.toLowerCase();
-  return host.includes("pantanan") || host.includes("foodkiosk2") ? "Pantanan" : "Roadworthy";
+  return host.includes("pos-pantanan") || host.includes("foodkiosk2") ? "Pantanan" : "Roadworthy";
 }
 
 function applyKioskBrand(){

@@ -434,7 +434,7 @@ function sleep(ms){
 
 function kitchenBranchName(){
   const host = window.location.hostname.toLowerCase();
-  return host.includes("pantanan") || host.includes("foodkiosk2") ? "Pantanan" : "Roadworthy";
+  return host.includes("pos-pantanan") || host.includes("foodkiosk2") ? "Pantanan" : "Roadworthy";
 }
 
 function kitchenReceiptBytes(order){
