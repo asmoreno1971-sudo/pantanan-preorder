@@ -63,7 +63,7 @@ function send(res, status, body, type = "application/json; charset=utf-8"){
     : type.includes("text/html")
       ? "no-store, max-age=0, must-revalidate"
       : type.includes("application/javascript") || type.includes("text/css")
-        ? "no-store, max-age=0, must-revalidate"
+        ? "public, max-age=604800, immutable"
         : "public, max-age=86400";
 
   res.writeHead(status, {
@@ -493,6 +493,21 @@ function menuFingerprint(menu){
     .slice(0, 16);
 }
 
+function orderableMenuResponse(menu, view){
+  if(view !== "customer" && view !== "cashier"){
+    return menu;
+  }
+
+  return menu.map(item=>{
+    const fingerprint = item.imageFingerprint || imageFingerprint(item.image);
+    return {
+      ...item,
+      imageFingerprint:fingerprint,
+      image:fingerprint ? `/api/menu-image/${encodeURIComponent(item.id)}?v=${encodeURIComponent(fingerprint)}` : ""
+    };
+  });
+}
+
 async function readLiveRecordCount(reader){
   try{
     const records = await reader();
@@ -764,13 +779,15 @@ function normalizeMenuCategory(category){
 }
 
 function normalizeMenuItem(item, index = 0){
+  const image = normalizeMenuImage(item.image);
   return {
     id: String(item.id || `item-${index + 1}`).replace(/[^a-z0-9-]/gi, "-").toLowerCase(),
     name: String(item.name || "Untitled Product").trim(),
     price: Math.max(0, Number(item.price) || 0),
     theme: String(item.theme || "latte"),
     category: normalizeMenuCategory(item.category),
-    image: normalizeMenuImage(item.image),
+    image,
+    imageFingerprint: imageFingerprint(image),
     available: item.available !== false
   };
 }
@@ -983,7 +1000,8 @@ async function handleApi(req, res){
 
   if(pathname === "/api/menu" && req.method === "GET"){
     const view = url.searchParams.get("view");
-    const responseMenu = normalizeMenu(await readMenu());
+    const fullMenu = normalizeMenu(await readMenu());
+    const responseMenu = orderableMenuResponse(fullMenu, view);
     res.writeHead(200, {
       "Content-Type":"application/json; charset=utf-8",
       "Cache-Control":"no-store",
@@ -991,7 +1009,7 @@ async function handleApi(req, res){
       "X-Menu-File":"admin-products",
       "X-Menu-Storage":storageMode(),
       "X-Menu-Version":menuContractVersion,
-      "X-Menu-Fingerprint":menuFingerprint(responseMenu),
+      "X-Menu-Fingerprint":menuFingerprint(fullMenu),
       "X-Menu-Count":String(responseMenu.length),
       "X-Menu-View":view || "admin"
     });
