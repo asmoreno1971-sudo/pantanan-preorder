@@ -4,11 +4,19 @@ let queuedPrintOrderIds = new Set();
 let printQueue = [];
 let printInProgress = false;
 let kitchenPrinterPort = null;
+let kitchenBluetoothDevice = null;
+let kitchenBluetoothCharacteristic = null;
 let soundEnabled = localStorage.getItem("kitchenSoundEnabled") === "true";
 let audioContext;
 let currentOrders = [];
 let kitchenToken = "page-auth";
 const printedOrdersStorageKey = "kitchenPrintedOrderIds:v20260523-autoprint-recover";
+const bluetoothPrinterServices = [
+  "0000fff0-0000-1000-8000-00805f9b34fb",
+  "0000ff00-0000-1000-8000-00805f9b34fb",
+  "49535343-fe7d-4ae5-8fa9-9fafd205e455",
+  "000018f0-0000-1000-8000-00805f9b34fb"
+];
 const kitchenLoginPanel = document.getElementById("kitchenLoginPanel");
 const kitchenPanel = document.getElementById("kitchenPanel");
 const kitchenPassword = document.getElementById("kitchenPassword");
@@ -144,41 +152,154 @@ async function runPrintQueue(){
 }
 
 async function restoreKitchenPrinter(){
-  if(!("serial" in navigator)){
-    updatePrinterStatus("Use Chrome or Edge for direct printer", false);
+  const serialRestored = await restoreSerialPrinter();
+
+  if(serialRestored){
     return;
+  }
+
+  const bluetoothRestored = await restoreBluetoothPrinter();
+
+  if(bluetoothRestored){
+    return;
+  }
+
+  updatePrinterStatus(printerSupportMessage(), false);
+}
+
+async function connectKitchenPrinter(){
+  const serialConnected = await connectSerialPrinter();
+
+  if(serialConnected){
+    return;
+  }
+
+  const bluetoothConnected = await connectBluetoothPrinter();
+
+  if(bluetoothConnected){
+    return;
+  }
+
+  updatePrinterStatus("Printer not connected", false);
+}
+
+async function restoreSerialPrinter(){
+  if(!("serial" in navigator)){
+    return false;
   }
 
   try{
     const ports = await navigator.serial.getPorts();
     if(!ports.length){
-      updatePrinterStatus("Tap Connect Printer once", false);
-      return;
+      return false;
     }
 
     kitchenPrinterPort = ports[0];
     await openKitchenPrinterPort();
-    updatePrinterStatus("Printer connected", true);
+    updatePrinterStatus("Serial printer connected", true);
     await loadOrders();
+    return true;
   }catch(err){
-    updatePrinterStatus("Tap Connect Printer", false);
+    return false;
   }
 }
 
-async function connectKitchenPrinter(){
+async function connectSerialPrinter(){
   if(!("serial" in navigator)){
-    updatePrinterStatus("Use Chrome or Edge for direct printer", false);
-    return;
+    return false;
   }
 
   try{
     kitchenPrinterPort = await navigator.serial.requestPort();
     await openKitchenPrinterPort();
-    updatePrinterStatus("Printer connected", true);
+    updatePrinterStatus("Serial printer connected", true);
     await loadOrders();
+    return true;
   }catch(err){
-    updatePrinterStatus("Printer not connected", false);
+    return false;
   }
+}
+
+async function restoreBluetoothPrinter(){
+  if(!("bluetooth" in navigator) || typeof navigator.bluetooth.getDevices !== "function"){
+    return false;
+  }
+
+  try{
+    const devices = await navigator.bluetooth.getDevices();
+    const device = devices.find(item=>/kprinter|printer|pos58|5802/i.test(item.name || ""));
+
+    if(!device){
+      return false;
+    }
+
+    await openBluetoothPrinter(device);
+    return true;
+  }catch(err){
+    return false;
+  }
+}
+
+async function connectBluetoothPrinter(){
+  if(!("bluetooth" in navigator)){
+    return false;
+  }
+
+  try{
+    const device = await navigator.bluetooth.requestDevice({
+      filters:[
+        { namePrefix:"KPrinter" },
+        { namePrefix:"KPrinter_dac5" },
+        { namePrefix:"JK" },
+        { namePrefix:"POS" }
+      ],
+      optionalServices:bluetoothPrinterServices
+    });
+
+    await openBluetoothPrinter(device);
+    return true;
+  }catch(err){
+    console.warn("Bluetooth printer connection failed", err);
+    return false;
+  }
+}
+
+async function openBluetoothPrinter(device){
+  kitchenBluetoothDevice = device;
+  const server = await device.gatt.connect();
+
+  for(const serviceId of bluetoothPrinterServices){
+    try{
+      const service = await server.getPrimaryService(serviceId);
+      const characteristics = await service.getCharacteristics();
+      const writable = characteristics.find(characteristic=>
+        characteristic.properties.write || characteristic.properties.writeWithoutResponse
+      );
+
+      if(writable){
+        kitchenBluetoothCharacteristic = writable;
+        updatePrinterStatus(`Bluetooth printer connected: ${device.name || "Printer"}`, true);
+        await loadOrders();
+        return;
+      }
+    }catch(err){
+      // Try the next common printer service.
+    }
+  }
+
+  throw new Error("No writable Bluetooth printer service found.");
+}
+
+function printerSupportMessage(){
+  if("bluetooth" in navigator){
+    return "Tap Connect Printer";
+  }
+
+  if("serial" in navigator){
+    return "Tap Connect Printer";
+  }
+
+  return "Use Chrome/Edge with Bluetooth";
 }
 
 async function openKitchenPrinterPort(){
@@ -207,6 +328,17 @@ function updatePrinterStatus(message, connected){
 }
 
 async function printKitchenReceiptDirect(order){
+  const bytes = kitchenReceiptBytes(order);
+  const serialPrinted = await printKitchenReceiptSerial(bytes);
+
+  if(serialPrinted){
+    return true;
+  }
+
+  return printKitchenReceiptBluetooth(bytes);
+}
+
+async function printKitchenReceiptSerial(bytes){
   if(!kitchenPrinterPort){
     return false;
   }
@@ -220,18 +352,53 @@ async function printKitchenReceiptDirect(order){
     }
 
     writer = kitchenPrinterPort.writable.getWriter();
-    await writer.write(kitchenReceiptBytes(order));
+    await writer.write(bytes);
     updatePrinterStatus("Printed to KPrinter", true);
     return true;
   }catch(err){
-    console.warn("Direct kitchen print failed", err);
-    updatePrinterStatus("Printer needs reconnect", false);
+    console.warn("Serial kitchen print failed", err);
     return false;
   }finally{
     if(writer){
       writer.releaseLock();
     }
   }
+}
+
+async function printKitchenReceiptBluetooth(bytes){
+  if(!kitchenBluetoothCharacteristic){
+    return false;
+  }
+
+  try{
+    if(kitchenBluetoothDevice && kitchenBluetoothDevice.gatt && !kitchenBluetoothDevice.gatt.connected){
+      await openBluetoothPrinter(kitchenBluetoothDevice);
+    }
+
+    const chunkSize = 20;
+    for(let offset = 0; offset < bytes.length; offset += chunkSize){
+      const chunk = bytes.slice(offset, offset + chunkSize);
+
+      if(kitchenBluetoothCharacteristic.properties.writeWithoutResponse){
+        await kitchenBluetoothCharacteristic.writeValueWithoutResponse(chunk);
+      }else{
+        await kitchenBluetoothCharacteristic.writeValue(chunk);
+      }
+
+      await sleep(35);
+    }
+
+    updatePrinterStatus("Printed to Bluetooth printer", true);
+    return true;
+  }catch(err){
+    console.warn("Bluetooth kitchen print failed", err);
+    updatePrinterStatus("Printer needs reconnect", false);
+    return false;
+  }
+}
+
+function sleep(ms){
+  return new Promise(resolve=>setTimeout(resolve, ms));
 }
 
 function kitchenReceiptBytes(order){
