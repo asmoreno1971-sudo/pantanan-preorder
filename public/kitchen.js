@@ -258,6 +258,7 @@ function kitchenReceiptBytes(order){
     "",
     "",
     "",
+    "",
     ""
   ];
   const text = lines.join("\r\n");
