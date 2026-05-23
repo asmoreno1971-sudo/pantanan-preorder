@@ -253,10 +253,7 @@ function kitchenReceiptBytes(order){
       return `${item.qty || 0}x ${name}`.padEnd(Math.max(1, 30 - amount.length), " ") + amount;
     }),
     "------------------------------",
-    `TOTAL P${order.total || 0}`,
-    "",
-    "",
-    "",
+    receiptLine("TOTAL", `P${order.total || 0}`),
     "",
     "",
     "",
@@ -274,6 +271,14 @@ function kitchenReceiptBytes(order){
   bytes.set(cut, init.length + payload.length);
 
   return bytes;
+}
+
+function receiptLine(left, right){
+  const lineWidth = 30;
+  const leftText = String(left || "");
+  const rightText = String(right || "");
+  const spaceCount = Math.max(1, lineWidth - leftText.length - rightText.length);
+  return leftText + " ".repeat(spaceCount) + rightText;
 }
 
 function escapeHtml(value){
