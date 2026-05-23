@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: foodkiosk1
+    name: pos-roadworthy
     env: node
     plan: free
     buildCommand: npm install
