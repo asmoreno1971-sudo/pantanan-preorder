@@ -18,7 +18,7 @@ services:
       - key: PANTANAN_MESSENGER_LINK
         value: https://facebook.com/alexander.moreno.2929
   - type: web
-    name: foodkiosk2
+    name: pos-pantanan
     env: node
     plan: free
     buildCommand: npm install
