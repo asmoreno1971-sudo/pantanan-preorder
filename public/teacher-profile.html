@@ -22,9 +22,9 @@
 <section class="teacher-card teacher-sheet">
 <h2>Personal Information</h2>
 <div class="teacher-field-grid">
-<label>Family Name<input type="text"></label>
-<label>First Name<input type="text"></label>
-<label>Middle Name<input type="text"></label>
+<label>Family Name<input type="text" data-format="proper"></label>
+<label>First Name<input type="text" data-format="proper"></label>
+<label>Middle Name<input type="text" data-format="proper"></label>
 <label>Birthday<input type="date"></label>
 <label>Sex<select><option value="">Select</option><option>Female</option><option>Male</option></select></label>
 <label>School Year<input type="text" placeholder="2026-2027"></label>
@@ -34,28 +34,51 @@
 <section class="teacher-card teacher-sheet">
 <h2>Education and Teaching Assignment</h2>
 <div class="teacher-field-grid">
-<label>Highest Educational Attainment<input type="text"></label>
-<label>Major in<input type="text"></label>
-<label>Subject/s Taught<input type="text"></label>
-<label>Grade Level / Advisory<input type="text"></label>
-<label>Position<input type="text" placeholder="Teacher"></label>
-<label>Department<input type="text"></label>
+<label>Highest Educational Attainment<input type="text" data-format="proper"></label>
+<label>Major in<input type="text" data-format="proper"></label>
+<label>Subject/s Taught<input type="text" data-format="proper"></label>
+<label>Grade Level / Advisory<input type="text" data-format="proper"></label>
+<label>Position<input type="text" placeholder="Teacher" data-format="proper"></label>
+<label>Department<input type="text" data-format="proper"></label>
 </div>
 </section>
 
 <section class="teacher-card teacher-sheet">
 <h2>Government and Employee IDs</h2>
 <div class="teacher-field-grid id-grid">
-<label>Employee No.<input type="text"></label>
-<label>GSIS<input type="text"></label>
-<label>PhilHealth<input type="text"></label>
-<label>TIN<input type="text"></label>
-<label>SSS<input type="text"></label>
-<label>PAG-IBIG<input type="text"></label>
-<label>PRC License No.<input type="text"></label>
-<label>DepEd Email<input type="email"></label>
+<label>Employee No.<input type="text" data-format="upper"></label>
+<label>GSIS<input type="text" data-format="upper"></label>
+<label>PhilHealth<input type="text" data-format="upper"></label>
+<label>TIN<input type="text" data-format="upper"></label>
+<label>SSS<input type="text" data-format="upper"></label>
+<label>PAG-IBIG<input type="text" data-format="upper"></label>
+<label>PRC License No.<input type="text" data-format="upper"></label>
+<label>DepEd Email<input type="email" data-format="lower"></label>
 </div>
 </section>
 </main>
+<script>
+function toProperCase(value){
+  return value
+    .toLowerCase()
+    .replace(/\b[a-z]/g, letter => letter.toUpperCase())
+    .replace(/\s+/g, " ")
+    .trimStart();
+}
+
+document.querySelectorAll("input[data-format]").forEach(input=>{
+  input.addEventListener("blur", ()=>{
+    const mode = input.dataset.format;
+
+    if(mode === "proper"){
+      input.value = toProperCase(input.value);
+    }else if(mode === "upper"){
+      input.value = input.value.toUpperCase().trim();
+    }else if(mode === "lower"){
+      input.value = input.value.toLowerCase().trim();
+    }
+  });
+});
+</script>
 </body>
 </html>
