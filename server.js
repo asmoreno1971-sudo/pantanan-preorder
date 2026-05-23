@@ -7,6 +7,7 @@ const root = __dirname;
 const publicDir = path.join(root, "public");
 const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : root;
 const databaseUrl = process.env.EXTERNAL_DATABASE_URL || process.env.DATABASE_URL || "";
+const dataNamespace = String(process.env.DATA_NAMESPACE || "").trim();
 const isProduction = process.env.NODE_ENV === "production";
 const menuPath = resolveAdminProductsPath();
 const ordersPath = path.resolve(process.env.ORDERS_PATH || path.join(dataDir, "orders.json"));
@@ -136,20 +137,17 @@ async function readDataRecord(key, filePath, fallbackValue){
   const pool = await getDbPool();
 
   if(pool){
-    const existing = await pool.query("select value from app_data where key = $1", [key]);
+    const dbKey = storageKey(key);
+    const existing = await pool.query("select value from app_data where key = $1", [dbKey]);
 
     if(existing.rows.length){
       return existing.rows[0].value;
     }
 
-    if(key === "admin-products"){
-      return fallbackValue;
-    }
-
     const seed = await readJsonSeed(filePath, fallbackValue);
     await pool.query(
       "insert into app_data (key, value, updated_at) values ($1, $2::jsonb, now()) on conflict (key) do nothing",
-      [key, JSON.stringify(seed)]
+      [dbKey, JSON.stringify(seed)]
     );
     return seed;
   }
@@ -328,14 +326,19 @@ async function writeDataRecord(key, filePath, value){
   const pool = await getDbPool();
 
   if(pool){
+    const dbKey = storageKey(key);
     await pool.query(
       "insert into app_data (key, value, updated_at) values ($1, $2::jsonb, now()) on conflict (key) do update set value = excluded.value, updated_at = now()",
-      [key, JSON.stringify(value)]
+      [dbKey, JSON.stringify(value)]
     );
     return;
   }
 
   await writeJsonFile(filePath, value);
+}
+
+function storageKey(key){
+  return dataNamespace ? `${dataNamespace}:${key}` : key;
 }
 
 function requirePersistentStorageForProduction(key, operation){
