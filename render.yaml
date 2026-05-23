@@ -37,6 +37,18 @@ services:
         value: https://wa.me/639695093050
       - key: PANTANAN_MESSENGER_LINK
         value: https://facebook.com/alexander.moreno.2929
+  - type: web
+    name: teacher-profile
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TEACHER_PROFILE_HOME
+        value: "true"
 
 databases:
   - name: pos-roadworthy-db

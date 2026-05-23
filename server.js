@@ -8,6 +8,7 @@ const publicDir = path.join(root, "public");
 const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : root;
 const databaseUrl = process.env.EXTERNAL_DATABASE_URL || process.env.DATABASE_URL || "";
 const dataNamespace = String(process.env.DATA_NAMESPACE || "").trim();
+const teacherProfileHome = process.env.TEACHER_PROFILE_HOME === "true";
 const isProduction = process.env.NODE_ENV === "production";
 const menuPath = resolveAdminProductsPath();
 const ordersPath = path.resolve(process.env.ORDERS_PATH || path.join(dataDir, "orders.json"));
@@ -1438,8 +1439,12 @@ async function handleApi(req, res){
 
 async function serveStatic(req, res){
   const pathname = requestPath(req);
+  const host = String(req.headers.host || "").toLowerCase();
+  const rootPage = teacherProfileHome || host.startsWith("teacher-profile.")
+    ? "teacher-profile.html"
+    : "index.html";
   const routes = {
-    "/": "index.html",
+    "/": rootPage,
     "/admin": "admin.html",
     "/cashier": "cashier.html",
     "/kitchen": "kitchen.html",
