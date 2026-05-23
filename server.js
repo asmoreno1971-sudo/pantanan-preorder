@@ -1447,6 +1447,7 @@ async function serveStatic(req, res){
     "/transaction": "transactions.html",
     "/transactions": "transactions.html",
     "/expenses": "expenses.html",
+    "/teacher-profile": "teacher-profile.html",
     "/qr": "qr.html"
   };
 

@@ -26,6 +26,141 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 
+.teacher-profile-body{
+  min-height:100vh;
+  padding:22px;
+  background:#f4f7f1;
+  color:#1f2a24;
+}
+
+.teacher-profile{
+  width:min(920px, 100%);
+  margin:0 auto;
+}
+
+.teacher-hero{
+  display:grid;
+  grid-template-columns:92px 1fr;
+  gap:18px;
+  align-items:center;
+  padding:22px;
+  border:1px solid #cbdcc9;
+  border-radius:10px;
+  background:linear-gradient(135deg, #edf7ee, #f7f3e7);
+  box-shadow:0 18px 42px rgba(37, 65, 46, .09);
+}
+
+.school-mark{
+  display:grid;
+  place-items:center;
+  width:92px;
+  height:92px;
+  border-radius:50%;
+  background:#2f6b45;
+  color:#fff;
+  font-size:28px;
+  font-weight:800;
+  letter-spacing:.04em;
+}
+
+.school-name{
+  margin:0 0 4px;
+  color:#4b6b55;
+  font-size:15px;
+  font-weight:650;
+}
+
+.teacher-hero h1{
+  margin:0;
+  font-family:var(--font-display);
+  font-size:42px;
+  line-height:1;
+  color:#213a2a;
+}
+
+.teacher-intro{
+  max-width:680px;
+  margin:10px 0 0;
+  color:#47584d;
+  font-size:16px;
+}
+
+.teacher-card{
+  border:1px solid #d6dfd2;
+  border-radius:10px;
+  background:#fffdf8;
+  box-shadow:0 12px 28px rgba(37, 65, 46, .06);
+}
+
+.profile-main{
+  display:grid;
+  grid-template-columns:180px 1fr;
+  gap:20px;
+  align-items:center;
+  margin-top:18px;
+  padding:18px;
+}
+
+.teacher-photo{
+  display:grid;
+  place-items:center;
+  min-height:180px;
+  border-radius:8px;
+  background:#dce9f4;
+  color:#2b4b64;
+  font-size:22px;
+  font-weight:750;
+}
+
+.teacher-details h2{
+  margin:0 0 8px;
+  font-family:var(--font-display);
+  font-size:30px;
+  color:#213a2a;
+}
+
+.teacher-details p,
+.teacher-card p{
+  margin:6px 0;
+  color:#33483a;
+}
+
+.profile-label{
+  margin:0 0 4px !important;
+  color:#6d7b70 !important;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+.profile-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:16px;
+  margin-top:16px;
+}
+
+.profile-grid .teacher-card{
+  padding:18px;
+}
+
+.teacher-card h3{
+  margin:0 0 10px;
+  color:#213a2a;
+  font-family:var(--font-display);
+  font-size:22px;
+}
+
+.teacher-card ul{
+  margin:8px 0 0;
+  padding-left:20px;
+}
+
+.teacher-card li{
+  margin:4px 0;
+  color:#33483a;
+}
+
 .page{
   display:flex;
   gap:24px;
@@ -2241,6 +2376,28 @@ button:disabled{
 }
 
 @media (max-width:760px){
+  .teacher-profile-body{
+    padding:12px;
+  }
+
+  .teacher-hero,
+  .profile-main{
+    grid-template-columns:1fr;
+    text-align:center;
+  }
+
+  .school-mark{
+    margin:0 auto;
+  }
+
+  .teacher-hero h1{
+    font-size:34px;
+  }
+
+  .profile-grid{
+    grid-template-columns:1fr;
+  }
+
   body{
     padding:16px;
   }
