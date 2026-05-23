@@ -432,6 +432,11 @@ function sleep(ms){
   return new Promise(resolve=>setTimeout(resolve, ms));
 }
 
+function kitchenBranchName(){
+  const host = window.location.hostname.toLowerCase();
+  return host.includes("pantanan") || host.includes("foodkiosk2") ? "Pantanan" : "Roadworthy";
+}
+
 function kitchenReceiptBytes(order){
   const encoder = new TextEncoder();
   const orderNumber = String(order.orderNumber || order.id.slice(-3)).padStart(3, "0");
@@ -439,7 +444,7 @@ function kitchenReceiptBytes(order){
     ? new Date(order.createdAt).toLocaleString([], { month:"short", day:"numeric", hour:"numeric", minute:"2-digit" })
     : "";
   const lines = [
-    "Food Kiosk - Roadworthy",
+    `Food Kiosk - ${kitchenBranchName()}`,
     `ORDER #${orderNumber}`,
     `Customer: ${order.customerName || "Walk-in"}`,
     `Pickup: ${order.pickupTime || ""}`,

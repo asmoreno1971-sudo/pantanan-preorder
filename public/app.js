@@ -34,6 +34,22 @@ let storageWarning = "";
 let statusCheckInFlight = false;
 const requiredMenuVersion = "20260518-admin-canonical-menu";
 
+function kioskBranchName(){
+  const host = window.location.hostname.toLowerCase();
+  return host.includes("pantanan") || host.includes("foodkiosk2") ? "Pantanan" : "Roadworthy";
+}
+
+function applyKioskBrand(){
+  const branch = kioskBranchName();
+  document.querySelectorAll(".summary-brand").forEach(element=>{
+    element.textContent = `Food Kiosk - ${branch}`;
+  });
+
+  if(document.title.includes("Roadworthy") || document.title.includes("Pantanan")){
+    document.title = `${branch} Menu`;
+  }
+}
+
 function eraseLegacyMenuMemory(){
   [
     "pantananCustomerMenuV1",
@@ -871,6 +887,7 @@ document.addEventListener("visibilitychange", ()=>{
 });
 updateNowTime();
 generateTimes();
+applyKioskBrand();
 eraseLegacyMenuMemory();
 loadSavedCustomer();
 updatePaymentVisibility();
