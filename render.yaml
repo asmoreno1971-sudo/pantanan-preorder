@@ -38,7 +38,7 @@ services:
       - key: PANTANAN_MESSENGER_LINK
         value: https://facebook.com/alexander.moreno.2929
   - type: web
-    name: teacher-profile
+    name: teacher-profile-bis
     env: node
     plan: free
     buildCommand: npm install
