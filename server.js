@@ -498,7 +498,7 @@ function menuFingerprint(menu){
 }
 
 function orderableMenuResponse(menu, view){
-  if(view !== "customer" && view !== "cashier"){
+  if(view !== "customer" && view !== "cashier" && view !== "admin"){
     return menu;
   }
 
@@ -508,6 +508,26 @@ function orderableMenuResponse(menu, view){
       ...item,
       imageFingerprint:fingerprint,
       image:fingerprint ? `/api/menu-image/${encodeURIComponent(item.id)}?v=${encodeURIComponent(fingerprint)}` : ""
+    };
+  });
+}
+
+function restoreStoredMenuImages(menu, storedMenu){
+  const storedImages = new Map(
+    normalizeMenu(storedMenu).map(item=>[item.id, item.image])
+  );
+
+  return (Array.isArray(menu) ? menu : []).map(item=>{
+    const id = String(item && item.id || "").replace(/[^a-z0-9-]/gi, "-").toLowerCase();
+    const image = String(item && item.image || "").trim();
+
+    if(!image.startsWith("/api/menu-image/")){
+      return item;
+    }
+
+    return {
+      ...item,
+      image:storedImages.get(id) || ""
     };
   });
 }
@@ -1068,7 +1088,8 @@ async function handleApi(req, res){
       return true;
     }
 
-    const cleanMenu = normalizeMenu(menu);
+    const storedMenu = await readMenu();
+    const cleanMenu = normalizeMenu(restoreStoredMenuImages(menu, storedMenu));
 
     try{
       await writeDataRecord("admin-products", menuPath, cleanMenu);
@@ -1081,7 +1102,7 @@ async function handleApi(req, res){
       return true;
     }
 
-    send(res, 200, JSON.stringify({ ok:true, menu:cleanMenu }));
+    send(res, 200, JSON.stringify({ ok:true, menu:orderableMenuResponse(cleanMenu, "admin") }));
     return true;
   }
 
@@ -1288,11 +1309,11 @@ async function handleApi(req, res){
       .filter(Boolean);
 
     const customerContact = String(body.customerContact || body.customerMessenger || "").trim();
-    const normalizedContact = normalizePhilippineMobileNumber(customerContact);
+    const normalizedContact = customerContact ? normalizePhilippineMobileNumber(customerContact) : "";
     const source = String(body.source || "customer").trim().toLowerCase() === "cashier" ? "cashier" : "";
     const isCashierOrder = source === "cashier";
 
-    if(!body.customerName || !body.pickupTime || cleanItems.length === 0){
+    if((!isCashierOrder && !body.customerName) || !body.pickupTime || cleanItems.length === 0){
       send(res, 400, JSON.stringify({ ok:false, message:"Order is incomplete" }));
       return true;
     }
@@ -1318,7 +1339,7 @@ async function handleApi(req, res){
       id: Date.now().toString(),
       orderNumber,
       orderDate,
-      customerName: String(body.customerName).trim().toUpperCase(),
+      customerName: String(body.customerName || `CUSTOMER #${String(orderNumber).padStart(3, "0")}`).trim().toUpperCase(),
       customerContact:normalizedContact,
       pickupTime,
       status: isCashierOrder ? "Done" : "Order Sent",

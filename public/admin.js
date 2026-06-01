@@ -24,7 +24,7 @@ async function loadMenu(){
 
   isLoadingMenu = true;
   try{
-    const res = await fetch(`/api/menu?fresh=${Date.now()}`, { cache:"no-store" });
+    const res = await fetch(`/api/menu?view=admin&fresh=${Date.now()}`, { cache:"no-store" });
     const menuSource = res.headers.get("X-Menu-Source");
     const menuVersion = res.headers.get("X-Menu-Version");
 
