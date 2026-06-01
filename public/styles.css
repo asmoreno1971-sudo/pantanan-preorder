@@ -879,40 +879,75 @@ button:disabled{
 
 .picture-actions{
   grid-column:1 / -1;
-  display:flex;
-  align-items:center;
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0, 1fr));
   gap:10px;
-  flex-wrap:wrap;
+  align-items:stretch;
 }
 
-.product-fields-editor .upload-btn{
+.product-fields-editor .upload-btn,
+.picture-actions button{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  min-height:40px;
-  padding:10px 12px;
+  width:100%;
+  min-height:42px;
+  height:42px;
+  margin:0;
+  padding:8px 10px;
   border-radius:8px;
-  background:#6f4e37;
-  color:#fff;
   cursor:pointer;
   font-size:14px;
   font-weight:850;
   text-transform:none;
 }
 
+.product-fields-editor .upload-btn{
+  border:1px solid #decab7;
+  background:#f7eadb;
+  color:#5a3c28;
+}
+
+.picture-actions .secondary-btn{
+  border:1px solid #ddd1c7;
+  background:#f4eee8;
+  color:#5a4334;
+}
+
 .availability-btn{
-  background:#1f8f4d;
-  color:#fff;
+  border:1px solid #bddbc4;
+  background:#e8f5ea;
+  color:#27683d;
 }
 
 .availability-btn.unavailable{
-  background:#eee3d9;
-  color:#4a3224;
-  border:1px solid #d7c8bb;
+  border:1px solid #ddd1c7;
+  background:#f4eee8;
+  color:#6b584c;
+}
+
+.picture-actions .danger-btn{
+  border:1px solid #e1c4bd;
+  background:#f7e9e6;
+  color:#8a4238;
 }
 
 .product-fields-editor .upload-btn input{
   display:none;
+}
+
+@media (max-width: 620px){
+  .picture-actions{
+    gap:6px;
+  }
+
+  .product-fields-editor .upload-btn,
+  .picture-actions button{
+    min-height:38px;
+    height:38px;
+    padding:6px 4px;
+    font-size:11px;
+  }
 }
 
 .admin-row{
