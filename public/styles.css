@@ -1164,6 +1164,44 @@ button:disabled{
   font-size:12px !important;
 }
 
+.cashier-offline-status{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin:10px 0 12px;
+  padding:8px 10px;
+  border:1px solid #c8dfce;
+  border-radius:8px;
+  background:#eef8f0;
+  color:#27623c;
+}
+
+.cashier-offline-status.pending{
+  border-color:#ead5a6;
+  background:#fff8e8;
+  color:#76561c;
+}
+
+.cashier-offline-status.offline{
+  border-color:#e6c4bd;
+  background:#fdf0ed;
+  color:#81483d;
+}
+
+.cashier-offline-status button{
+  min-height:30px;
+  margin:0;
+  padding:5px 9px;
+  border:1px solid #c7d9ca;
+  border-radius:6px;
+  background:#fff;
+  color:inherit;
+  box-shadow:none;
+  font-size:11px !important;
+  white-space:nowrap;
+}
+
 .sound-control button.sound-on{
   background:#6f4e37;
 }

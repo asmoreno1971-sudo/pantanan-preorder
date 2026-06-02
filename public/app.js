@@ -23,6 +23,10 @@ const successText = document.getElementById("successText");
 const customerStatus = document.getElementById("customerStatus");
 const customerStatusTitle = document.getElementById("customerStatusTitle");
 const customerStatusText = document.getElementById("customerStatusText");
+const cashierOffline = window.CashierOffline || null;
+const cashierOfflineStatus = document.getElementById("cashierOfflineStatus");
+const cashierOfflineText = document.getElementById("cashierOfflineText");
+const cashierSyncButton = document.getElementById("cashierSyncBtn");
 const maxOrdersPerSlot = 5;
 let activeOrderId = localStorage.getItem("activeOrderId") || "";
 let lastNotifiedStatus = localStorage.getItem("lastNotifiedStatus") || "";
@@ -32,6 +36,9 @@ let currentTotal = 0;
 let storageWriteReady = true;
 let storageWarning = "";
 let statusCheckInFlight = false;
+let cashierSyncInFlight = false;
+let cashierOfflineReady = !isCashierPage;
+let cashierSyncWarning = "";
 const requiredMenuVersion = "20260518-admin-canonical-menu";
 
 function kioskBranchName(){
@@ -63,15 +70,17 @@ function eraseLegacyMenuMemory(){
     "adminMenuServerSavedAt"
   ].forEach(key=>localStorage.removeItem(key));
 
-  if("caches" in window){
+  if(!isCashierPage && "caches" in window){
     caches.keys()
-      .then(keys=>Promise.all(keys.filter(key=>/menu|preorder|pantanan|pos|roadworthy/i.test(key)).map(key=>caches.delete(key))))
+      .then(keys=>Promise.all(keys.filter(key=>!key.startsWith("roadworthy-cashier-shell-") && /menu|preorder|pantanan|pos|roadworthy/i.test(key)).map(key=>caches.delete(key))))
       .catch(()=>{});
   }
 
-  if("serviceWorker" in navigator){
+  if(!isCashierPage && "serviceWorker" in navigator){
     navigator.serviceWorker.getRegistrations()
-      .then(registrations=>Promise.all(registrations.map(registration=>registration.unregister())))
+      .then(registrations=>Promise.all(registrations
+        .filter(registration=>!String((registration.active && registration.active.scriptURL) || "").includes("/cashier-sw.js"))
+        .map(registration=>registration.unregister())))
       .catch(()=>{});
   }
 }
@@ -107,11 +116,24 @@ async function loadMenu(){
 
     const orderableMenu = freshMenu.filter(item=>item.available !== false);
 
+    if(isCashierPage && cashierOffline){
+      cashierOffline.saveMenu(orderableMenu).catch(()=>{});
+    }
+
     if(menuSignature(orderableMenu) !== menuSignature(menu)){
       menu = orderableMenu;
       renderMenu();
     }
   }catch{
+    if(isCashierPage && cashierOffline){
+      const savedMenu = await cashierOffline.loadMenu().catch(()=>[]);
+      if(savedMenu.length){
+        menu = savedMenu.filter(item=>item.available !== false);
+        renderMenu();
+        updateCashierOfflineUi();
+        return;
+      }
+    }
     if(!menu.length){
       menuList.innerHTML = `<div class="category-empty">Menu is loading. Please refresh.</div>`;
     }
@@ -402,9 +424,10 @@ function validate(){
   const valid = needsCustomerFields
     ? (!nameInput || nameVal) && (!contactInput || normalizeMobileNumber(contactVal)) && hasItem && hasDeliveryTime && cashValid
     : hasItem && cashValid;
-  orderButton.disabled = orderSubmitted || !valid || !storageWriteReady;
-  orderButton.innerText = storageWriteReady ? orderButtonReadyText : "Database Required";
-  orderButton.style.background = valid && !orderSubmitted && storageWriteReady ? "#1f8f4d" : "#ccc";
+  const canStoreOrder = storageWriteReady || (isCashierPage && cashierOfflineReady);
+  orderButton.disabled = orderSubmitted || !valid || !canStoreOrder;
+  orderButton.innerText = canStoreOrder ? orderButtonReadyText : "Database Required";
+  orderButton.style.background = valid && !orderSubmitted && canStoreOrder ? "#1f8f4d" : "#ccc";
 }
 
 async function loadStorageStatus(){
@@ -531,7 +554,7 @@ async function openSummary(){
     return;
   }
 
-  if(!storageWriteReady){
+  if(!storageWriteReady && !isCashierPage){
     alert(storageWarning || "Database is required before sending live orders.");
     validate();
     return;
@@ -544,25 +567,24 @@ async function openSummary(){
 
   let data;
 
+  const payload = {
+    customerName:nameVal,
+    customerContact:contactVal,
+    pickupTime,
+    items,
+    source:isCashierPage ? "cashier" : "customer",
+    cashReceived:cashInput ? Number(cashInput.value || 0) : undefined
+  };
+
   try{
-    const res = await fetch("/api/orders", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({
-        customerName:nameVal,
-        customerContact:contactVal,
-        pickupTime,
-        items,
-        source:isCashierPage ? "cashier" : "customer",
-        cashReceived:cashInput ? Number(cashInput.value || 0) : undefined
-      })
-    });
-    data = await res.json();
+    data = isCashierPage
+      ? await submitCashierOrder(payload)
+      : await postOrder(payload);
   }catch{
     orderSubmitted = false;
     orderButton.disabled = false;
     orderButton.innerText = orderButtonReadyText;
-    alert("Unable to send order. Please check your internet connection and try again.");
+    alert(isCashierPage ? "Sale could not be saved on this device. Please retry." : "Unable to send order. Please check your internet connection and try again.");
     validate();
     return;
   }
@@ -578,6 +600,9 @@ async function openSummary(){
   }
 
   saveCustomer();
+  if(isCashierPage && data.queued){
+    updateCashierOfflineUi();
+  }
   if(!isCashierPage){
     activeOrderId = data.order.id;
     localStorage.setItem("activeOrderId", activeOrderId);
@@ -592,6 +617,116 @@ async function openSummary(){
   orderButton.disabled = false;
   orderButton.innerText = orderButtonReadyText;
   validate();
+}
+
+async function postOrder(payload){
+  const res = await fetch("/api/orders", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify(payload)
+  });
+  const data = await res.json();
+
+  if(!res.ok && !data.ok){
+    const error = new Error(data.message || "Unable to send order");
+    error.responseData = data;
+    error.permanent = res.status >= 400 && res.status < 500;
+    throw error;
+  }
+
+  return data;
+}
+
+async function submitCashierOrder(payload){
+  if(!cashierOffline){
+    return postOrder(payload);
+  }
+
+  const sale = {
+    ...payload,
+    clientTransactionId:cashierOffline.transactionId(),
+    offlineQueuedAt:new Date().toISOString()
+  };
+
+  if(navigator.onLine && storageWriteReady){
+    try{
+      return await postOrder(sale);
+    }catch(error){
+      if(error.permanent){
+        throw error;
+      }
+    }
+  }
+
+  await cashierOffline.queueSale(sale);
+  return { ok:true, queued:true };
+}
+
+async function updateCashierOfflineUi(message){
+  if(!isCashierPage || !cashierOffline || !cashierOfflineStatus || !cashierOfflineText){
+    return;
+  }
+
+  const pending = await cashierOffline.countPending().catch(()=>0);
+  const offline = !navigator.onLine;
+  cashierOfflineStatus.classList.toggle("pending", pending > 0 && !offline);
+  cashierOfflineStatus.classList.toggle("offline", offline);
+  cashierOfflineText.innerText = message || cashierSyncWarning || (pending
+    ? `${pending} sale${pending === 1 ? "" : "s"} saved on this phone, waiting to sync.`
+    : offline
+      ? "Offline. New sales will be saved on this phone."
+      : "Online. Cashier sales are synced.");
+  if(cashierSyncButton){
+    cashierSyncButton.disabled = cashierSyncInFlight || pending === 0 || offline;
+  }
+}
+
+async function syncPendingCashierSales(){
+  if(!isCashierPage || !cashierOffline || cashierSyncInFlight || !navigator.onLine){
+    updateCashierOfflineUi();
+    return;
+  }
+
+  cashierSyncInFlight = true;
+  cashierSyncWarning = "";
+  updateCashierOfflineUi("Syncing saved cashier sales...");
+  try{
+    const pending = await cashierOffline.pendingSales();
+    for(const sale of pending){
+      try{
+        const data = await postOrder(sale);
+        if(data.ok){
+          await cashierOffline.removeSale(sale.clientTransactionId);
+        }
+      }catch(error){
+        if(error.permanent){
+          cashierSyncWarning = "A saved sale needs attention. It remains safely stored on this phone.";
+        }
+        break;
+      }
+    }
+  }finally{
+    cashierSyncInFlight = false;
+    updateCashierOfflineUi();
+  }
+}
+
+async function initializeCashierOffline(){
+  if(!isCashierPage || !cashierOffline){
+    return;
+  }
+
+  try{
+    await cashierOffline.registerServiceWorker();
+    await cashierOffline.countPending();
+    cashierOfflineReady = true;
+  }catch{
+    cashierOfflineReady = false;
+  }
+
+  updateCashierOfflineUi();
+  validate();
+  syncPendingCashierSales();
 }
 
 function normalizeMobileNumber(value){
@@ -870,6 +1005,7 @@ setInterval(updateNowTime, 60000);
 setInterval(loadStorageStatus, 60000);
 setInterval(checkActiveOrder, 7000);
 setInterval(refreshMenuIfIdle, 60000);
+setInterval(syncPendingCashierSales, 60000);
 window.addEventListener("focus", ()=>{
   refreshMenuIfIdle();
   loadStorageStatus();
@@ -878,7 +1014,12 @@ window.addEventListener("pageshow", ()=>{
   refreshMenuIfIdle();
   loadStorageStatus();
 });
-window.addEventListener("online", refreshMenuIfIdle);
+window.addEventListener("online", ()=>{
+  refreshMenuIfIdle();
+  syncPendingCashierSales();
+  updateCashierOfflineUi();
+});
+window.addEventListener("offline", ()=>updateCashierOfflineUi());
 document.addEventListener("visibilitychange", ()=>{
   if(document.visibilityState === "visible"){
     refreshMenuIfIdle();
@@ -889,6 +1030,7 @@ updateNowTime();
 generateTimes();
 applyKioskBrand();
 eraseLegacyMenuMemory();
+initializeCashierOffline();
 loadSavedCustomer();
 updatePaymentVisibility();
 updateCashInputWidth();

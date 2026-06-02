@@ -1289,29 +1289,43 @@ async function handleApi(req, res){
     const menu = await readMenu();
     const orders = await readOrders();
     const items = Array.isArray(body.items) ? body.items : [];
+    const source = String(body.source || "customer").trim().toLowerCase() === "cashier" ? "cashier" : "";
+    const isCashierOrder = source === "cashier";
+    const clientTransactionId = isCashierOrder ? String(body.clientTransactionId || "").trim().slice(0, 120) : "";
+    const existingCashierOrder = clientTransactionId
+      ? orders.find(order=>order.source === "cashier" && order.clientTransactionId === clientTransactionId)
+      : null;
+
+    if(existingCashierOrder){
+      send(res, 200, JSON.stringify({ ok:true, duplicate:true, order:existingCashierOrder }));
+      return true;
+    }
+
     const cleanItems = items
       .map(item=>{
         const product = menu.find(menuItem=>menuItem.id === item.id);
         const qty = Math.max(0, Number(item.qty) || 0);
+        const allowCashierSnapshot = isCashierOrder && clientTransactionId;
 
-        if(!product || qty === 0){
+        if((!product && !allowCashierSnapshot) || qty === 0){
           return null;
         }
 
+        const price = allowCashierSnapshot && Number.isFinite(Number(item.price))
+          ? Math.max(0, Number(item.price))
+          : Number(product.price) || 0;
         return {
-          id: product.id,
-          name: product.name,
+          id: String((product && product.id) || item.id || item.name || crypto.randomUUID()),
+          name: String((allowCashierSnapshot && item.name) || (product && product.name) || "Item").trim(),
           qty,
-          price: product.price,
-          subtotal: qty * product.price
+          price,
+          subtotal: qty * price
         };
       })
       .filter(Boolean);
 
     const customerContact = String(body.customerContact || body.customerMessenger || "").trim();
     const normalizedContact = customerContact ? normalizePhilippineMobileNumber(customerContact) : "";
-    const source = String(body.source || "customer").trim().toLowerCase() === "cashier" ? "cashier" : "";
-    const isCashierOrder = source === "cashier";
 
     if(!body.pickupTime || cleanItems.length === 0){
       send(res, 400, JSON.stringify({ ok:false, message:"Order is incomplete" }));
@@ -1344,6 +1358,7 @@ async function handleApi(req, res){
       pickupTime,
       status: isCashierOrder ? "Done" : "Order Sent",
       source,
+      clientTransactionId,
       createdAt: completedAt,
       items: cleanItems,
       total
