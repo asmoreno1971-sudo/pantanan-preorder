@@ -1502,11 +1502,22 @@ async function serveStatic(req, res){
   }
 
   try{
-    const body = await fs.readFile(filePath);
-    send(res, 200, body, types[path.extname(filePath)] || "text/plain; charset=utf-8");
+    let body = await fs.readFile(filePath);
+    const ext = path.extname(filePath);
+    const type = types[ext] || "text/plain; charset=utf-8";
+
+    if(ext === ".html" && isPantananHost(host)){
+      body = Buffer.from(body.toString("utf8").replace(/Roadworthy/g, "Pantanan"));
+    }
+
+    send(res, 200, body, type);
   }catch{
     send(res, 404, "Not found", "text/plain; charset=utf-8");
   }
+}
+
+function isPantananHost(host){
+  return host.includes("foodkiosk2") || host.includes("pos-pantanan");
 }
 
 const server = http.createServer(async (req, res)=>{
