@@ -400,7 +400,7 @@ function validate(){
   const needsCustomerFields = Boolean(nameInput || contactInput || timeDropdown);
   const cashValid = !cashInput || Number(cashInput.value || 0) >= currentTotal;
   const valid = needsCustomerFields
-    ? nameVal && (!contactInput || normalizeMobileNumber(contactVal)) && hasItem && hasDeliveryTime && cashValid
+    ? (!nameInput || nameVal) && (!contactInput || normalizeMobileNumber(contactVal)) && hasItem && hasDeliveryTime && cashValid
     : hasItem && cashValid;
   orderButton.disabled = orderSubmitted || !valid || !storageWriteReady;
   orderButton.innerText = storageWriteReady ? orderButtonReadyText : "Database Required";
@@ -495,7 +495,7 @@ async function openSummary(){
     return;
   }
 
-  const nameVal = nameInput ? nameInput.value.trim() : "CASHIER";
+  const nameVal = nameInput ? nameInput.value.trim() : (isCashierPage ? "CASHIER" : "");
   const contactVal = contactInput ? contactInput.value.trim() : "";
   const pickupTime = selectedTime && timeDropdown ? selectedTime.value || formatDeliveryTime(timeDropdown.value) : "Cashier";
   const items = menu

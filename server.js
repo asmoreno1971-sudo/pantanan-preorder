@@ -1313,7 +1313,7 @@ async function handleApi(req, res){
     const source = String(body.source || "customer").trim().toLowerCase() === "cashier" ? "cashier" : "";
     const isCashierOrder = source === "cashier";
 
-    if((!isCashierOrder && !body.customerName) || !body.pickupTime || cleanItems.length === 0){
+    if(!body.pickupTime || cleanItems.length === 0){
       send(res, 400, JSON.stringify({ ok:false, message:"Order is incomplete" }));
       return true;
     }
