@@ -17,16 +17,6 @@
 <div class="summary-panel">
 <div class="summary-brand">Food Kiosk - Roadworthy</div>
 
-<div class="customer-panel">
-<label class="field-label" for="timeSelect">Expected Pickup Time:</label>
-<div class="time-picker-wrap">
-<select id="timeSelect" aria-label="Choose pickup time"></select>
-<span class="time-picker-icon" aria-hidden="true">◷</span>
-</div>
-<input id="time" type="hidden">
-<span id="summaryTime" class="hidden">--</span>
-</div>
-
 <h3 id="summaryTitle">Order Summary</h3>
 
 <div id="liveSummary">No items yet</div>
@@ -35,15 +25,10 @@
 Total P<span id="liveTotal">0</span>
 </div>
 
-<button id="orderBtn" disabled onclick="openSummary()">Send Order</button>
+<button id="orderBtn" class="hidden" type="button" disabled aria-hidden="true" tabindex="-1">Send Order</button>
 </div>
 </div>
 
-<div id="customerStatus" class="customer-status hidden">
-<strong id="customerStatusTitle">Order Status</strong>
-<p id="customerStatusText">Your order status will appear here.</p>
-</div>
-
-<script src="/app.js?v=20260603-pickup-until-4pm"></script>
+<script src="/app.js?v=20260607-menu-calculator-only"></script>
 </body>
 </html>
