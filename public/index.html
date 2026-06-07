@@ -6,6 +6,19 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<script>
+if(window.location.hostname.toLowerCase() === "foodkiosk1.onrender.com"){
+  document.documentElement.classList.add("customer-calculator-only");
+}
+</script>
+<style>
+.customer-calculator-only .customer-panel,
+.customer-calculator-only #orderBtn,
+.customer-calculator-only #customerStatus,
+.customer-calculator-only #kioskClosedMessage{
+  display:none !important;
+}
+</style>
 <link rel="stylesheet" href="/styles.css?v=20260523-readable-status">
 </head>
 <body>
@@ -17,6 +30,16 @@
 <div class="summary-panel">
 <div class="summary-brand">Food Kiosk - Roadworthy</div>
 
+<div class="customer-panel">
+<label class="field-label" for="timeSelect">Expected Pickup Time:</label>
+<div class="time-picker-wrap">
+<select id="timeSelect" aria-label="Choose pickup time"></select>
+<span class="time-picker-icon" aria-hidden="true">◷</span>
+</div>
+<input id="time" type="hidden">
+<span id="summaryTime" class="hidden">--</span>
+</div>
+
 <h3 id="summaryTitle">Order Summary</h3>
 
 <div id="liveSummary">No items yet</div>
@@ -25,10 +48,16 @@
 Total P<span id="liveTotal">0</span>
 </div>
 
-<button id="orderBtn" class="hidden" type="button" disabled aria-hidden="true" tabindex="-1">Send Order</button>
+<button id="orderBtn" disabled onclick="openSummary()">Send Order</button>
+<div id="kioskClosedMessage" class="kiosk-closed-message hidden"></div>
 </div>
 </div>
 
-<script src="/app.js?v=20260607-menu-calculator-only"></script>
+<div id="customerStatus" class="customer-status hidden">
+<strong id="customerStatusTitle">Order Status</strong>
+<p id="customerStatusText">Your order status will appear here.</p>
+</div>
+
+<script src="/app.js?v=20260607-customer-host-mode"></script>
 </body>
 </html>
