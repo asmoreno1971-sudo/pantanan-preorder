@@ -80,7 +80,26 @@
     if(!("serviceWorker" in navigator)){
       return;
     }
-    await navigator.serviceWorker.register("/cashier-sw.js?v=20260602-offline-cashier", { scope:"/" });
+    await navigator.serviceWorker.register("/cashier-sw.js?v=20260607-fast-offline-cashier", { scope:"/" });
+  }
+
+  async function cacheMenuImages(menu){
+    if(!("serviceWorker" in navigator)){
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    const worker = registration.active || registration.waiting || registration.installing;
+    if(!worker){
+      return;
+    }
+
+    worker.postMessage({
+      type:"CACHE_MENU_IMAGES",
+      urls:(Array.isArray(menu) ? menu : [])
+        .map(item=>String(item.image || ""))
+        .filter(Boolean)
+    });
   }
 
   window.CashierOffline = {
@@ -91,6 +110,7 @@
     pendingSales,
     removeSale,
     countPending,
-    registerServiceWorker
+    registerServiceWorker,
+    cacheMenuImages
   };
 })();
