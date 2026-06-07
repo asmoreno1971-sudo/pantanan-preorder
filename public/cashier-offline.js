@@ -80,7 +80,7 @@
     if(!("serviceWorker" in navigator)){
       return;
     }
-    await navigator.serviceWorker.register("/cashier-sw.js?v=20260607-fast-offline-cashier", { scope:"/" });
+    await navigator.serviceWorker.register("/cashier-sw.js?v=20260607-sync-wake", { scope:"/" });
   }
 
   async function cacheMenuImages(menu){

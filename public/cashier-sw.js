@@ -1,13 +1,13 @@
-const cacheName = "roadworthy-cashier-shell-20260607";
+const cacheName = "roadworthy-cashier-shell-20260607-sync-wake";
 const imageCacheName = "roadworthy-cashier-images-v1";
 const shellFiles = [
   "/cashier",
   "/cashier.html",
-  "/styles.css?v=20260607-fast-offline-cashier",
+  "/styles.css?v=20260607-sync-wake",
   "/page-auth.js?v=20260522-password-1111",
-  "/cashier-offline.js?v=20260607-fast-offline-cashier",
-  "/app.js?v=20260607-fast-offline-cashier",
-  "/cashier-fast.js?v=20260607-fast-offline-cashier"
+  "/cashier-offline.js?v=20260607-sync-wake",
+  "/app.js?v=20260607-sync-wake",
+  "/cashier-fast.js?v=20260607-sync-wake"
 ];
 
 self.addEventListener("install", event=>{
