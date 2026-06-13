@@ -133,7 +133,7 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      await navigator.serviceWorker.register("/learner-sw.js?v=20260613-accounts", { scope:"/" });
+      await navigator.serviceWorker.register("/learner-sw.js?v=20260613-teacher-dropdown", { scope:"/" });
       await navigator.serviceWorker.ready;
     }
   }

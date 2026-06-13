@@ -28,6 +28,18 @@ const teacherSessionSecret = process.env.TEACHER_SESSION_SECRET || crypto.create
   .update(`${teacherUsername}:${teacherPin}:bakhaw-learner-portal`)
   .digest("hex");
 const teacherSessionCookie = "bakhawTeacherSession";
+const teacherDirectoryCsvUrl = "https://docs.google.com/spreadsheets/d/1llV9k9pReCpe7HAYt2-vZjlqMYXDmlQixgifcfRPOy0/export?format=csv&gid=785227885";
+const teacherDirectoryFallback = [
+  "ALEXANDER S. MORENO", "ANALYN L. PORRAS", "BENITA T. LIZADA", "CHARLEY A. EMPESTAN",
+  "CRISTY R. DENIEGA", "DARLYN JOY C. HERRERA", "EDEN P. BARCEBAS", "GELINE JR. L. ARELLANO",
+  "GINA M. MUYUELA", "GIRLY G. ALBUYA", "GRACE C. NISMAL", "JANICE G. REMANDABAN",
+  "JOAN S. QUITOS", "JONA T. TABALDO", "JOSE JOSEPH RICAPLAZA DE LA FUENTE", "JOSIE V. DEVIZA",
+  "NOE V. BALAJIDIONG JR.", "JULIE ANN T. VASQUEZ", "JYLEN P. ADUANA", "LORENCE A. TAGACAY",
+  "LORRAINE GRACE S. PETROLA", "LOVELLA S. FUENTES", "MA. DIVINA G. ANDRES", "MARIA KARMILA S. FAYO",
+  "MARVY P. BONDAD", "MONALISA G. LEBUNA", "ROSELYN D. SANTILLAN", "ROXAN C. FIGUEROA",
+  "SANDRA M. DIONIO", "SHANE DAVE C. ALMELDA", "SHANE F. NATONTON", "ZARAH C. CAPINIG",
+  "ANGEL HELLARES ZAFRA", "RISHELLE G. HURTADA", "CJ D. CORTEZ", "MARIDEL N. ONATO"
+];
 const menuContractVersion = "20260518-admin-canonical-menu";
 const allowEmptyOrderStorage = process.env.ALLOW_EMPTY_ORDER_STORAGE === "true";
 let cachedMenu = null;
@@ -38,6 +50,8 @@ let ordersFileReady = null;
 let dbPool = null;
 let dbReady = null;
 let studentSeedPromise = null;
+let teacherDirectoryCache = null;
+let teacherDirectoryCachedAt = 0;
 const legacyMenuPaths = [...new Set([
   path.join(root, "menu.json"),
   path.join(dataDir, "menu.json"),
@@ -175,6 +189,53 @@ function normalizedTeacherUsername(value){
     .toLowerCase()
     .replace(/\s+/g, ".")
     .replace(/[^a-z0-9._-]/g, "");
+}
+
+function teacherUsernameFromName(name){
+  const words = String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9.\s-]/g, " ")
+    .split(/\s+/)
+    .map(word=>word.replace(/\./g, ""))
+    .filter(Boolean);
+  const suffixes = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
+  while(words.length && suffixes.has(words[words.length - 1])){
+    words.pop();
+  }
+  return normalizedTeacherUsername(`${words[0] || ""}.${words[words.length - 1] || ""}`);
+}
+
+function teacherDirectoryEntries(names){
+  return [...new Set(names.map(name=>String(name || "").trim()).filter(Boolean))]
+    .map(displayName=>({
+      displayName,
+      username:teacherUsernameFromName(displayName)
+    }))
+    .filter(entry=>entry.username.includes("."));
+}
+
+async function readTeacherDirectory(){
+  if(teacherDirectoryCache && Date.now() - teacherDirectoryCachedAt < 15 * 60 * 1000){
+    return teacherDirectoryCache;
+  }
+
+  try{
+    const response = await fetch(teacherDirectoryCsvUrl, { signal:AbortSignal.timeout(10000) });
+    if(!response.ok){
+      throw new Error(`Google Sheet returned ${response.status}.`);
+    }
+    const rows = parseCsvRows(await response.text());
+    const names = rows.slice(1).map(row=>String(row[9] || "").trim()).filter(Boolean);
+    if(!names.length){
+      throw new Error("Column J did not contain teacher names.");
+    }
+    teacherDirectoryCache = teacherDirectoryEntries(names);
+  }catch{
+    teacherDirectoryCache = teacherDirectoryEntries(teacherDirectoryFallback);
+  }
+
+  teacherDirectoryCachedAt = Date.now();
+  return teacherDirectoryCache;
 }
 
 function teacherPinHash(pin, salt){
@@ -1486,6 +1547,12 @@ async function handleApi(req, res){
     return true;
   }
 
+  if(pathname === "/api/teacher-directory" && req.method === "GET"){
+    const teachers = await readTeacherDirectory();
+    send(res, 200, JSON.stringify({ ok:true, teachers }));
+    return true;
+  }
+
   if(pathname === "/api/teacher-login" && req.method === "POST"){
     let body;
 
@@ -1580,12 +1647,14 @@ async function handleApi(req, res){
       return true;
     }
 
-    const username = normalizedTeacherUsername(body.username);
     const displayName = String(body.displayName || "").trim();
     const pin = String(body.pin || "").trim();
+    const directory = await readTeacherDirectory();
+    const directoryTeacher = directory.find(teacher=>teacher.displayName === displayName);
+    const username = directoryTeacher?.username || "";
 
-    if(!/^[a-z0-9]+(?:[._-][a-z0-9]+)+$/.test(username)){
-      send(res, 400, JSON.stringify({ ok:false, message:"Use a username such as firstname.familyname." }));
+    if(!directoryTeacher){
+      send(res, 400, JSON.stringify({ ok:false, message:"Select a teacher from the official teacher list." }));
       return true;
     }
     if(!displayName){

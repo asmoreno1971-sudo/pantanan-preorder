@@ -16,7 +16,8 @@ body{
 }
 
 button,
-input{ font:inherit; }
+input,
+select{ font:inherit; }
 
 .accounts-shell{ padding:14px; }
 
@@ -104,9 +105,12 @@ dialog::backdrop{ background:rgba(3, 35, 23, .68); backdrop-filter:blur(4px); }
 .icon-button{ border:0; background:transparent; color:#566b61; cursor:pointer; font-size:22px; }
 label{ display:grid; gap:6px; }
 label span{ color:#365c49; font-size:13px; font-weight:800; }
-input{ min-height:46px; padding:9px 11px; border:1px solid #bfd2c6; border-radius:9px; }
-input:focus{ border-color:#3f946a; outline:3px solid rgba(63, 148, 106, .14); }
-input:disabled{ background:#edf1ee; color:#64746c; }
+input,
+select{ min-height:46px; padding:9px 11px; border:1px solid #bfd2c6; border-radius:9px; background:#fff; }
+input:focus,
+select:focus{ border-color:#3f946a; outline:3px solid rgba(63, 148, 106, .14); }
+input:disabled,
+select:disabled{ background:#edf1ee; color:#64746c; }
 .pin-help{ margin:-5px 0 0; color:#708078; font-size:12px; }
 .dialog-actions{ display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:9px; }
 .dialog-actions .status{ margin-right:auto; color:#9d3c34; }

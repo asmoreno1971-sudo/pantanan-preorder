@@ -4,7 +4,6 @@ const accountDialog = document.getElementById("accountDialog");
 const accountForm = document.getElementById("accountForm");
 const originalUsername = document.getElementById("originalUsername");
 const displayNameInput = document.getElementById("teacherDisplayName");
-const usernameInput = document.getElementById("accountUsername");
 const pinInput = document.getElementById("accountPin");
 const pinLabel = document.getElementById("pinLabel");
 const pinHelp = document.getElementById("pinHelp");
@@ -12,6 +11,7 @@ const dialogTitle = document.getElementById("accountDialogTitle");
 const saveButton = document.getElementById("saveAccountButton");
 const formStatus = document.getElementById("formStatus");
 let accounts = [];
+let teacherDirectory = [];
 
 function escapeHtml(value){
   return String(value || "")
@@ -38,12 +38,36 @@ async function loadAccounts(){
   try{
     const data = await apiRequest("/api/teacher-accounts", { cache:"no-store" });
     accounts = data.accounts || [];
+    renderTeacherOptions();
     renderAccounts();
     accountStatus.textContent = `${accounts.length} registered teacher account${accounts.length === 1 ? "" : "s"}`;
   }catch(error){
     accountStatus.textContent = error.message;
     accountRows.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message)}</td></tr>`;
   }
+}
+
+async function loadTeacherDirectory(){
+  try{
+    const data = await apiRequest("/api/teacher-directory", { cache:"no-store" });
+    teacherDirectory = data.teachers || [];
+    renderTeacherOptions();
+  }catch(error){
+    accountStatus.textContent = error.message;
+  }
+}
+
+function renderTeacherOptions(selected = ""){
+  const registered = new Set(accounts.map(account=>account.username));
+  const options = teacherDirectory
+    .filter(teacher=>teacher.displayName === selected || !registered.has(teacher.username))
+    .map(teacher=>`<option value="${escapeHtml(teacher.displayName)}">${escapeHtml(teacher.displayName)}</option>`)
+    .join("");
+  const selectedOption = selected && !teacherDirectory.some(teacher=>teacher.displayName === selected)
+    ? `<option value="${escapeHtml(selected)}">${escapeHtml(selected)}</option>`
+    : "";
+  displayNameInput.innerHTML = `<option value="">Select teacher</option>${selectedOption}${options}`;
+  displayNameInput.value = selected;
 }
 
 function renderAccounts(){
@@ -67,7 +91,8 @@ function renderAccounts(){
 function openCreateDialog(){
   accountForm.reset();
   originalUsername.value = "";
-  usernameInput.disabled = false;
+  displayNameInput.disabled = false;
+  renderTeacherOptions();
   pinInput.required = true;
   pinLabel.textContent = "4-Digit PIN *";
   pinHelp.textContent = "Give this temporary PIN privately to the teacher.";
@@ -81,9 +106,8 @@ function openCreateDialog(){
 function openEditDialog(account){
   accountForm.reset();
   originalUsername.value = account.username;
-  displayNameInput.value = account.displayName;
-  usernameInput.value = account.username;
-  usernameInput.disabled = true;
+  renderTeacherOptions(account.displayName);
+  displayNameInput.disabled = true;
   pinInput.required = false;
   pinLabel.textContent = "New 4-Digit PIN";
   pinHelp.textContent = "Leave blank to keep the current PIN.";
@@ -104,10 +128,6 @@ pinInput.addEventListener("input", ()=>{
   pinInput.value = pinInput.value.replace(/\D/g, "").slice(0, 4);
 });
 
-usernameInput.addEventListener("input", ()=>{
-  usernameInput.value = usernameInput.value.toLowerCase().replace(/\s+/g, ".").replace(/[^a-z0-9._-]/g, "");
-});
-
 accountForm.addEventListener("submit", async event=>{
   event.preventDefault();
   formStatus.textContent = "";
@@ -126,7 +146,6 @@ accountForm.addEventListener("submit", async event=>{
       displayName:displayNameInput.value.trim()
     };
     if(!editing){
-      body.username = usernameInput.value.trim();
       body.pin = pin;
     }else if(pin){
       body.pin = pin;
@@ -187,4 +206,4 @@ accountRows.addEventListener("click", async event=>{
 document.getElementById("addTeacherButton").addEventListener("click", openCreateDialog);
 document.getElementById("closeAccountDialog").addEventListener("click", closeDialog);
 document.getElementById("cancelAccountDialog").addEventListener("click", closeDialog);
-loadAccounts();
+Promise.all([loadTeacherDirectory(), loadAccounts()]);

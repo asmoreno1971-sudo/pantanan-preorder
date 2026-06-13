@@ -7,7 +7,7 @@
 <title>Teacher Accounts | Bakhaw Integrated School</title>
 <meta name="theme-color" content="#0c6842">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/teacher-accounts.css?v=20260613">
+<link rel="stylesheet" href="/teacher-accounts.css?v=20260613-teacher-dropdown">
 </head>
 <body>
 <main class="accounts-shell">
@@ -64,11 +64,9 @@
     <input id="originalUsername" type="hidden">
     <label>
       <span>Teacher Name *</span>
-      <input id="teacherDisplayName" required placeholder="Noe Balajidiong">
-    </label>
-    <label>
-      <span>Username *</span>
-      <input id="accountUsername" required placeholder="firstname.familyname" autocomplete="off">
+      <select id="teacherDisplayName" required>
+        <option value="">Select teacher</option>
+      </select>
     </label>
     <label>
       <span id="pinLabel">4-Digit PIN *</span>
@@ -84,6 +82,6 @@
 </dialog>
 
 <script src="/teacher-session.js?v=20260613-accounts"></script>
-<script src="/teacher-accounts.js?v=20260613"></script>
+<script src="/teacher-accounts.js?v=20260613-teacher-dropdown"></script>
 </body>
 </html>

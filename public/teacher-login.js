@@ -6,6 +6,46 @@ const loginError = document.getElementById("loginError");
 const privacyDialog = document.getElementById("privacyDialog");
 const agreeButton = document.getElementById("agreeButton");
 const disagreeButton = document.getElementById("disagreeButton");
+const teacherDirectoryKey = "bakhawTeacherDirectory";
+
+function escapeHtml(value){
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function renderTeacherDirectory(teachers){
+  const current = usernameInput.value;
+  usernameInput.innerHTML = `<option value="">Select your name</option>${teachers
+    .map(teacher=>`<option value="${escapeHtml(teacher.username)}">${escapeHtml(teacher.displayName)}</option>`)
+    .join("")}`;
+  if([...usernameInput.options].some(option=>option.value === current)){
+    usernameInput.value = current;
+  }
+}
+
+async function loadTeacherDirectory(){
+  try{
+    const response = await fetch("/api/teacher-directory", { cache:"no-store" });
+    const data = await response.json();
+    if(!response.ok || !data.ok){
+      throw new Error(data.message || "Teacher list could not be loaded.");
+    }
+    const teachers = Array.isArray(data.teachers) ? data.teachers : [];
+    localStorage.setItem(teacherDirectoryKey, JSON.stringify(teachers));
+    renderTeacherDirectory(teachers);
+  }catch{
+    const saved = JSON.parse(localStorage.getItem(teacherDirectoryKey) || "[]");
+    if(saved.length){
+      renderTeacherDirectory(saved);
+    }else{
+      loginError.textContent = "Connect to the internet once to load the teacher list.";
+    }
+  }
+}
 
 function nextPage(){
   const next = new URLSearchParams(window.location.search).get("next") || "/student-dashboard";
@@ -127,3 +167,5 @@ disagreeButton.addEventListener("click", async ()=>{
     disagreeButton.textContent = "Disagree";
   }
 });
+
+loadTeacherDirectory();

@@ -84,13 +84,15 @@ label span{
 }
 
 input,
+select,
 button{
   min-height:48px;
   border-radius:10px;
   font:inherit;
 }
 
-input{
+input,
+select{
   width:100%;
   padding:10px 12px;
   border:1px solid #bed1c6;
@@ -99,7 +101,8 @@ input{
   font-size:16px;
 }
 
-input:focus{
+input:focus,
+select:focus{
   border-color:#3d9368;
   outline:3px solid rgba(61, 147, 104, .15);
 }
