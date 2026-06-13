@@ -54,6 +54,7 @@ let dbReady = null;
 let studentSeedPromise = null;
 let teacherDirectoryCache = null;
 let teacherDirectoryCachedAt = 0;
+let gradeSectionCache = null;
 const legacyMenuPaths = [...new Set([
   path.join(root, "menu.json"),
   path.join(dataDir, "menu.json"),
@@ -241,6 +242,30 @@ async function readTeacherDirectory(forceRefresh = false){
 
   teacherDirectoryCachedAt = Date.now();
   return teacherDirectoryCache;
+}
+
+async function readGradeSections(){
+  try{
+    const response = await fetch(teacherDirectoryCsvUrl, { signal:AbortSignal.timeout(10000) });
+    if(!response.ok){
+      throw new Error(`Google Sheet returned ${response.status}.`);
+    }
+    const rows = parseCsvRows(await response.text());
+    const sections = rows.slice(1)
+      .map(row=>String(row[14] || "").trim())
+      .filter(Boolean);
+    if(!sections.length){
+      throw new Error("Column O did not contain grade and section names.");
+    }
+    gradeSectionCache = [...new Set(sections)]
+      .sort((a, b)=>a.localeCompare(b, undefined, { numeric:true }));
+  }catch{
+    if(!gradeSectionCache){
+      gradeSectionCache = [];
+    }
+  }
+
+  return gradeSectionCache;
 }
 
 function teacherPinHash(pin, salt){
@@ -1595,6 +1620,12 @@ async function handleApi(req, res){
   if(pathname === "/api/teacher-directory" && req.method === "GET"){
     const teachers = await readTeacherDirectory(true);
     send(res, 200, JSON.stringify({ ok:true, teachers }));
+    return true;
+  }
+
+  if(pathname === "/api/grade-sections" && req.method === "GET"){
+    const sections = await readGradeSections();
+    send(res, 200, JSON.stringify({ ok:true, sections }));
     return true;
   }
 

@@ -44,24 +44,70 @@ const statusCodeInput = studentForm.elements.namedItem("statusCode");
 const code3ClassInput = studentForm.elements.namedItem("code3Class");
 
 let students = [];
+let spreadsheetSections = [];
 let filteredStudents = [];
 let currentPage = 1;
 const expandedStudentIds = new Set();
 let syncInFlight = false;
+let sectionRefreshInFlight = false;
+
+function savedGradeSections(){
+  try{
+    const saved = JSON.parse(localStorage.getItem("bakhawGradeSections") || "[]");
+    return Array.isArray(saved) ? saved : [];
+  }catch{
+    return [];
+  }
+}
+
+async function refreshSpreadsheetSections(rebuildDropdowns = false){
+  if(sectionRefreshInFlight || !navigator.onLine){
+    return;
+  }
+
+  sectionRefreshInFlight = true;
+  try{
+    const response = await fetch("/api/grade-sections", { cache:"no-store" });
+    const data = await response.json();
+    if(!response.ok || !data.ok){
+      throw new Error(data.message || "Grade and section list could not be loaded.");
+    }
+    spreadsheetSections = Array.isArray(data.sections) ? data.sections : [];
+    localStorage.setItem("bakhawGradeSections", JSON.stringify(spreadsheetSections));
+    if(rebuildDropdowns){
+      buildSectionFilter();
+      buildRecordDropdowns();
+      applySectionFromUrl();
+      applyFilters();
+    }
+  }catch{
+    if(!spreadsheetSections.length){
+      spreadsheetSections = savedGradeSections();
+    }
+  }finally{
+    sectionRefreshInFlight = false;
+  }
+}
 
 async function loadStudents(){
   recordsStatus.textContent = "Loading records...";
 
   try{
-    await syncPendingChanges();
-    const response = await fetch("/api/students", { cache:"no-store" });
-    const data = await response.json();
+    await Promise.all([
+      syncPendingChanges(),
+      refreshSpreadsheetSections()
+    ]);
+    const studentResponse = await fetch("/api/students", { cache:"no-store" });
+    const data = await studentResponse.json();
 
-    if(!response.ok || !data.ok){
+    if(!studentResponse.ok || !data.ok){
       throw new Error(data.message || "Unable to load records.");
     }
 
     students = Array.isArray(data.students) ? data.students : [];
+    if(!spreadsheetSections.length){
+      spreadsheetSections = savedGradeSections();
+    }
     await LearnerOffline.replaceRecords(students);
     buildSectionFilter();
     buildRecordDropdowns();
@@ -70,6 +116,7 @@ async function loadStudents(){
     await updateSyncStatus();
   }catch(error){
     students = await LearnerOffline.loadRecords();
+    spreadsheetSections = savedGradeSections();
     if(students.length){
       buildSectionFilter();
       buildRecordDropdowns();
@@ -142,7 +189,10 @@ function applySectionFromUrl(){
 }
 
 function studentSections(){
-  return [...new Set(students.map(student=>student.gradeSection).filter(Boolean))]
+  return [...new Set([
+    ...spreadsheetSections,
+    ...students.map(student=>student.gradeSection)
+  ].filter(Boolean))]
     .sort((a, b)=>a.localeCompare(b, undefined, { numeric:true }));
 }
 
@@ -176,6 +226,8 @@ function updateLiveDateTime(){
 }
 
 function buildRecordDropdowns(){
+  const selectedGradeSection = gradeSectionInput.value;
+  const selectedCode3Class = code3ClassInput.value;
   const sections = studentSections();
   const options = sections
     .map(section=>`<option value="${escapeHtml(section)}">${escapeHtml(section)}</option>`)
@@ -183,6 +235,8 @@ function buildRecordDropdowns(){
 
   gradeSectionInput.innerHTML = `<option value="">Select grade / section</option>${options}`;
   code3ClassInput.innerHTML = `<option value="">Select class</option>${options}`;
+  setSelectValue(gradeSectionInput, selectedGradeSection);
+  setSelectValue(code3ClassInput, selectedCode3Class);
 }
 
 function setSelectValue(select, value){
@@ -603,3 +657,9 @@ window.addEventListener("online", async ()=>{
   }
 });
 window.addEventListener("offline", ()=>updateSyncStatus("Offline mode."));
+window.setInterval(()=>refreshSpreadsheetSections(true), 60 * 1000);
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "visible"){
+    refreshSpreadsheetSections(true);
+  }
+});
