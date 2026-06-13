@@ -291,13 +291,14 @@ select:disabled{
   align-self:center;
   justify-self:center;
   display:flex;
-  flex-wrap:wrap;
+  flex-direction:column;
   justify-content:center;
-  gap:8px 20px;
+  align-items:flex-start;
+  gap:5px;
   color:#000;
   font-size:17px;
   font-weight:400;
-  text-align:center;
+  text-align:left;
 }
 
 .toolbar .status strong{
