@@ -17,6 +17,12 @@ services:
         value: https://wa.me/639695093050
       - key: PANTANAN_MESSENGER_LINK
         value: https://facebook.com/alexander.moreno.2929
+      - key: TEACHER_USERNAME
+        value: alexander.moreno
+      - key: TEACHER_PIN
+        value: "1111"
+      - key: TEACHER_SESSION_SECRET
+        generateValue: true
   - type: web
     name: foodkiosk2
     env: node

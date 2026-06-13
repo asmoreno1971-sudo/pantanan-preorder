@@ -13,6 +13,29 @@
 <div class="admin-shell">
 <h3>Admin Products</h3>
 
+<div id="kioskSettingsPanel" class="admin-panel">
+<div class="admin-title-row">
+<div>
+<h4>Days of Operation</h4>
+<p class="admin-help">Choose the weekly open days and add holiday closures.</p>
+</div>
+</div>
+<div class="operation-days" id="operationDays"></div>
+<div class="operation-actions">
+<button class="secondary-action-btn" type="button" onclick="tickWeekdays()">Tick Mon - Fri</button>
+<label class="holiday-picker">
+Holiday or closed date
+<input id="closedDateInput" type="date">
+</label>
+<button class="secondary-action-btn" type="button" onclick="addClosedDate()">Add Closed Date</button>
+</div>
+<div id="closedDatesList" class="closed-dates-list"></div>
+<div class="admin-actions">
+<button class="green-action-btn" type="button" onclick="saveKioskSettings()">Save Operating Days</button>
+<span id="settingsStatus" class="status"></span>
+</div>
+</div>
+
 <div id="editorPanel" class="admin-panel">
 <div class="admin-title-row">
 <div>
@@ -43,6 +66,9 @@
 <a class="admin-action-box admin-action-customer" href="/customer">
 <span>Customer</span>
 </a>
+<a class="admin-action-box admin-action-sales" href="/students">
+<span>Learner Profile</span>
+</a>
 </div>
 <div class="admin-actions">
 <button class="green-action-btn" type="button" onclick="saveMenu()">Save Products</button>
@@ -51,6 +77,6 @@
 </div>
 </div>
 
-<script src="/admin.js?v=20260601-admin-light-images"></script>
+<script src="/admin.js?v=20260605-kiosk-days"></script>
 </body>
 </html>

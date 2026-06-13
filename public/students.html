@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<title>Learner Profile | Bakhaw Integrated School</title>
+<meta name="theme-color" content="#0c6842">
+<link rel="manifest" href="/learner-manifest.webmanifest">
+<link rel="icon" href="/bakhaw-school-logo.png">
+<link rel="stylesheet" href="/students.css?v=20260613-compact-spacing">
+</head>
+<body>
+<main class="records-shell">
+  <header class="records-header">
+    <div class="header-brand">
+      <img class="school-logo" src="/bakhaw-school-logo.png" alt="Bakhaw Integrated School logo">
+      <div>
+        <p class="eyebrow">Bakhaw Integrated School</p>
+        <h1>Learner Profile</h1>
+        <p class="subtitle">Add, update, review, and remove learner information.</p>
+      </div>
+    </div>
+    <div class="live-clock" aria-label="Current date and time">
+      <span>Current date and time</span>
+      <strong id="liveDateTime">Loading...</strong>
+    </div>
+    <div class="header-actions">
+      <a class="button button-secondary" href="/student-dashboard">Dashboard</a>
+      <button class="button button-secondary" type="button" data-teacher-logout>Logout</button>
+    </div>
+  </header>
+
+  <section class="records-panel">
+    <div class="toolbar">
+      <label class="search-field">
+        <span>Search records</span>
+        <input id="studentSearch" type="search" placeholder="Search full name, LRN, section, parent, address..." autocomplete="off">
+      </label>
+      <label class="filter-field">
+        <span>Grade / Section</span>
+        <select id="sectionFilter">
+          <option value="">All sections</option>
+        </select>
+      </label>
+      <button class="button button-primary toolbar-add-record" type="button" id="addStudentButton">Add Record</button>
+      <span class="status" id="recordsStatus" role="status"></span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Grade / Section</th>
+            <th>Family Name</th>
+            <th>First Name</th>
+            <th>Middle Name</th>
+            <th>Extension</th>
+            <th>Sex</th>
+            <th>Age</th>
+            <th>Birthday</th>
+            <th>Status Code</th>
+            <th>Date of Movement</th>
+            <th>If Code 3, which class?</th>
+            <th>LRN</th>
+            <th>Address</th>
+            <th>Father</th>
+            <th>Mother</th>
+            <th>Guardian</th>
+            <th>Contact Number</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="studentRows">
+          <tr><td class="empty-state" colspan="18">Loading learner profiles...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <button class="button button-quiet" type="button" id="previousPageButton">Previous</button>
+      <span id="pageSummary">Page 1 of 1</span>
+      <button class="button button-quiet" type="button" id="nextPageButton">Next</button>
+    </div>
+  </section>
+</main>
+
+<dialog id="studentDialog">
+  <form id="studentForm">
+    <div class="dialog-heading">
+      <div>
+        <p class="eyebrow">Learner information</p>
+        <h2 id="dialogTitle">Add Learner Record</h2>
+      </div>
+      <button class="close-button" type="button" id="closeDialogButton" aria-label="Close">x</button>
+    </div>
+
+    <input id="studentId" type="hidden">
+    <div class="form-grid">
+      <label><span>Grade / Section *</span><select name="gradeSection" required><option value="">Select grade / section</option></select></label>
+      <label><span>Family Name *</span><input name="familyName" required></label>
+      <label><span>First Name *</span><input name="firstName" required></label>
+      <label><span>Middle Name</span><input name="middleName"></label>
+      <label><span>Extension</span><input name="extension" placeholder="JR., III"></label>
+      <label><span>Sex</span><select name="sex"><option value="">Select</option><option>FEMALE</option><option>MALE</option></select></label>
+      <label><span>Age</span><input name="age" type="number" min="0" max="99"></label>
+      <label><span>Birthday</span><input name="birthday" type="date"></label>
+      <label><span>Status Code</span><select name="statusCode"><option value="">Select status code</option><option value="1">1 (In School)</option><option value="2">2 (Transferred In)</option><option value="3">3 (Transferred Class)</option><option value="4">4 (Transferred Out)</option><option value="5">5 (Dropped)</option></select></label>
+      <label><span>Date of Movement</span><input name="dateOfMovement" type="date"></label>
+      <label><span>If Code 3, which class?</span><select name="code3Class" disabled><option value="">Select class</option></select></label>
+      <label><span>LRN</span><input name="lrn" inputmode="numeric" maxlength="12"></label>
+      <label class="wide-field"><span>Address</span><input name="address"></label>
+      <label><span>Father</span><input name="father"></label>
+      <label><span>Mother</span><input name="mother"></label>
+      <label><span>Guardian</span><input name="guardian"></label>
+      <label><span>Contact Number</span><input name="contactNumber" inputmode="tel"></label>
+    </div>
+
+    <div class="dialog-actions">
+      <span class="status" id="formStatus" role="status"></span>
+      <button class="button button-secondary" type="button" id="cancelDialogButton">Cancel</button>
+      <button class="button button-primary" type="submit" id="saveStudentButton">Save Record</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/learner-offline.js?v=20260613-online"></script>
+<script src="/teacher-session.js?v=20260613-online"></script>
+<script src="/students.js?v=20260613-online"></script>
+</body>
+</html>

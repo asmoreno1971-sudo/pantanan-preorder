@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<title>Learner Dashboard | Bakhaw Integrated School</title>
+<meta name="theme-color" content="#0c6842">
+<link rel="manifest" href="/learner-manifest.webmanifest">
+<link rel="icon" href="/bakhaw-school-logo.png">
+<link rel="stylesheet" href="/student-dashboard.css?v=20260613-status-labels">
+</head>
+<body>
+<main class="dashboard-shell">
+  <header class="dashboard-header">
+    <div class="dashboard-brand">
+      <img src="/bakhaw-school-logo.png" alt="Bakhaw Integrated School logo">
+      <div>
+        <p class="eyebrow">Bakhaw Integrated School</p>
+        <h1>Learner Dashboard</h1>
+        <p>Enrollment and learner movement overview by grade and section.</p>
+      </div>
+    </div>
+    <div class="dashboard-clock">
+      <span>Current date and time</span>
+      <strong id="dashboardDateTime">Loading...</strong>
+    </div>
+    <div class="dashboard-actions">
+      <a class="profile-link" href="/students">Learner Profile</a>
+      <button class="logout-button" type="button" data-teacher-logout>Logout</button>
+    </div>
+  </header>
+
+  <section class="summary-grid" aria-label="Overall learner totals">
+    <article class="summary-card total-card"><span>Overall Learners</span><strong id="overallStudents">0</strong></article>
+    <article class="summary-card"><span>Grade Sections</span><strong id="overallSections">0</strong></article>
+    <article class="summary-card male-card"><span>Total Male</span><strong id="overallMale">0</strong></article>
+    <article class="summary-card female-card"><span>Total Female</span><strong id="overallFemale">0</strong></article>
+    <article class="summary-card unclassified-card"><span>Sex Not Specified</span><strong id="overallUnspecified">0</strong></article>
+  </section>
+
+  <section class="status-panel">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow dark">Learner movement</p>
+        <h2>Overall Status Codes</h2>
+      </div>
+      <p id="dashboardStatus" role="status">Loading dashboard...</p>
+    </div>
+    <div class="status-grid">
+      <article><span>1 (In School)</span><strong id="status1Total">0</strong></article>
+      <article><span>2 (Transferred In)</span><strong id="status2Total">0</strong></article>
+      <article><span>3 (Transferred Class)</span><strong id="status3Total">0</strong></article>
+      <article><span>4 (Transferred Out)</span><strong id="status4Total">0</strong></article>
+      <article><span>5 (Dropped)</span><strong id="status5Total">0</strong></article>
+      <article class="no-status"><span>No Status Code</span><strong id="statusBlankTotal">0</strong></article>
+    </div>
+  </section>
+
+  <section class="section-panel">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow dark">Class overview</p>
+        <h2>Grade and Section Summary</h2>
+      </div>
+    </div>
+
+    <div class="dashboard-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Grade / Section</th>
+            <th>Teacher</th>
+            <th>Department</th>
+            <th>Total Learners</th>
+            <th>Male</th>
+            <th>Female</th>
+            <th>Profile</th>
+          </tr>
+        </thead>
+        <tbody id="dashboardRows">
+          <tr><td colspan="7" class="empty-dashboard">Loading grade and section totals...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script src="/learner-offline.js?v=20260613-online"></script>
+<script src="/teacher-session.js?v=20260613-online"></script>
+<script src="/student-dashboard.js?v=20260613-online"></script>
+</body>
+</html>

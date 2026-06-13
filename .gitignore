@@ -3,6 +3,7 @@ node_modules/
 *.log
 menu.json
 orders.json
+students.json
 preorder-preview.html
 start-pantanan-server.cmd
 server.out.log

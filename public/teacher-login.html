@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<title>Teacher Login | Bakhaw Integrated School</title>
+<meta name="theme-color" content="#0c6842">
+<link rel="manifest" href="/learner-manifest.webmanifest">
+<link rel="icon" href="/bakhaw-school-logo.png">
+<link rel="stylesheet" href="/teacher-login.css?v=20260613-2">
+</head>
+<body>
+<main class="login-page">
+  <section class="login-card">
+    <div class="login-brand">
+      <img src="/bakhaw-school-logo.png" alt="Bakhaw Integrated School logo">
+      <div>
+        <p>Bakhaw Integrated School</p>
+        <h1>Teacher Login</h1>
+      </div>
+    </div>
+
+    <p class="login-intro">Sign in to access the Learner Dashboard and Learner Profile.</p>
+
+    <form id="teacherLoginForm">
+      <label>
+        <span>Username</span>
+        <input id="teacherUsername" name="username" type="text" autocomplete="username" placeholder="firstname.familyname" required autofocus>
+      </label>
+      <label>
+        <span>4-Digit Password</span>
+        <input id="teacherPin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="current-password" placeholder="••••" required>
+      </label>
+      <button id="loginButton" type="submit">Login</button>
+      <p id="loginError" class="login-error" role="alert"></p>
+    </form>
+  </section>
+</main>
+
+<dialog id="privacyDialog" class="privacy-dialog" aria-labelledby="privacyTitle">
+  <div class="privacy-icon" aria-hidden="true">!</div>
+  <h2 id="privacyTitle">Data Privacy Notice</h2>
+  <p>This app is protected by the Data Privacy Act of 2012. Hence, you are required to keep the data security in full confidentiality.</p>
+  <p class="privacy-question">Do you agree?</p>
+  <div class="privacy-actions">
+    <button id="disagreeButton" class="button-secondary" type="button">Disagree</button>
+    <button id="agreeButton" type="button">Agree</button>
+  </div>
+</dialog>
+
+<script src="/learner-offline.js?v=20260613-online"></script>
+<script src="/teacher-login.js?v=20260613-online"></script>
+</body>
+</html>

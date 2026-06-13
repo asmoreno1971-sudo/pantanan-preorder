@@ -15,9 +15,18 @@ const ordersPath = path.resolve(process.env.ORDERS_PATH || path.join(dataDir, "o
 const ordersWatermarkPath = path.resolve(process.env.ORDERS_WATERMARK_PATH || path.join(dataDir, "orders-watermark.json"));
 const transactionLedgerPath = path.resolve(process.env.TRANSACTION_LEDGER_PATH || path.join(dataDir, "transaction-ledger.json"));
 const expensesPath = path.resolve(process.env.EXPENSES_PATH || path.join(dataDir, "expenses.json"));
+const kioskSettingsPath = path.resolve(process.env.KIOSK_SETTINGS_PATH || path.join(dataDir, "kiosk-settings.json"));
+const studentsPath = path.resolve(process.env.STUDENTS_PATH || path.join(dataDir, "students.json"));
+const studentsImportPath = path.join(root, "students-import.csv");
 const port = Number(process.env.PORT) || 3001;
 const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
 const semaphoreSenderName = process.env.SEMAPHORE_SENDER_NAME || "";
+const teacherUsername = String(process.env.TEACHER_USERNAME || "alexander.moreno").trim().toLowerCase();
+const teacherPin = String(process.env.TEACHER_PIN || "1111").trim();
+const teacherSessionSecret = process.env.TEACHER_SESSION_SECRET || crypto.createHash("sha256")
+  .update(`${teacherUsername}:${teacherPin}:bakhaw-learner-portal`)
+  .digest("hex");
+const teacherSessionCookie = "bakhawTeacherSession";
 const menuContractVersion = "20260518-admin-canonical-menu";
 const allowEmptyOrderStorage = process.env.ALLOW_EMPTY_ORDER_STORAGE === "true";
 let cachedMenu = null;
@@ -27,6 +36,7 @@ let menuFileReady = null;
 let ordersFileReady = null;
 let dbPool = null;
 let dbReady = null;
+let studentSeedPromise = null;
 const legacyMenuPaths = [...new Set([
   path.join(root, "menu.json"),
   path.join(dataDir, "menu.json"),
@@ -37,7 +47,9 @@ const types = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".js": "application/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8"
+  ".json": "application/json; charset=utf-8",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
+  ".png": "image/png"
 };
 
 function requestPath(req){
@@ -73,6 +85,81 @@ function send(res, status, body, type = "application/json; charset=utf-8"){
     "Cache-Control": cacheControl
   });
   res.end(body);
+}
+
+function sendRedirect(res, location){
+  res.writeHead(302, {
+    "Location":location,
+    "Cache-Control":"no-store"
+  });
+  res.end();
+}
+
+function parseCookies(req){
+  return String(req.headers.cookie || "")
+    .split(";")
+    .map(part=>part.trim())
+    .filter(Boolean)
+    .reduce((cookies, part)=>{
+      const separator = part.indexOf("=");
+
+      if(separator > 0){
+        cookies[part.slice(0, separator)] = decodeURIComponent(part.slice(separator + 1));
+      }
+
+      return cookies;
+    }, {});
+}
+
+function teacherSessionToken(username, privacyAccepted = false){
+  const expiresAt = Date.now() + (12 * 60 * 60 * 1000);
+  const payload = Buffer.from(JSON.stringify({ username, expiresAt, privacyAccepted })).toString("base64url");
+  const signature = crypto.createHmac("sha256", teacherSessionSecret).update(payload).digest("base64url");
+  return `${payload}.${signature}`;
+}
+
+function readTeacherSession(req){
+  const token = parseCookies(req)[teacherSessionCookie] || "";
+  const [payload, signature] = token.split(".");
+
+  if(!payload || !signature){
+    return null;
+  }
+
+  const expected = crypto.createHmac("sha256", teacherSessionSecret).update(payload).digest();
+  let supplied;
+
+  try{
+    supplied = Buffer.from(signature, "base64url");
+  }catch{
+    return null;
+  }
+
+  if(supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)){
+    return null;
+  }
+
+  try{
+    const session = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    return session.username === teacherUsername && Number(session.expiresAt) > Date.now() ? session : null;
+  }catch{
+    return null;
+  }
+}
+
+function validTeacherSession(req){
+  return readTeacherSession(req)?.privacyAccepted === true;
+}
+
+function teacherCookie(token, maxAge = 43200){
+  const secure = isProduction ? "; Secure" : "";
+  return `${teacherSessionCookie}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
+}
+
+function safeCredentialEqual(received, expected){
+  const receivedHash = crypto.createHash("sha256").update(String(received || "")).digest();
+  const expectedHash = crypto.createHash("sha256").update(String(expected || "")).digest();
+  return crypto.timingSafeEqual(receivedHash, expectedHash);
 }
 
 async function readBody(req){
@@ -227,6 +314,213 @@ async function readExpenses(){
   return expenses.map(normalizeExpense).filter(Boolean);
 }
 
+async function readKioskSettings(){
+  return normalizeKioskSettings(await readDataRecord("kiosk-settings", kioskSettingsPath, defaultKioskSettings()));
+}
+
+async function readStudents(){
+  const seed = await readStudentSeed();
+  const students = await readDataRecord("students", studentsPath, seed);
+
+  if(!Array.isArray(students)){
+    throw new Error("Student storage is not an array.");
+  }
+
+  return students.map(normalizeStudent).filter(Boolean);
+}
+
+async function writeStudents(students){
+  if(!Array.isArray(students)){
+    throw new Error("Student write blocked: invalid record data.");
+  }
+
+  await writeDataRecord("students", studentsPath, students.map(normalizeStudent).filter(Boolean));
+}
+
+async function readStudentSeed(){
+  if(!studentSeedPromise){
+    studentSeedPromise = fs.readFile(studentsImportPath, "utf8")
+      .then(parseStudentCsv)
+      .catch(()=>[]);
+  }
+
+  return studentSeedPromise;
+}
+
+function parseStudentCsv(csv){
+  const rows = parseCsvRows(csv);
+  const headerIndex = rows.findIndex(row=>row.includes("Grade/Section"));
+
+  if(headerIndex < 0){
+    return [];
+  }
+
+  const headers = rows[headerIndex];
+  const column = name=>headers.indexOf(name);
+  const fields = {
+    gradeSection:column("Grade/Section"),
+    familyName:column("Family Name"),
+    firstName:column("First Name"),
+    middleName:column("Middle Name"),
+    extension:column("Extension"),
+    sex:column("Sex"),
+    age:column("Age"),
+    birthday:column("Birthday"),
+    statusCode:column("Status Code"),
+    dateOfMovement:column("Date of Movement"),
+    code3Class:column("If Code 3, which class?"),
+    lrn:column("LRN"),
+    address:column("Address"),
+    father:column("Father"),
+    mother:column("Mother"),
+    guardian:column("Guardian"),
+    contactNumber:column("Contact Number")
+  };
+
+  return rows.slice(headerIndex + 1)
+    .map((row, index)=>{
+      const student = { id:`import-${index + 1}` };
+      Object.entries(fields).forEach(([key, position])=>{
+        student[key] = position >= 0 ? String(row[position] || "").trim() : "";
+      });
+      return normalizeStudent(student);
+    })
+    .filter(Boolean);
+}
+
+function parseCsvRows(csv){
+  const rows = [];
+  let row = [];
+  let value = "";
+  let quoted = false;
+
+  for(let index = 0; index < csv.length; index += 1){
+    const character = csv[index];
+
+    if(character === '"'){
+      if(quoted && csv[index + 1] === '"'){
+        value += '"';
+        index += 1;
+      }else{
+        quoted = !quoted;
+      }
+    }else if(character === "," && !quoted){
+      row.push(value);
+      value = "";
+    }else if((character === "\n" || character === "\r") && !quoted){
+      if(character === "\r" && csv[index + 1] === "\n"){
+        index += 1;
+      }
+      row.push(value);
+      rows.push(row);
+      row = [];
+      value = "";
+    }else{
+      value += character;
+    }
+  }
+
+  if(value || row.length){
+    row.push(value);
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+function normalizeStudent(student){
+  const source = student && typeof student === "object" ? student : {};
+  const clean = {
+    id:String(source.id || crypto.randomUUID()),
+    gradeSection:String(source.gradeSection || "").trim(),
+    familyName:String(source.familyName || "").trim().toUpperCase(),
+    firstName:String(source.firstName || "").trim().toUpperCase(),
+    middleName:String(source.middleName || "").trim().toUpperCase(),
+    extension:String(source.extension || "").trim().toUpperCase(),
+    sex:String(source.sex || "").trim().toUpperCase(),
+    age:String(source.age || "").trim(),
+    birthday:normalizeStudentDate(source.birthday),
+    statusCode:String(source.statusCode || "").trim(),
+    dateOfMovement:normalizeStudentDate(source.dateOfMovement),
+    code3Class:String(source.code3Class || "").trim(),
+    lrn:String(source.lrn || "").replace(/\D/g, ""),
+    address:String(source.address || "").trim().toUpperCase(),
+    father:String(source.father || "").trim().toUpperCase(),
+    mother:String(source.mother || "").trim().toUpperCase(),
+    guardian:String(source.guardian || "").trim().toUpperCase(),
+    contactNumber:String(source.contactNumber || "").trim(),
+    createdAt:source.createdAt || new Date().toISOString(),
+    updatedAt:source.updatedAt || new Date().toISOString()
+  };
+
+  if(!clean.gradeSection && !clean.familyName && !clean.firstName && !clean.lrn){
+    return null;
+  }
+
+  return clean;
+}
+
+function normalizeStudentDate(value){
+  const text = String(value || "").trim();
+
+  if(!text){
+    return "";
+  }
+
+  if(/^\d{4}-\d{2}-\d{2}$/.test(text)){
+    return text;
+  }
+
+  const match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+  if(!match){
+    return text;
+  }
+
+  const month = String(Number(match[1])).padStart(2, "0");
+  const day = String(Number(match[2])).padStart(2, "0");
+  return `${match[3]}-${month}-${day}`;
+}
+
+function duplicateStudentLrn(students, lrn, excludedId = ""){
+  if(!lrn){
+    return null;
+  }
+
+  return students.find(student=>student.lrn === lrn && student.id !== excludedId) || null;
+}
+
+async function writeKioskSettings(settings){
+  const cleanSettings = normalizeKioskSettings(settings);
+  await writeDataRecord("kiosk-settings", kioskSettingsPath, cleanSettings);
+  return cleanSettings;
+}
+
+function defaultKioskSettings(){
+  return {
+    operatingDays:[1, 2, 3, 4, 5],
+    closedDates:[]
+  };
+}
+
+function normalizeKioskSettings(settings){
+  const source = settings && typeof settings === "object" ? settings : {};
+  const days = Array.isArray(source.operatingDays) ? source.operatingDays : defaultKioskSettings().operatingDays;
+  const operatingDays = [...new Set(days
+    .map(day=>Number(day))
+    .filter(day=>Number.isInteger(day) && day >= 0 && day <= 6)
+  )].sort((a, b)=>a - b);
+  const closedDates = [...new Set((Array.isArray(source.closedDates) ? source.closedDates : [])
+    .map(date=>String(date || "").trim())
+    .filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date))
+  )].sort();
+
+  return {
+    operatingDays:operatingDays.length ? operatingDays : defaultKioskSettings().operatingDays,
+    closedDates
+  };
+}
+
 function normalizeExpense(expense){
   const date = String(expense.date || localOrderDate()).trim();
   const item = String(expense.item || expense.items || "").trim();
@@ -348,7 +642,9 @@ function requirePersistentStorageForProduction(key, operation){
     "orders",
     "orders-watermark",
     "transaction-ledger",
-    "expenses"
+    "expenses",
+    "kiosk-settings",
+    "students"
   ]);
 
   if(!isProduction || databaseUrl || !protectedKeys.has(key)){
@@ -360,7 +656,7 @@ function requirePersistentStorageForProduction(key, operation){
   }
 
   if(operation === "write"){
-    throw new Error("Persistent database is required before saving live orders or transactions. Connect Render Postgres DATABASE_URL first.");
+    throw new Error("Persistent database is required before saving live records. Connect Render Postgres DATABASE_URL first.");
   }
 }
 
@@ -563,6 +859,80 @@ async function readLiveMenuStatus(){
       fingerprint:menuFingerprint([])
     };
   }
+}
+
+function kioskBusinessStatus(settings, dateValue = localOrderDate()){
+  const cleanSettings = normalizeKioskSettings(settings);
+  const date = normalizeDateValue(dateValue) || localOrderDate();
+  const open = isKioskOpenOnDate(cleanSettings, date);
+  const nextBusinessDate = open ? date : nextOpenBusinessDate(cleanSettings, date);
+
+  return {
+    open,
+    date,
+    nextBusinessDate,
+    nextBusinessDay:formatBusinessDate(nextBusinessDate),
+    message:open ? "" : `The kiosk is closed today. We will open on ${formatBusinessDate(nextBusinessDate)}.`
+  };
+}
+
+function isKioskOpenOnDate(settings, dateValue){
+  const date = normalizeDateValue(dateValue);
+
+  if(!date){
+    return false;
+  }
+
+  return settings.operatingDays.includes(dayOfWeek(date)) && !settings.closedDates.includes(date);
+}
+
+function nextOpenBusinessDate(settings, dateValue){
+  let date = normalizeDateValue(dateValue) || localOrderDate();
+
+  for(let offset = 1; offset <= 370; offset += 1){
+    date = addDays(date, 1);
+
+    if(isKioskOpenOnDate(settings, date)){
+      return date;
+    }
+  }
+
+  return addDays(normalizeDateValue(dateValue) || localOrderDate(), 1);
+}
+
+function normalizeDateValue(value){
+  const text = String(value || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
+}
+
+function dateParts(dateValue){
+  const [year, month, day] = String(dateValue || "").split("-").map(Number);
+  return { year, month, day };
+}
+
+function dayOfWeek(dateValue){
+  const { year, month, day } = dateParts(dateValue);
+  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0)).getUTCDay();
+}
+
+function addDays(dateValue, days){
+  const { year, month, day } = dateParts(dateValue);
+  const date = new Date(Date.UTC(year, month - 1, day + days, 12, 0, 0));
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0")
+  ].join("-");
+}
+
+function formatBusinessDate(dateValue){
+  const { year, month, day } = dateParts(dateValue);
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone:"Asia/Manila",
+    weekday:"long",
+    month:"long",
+    day:"numeric"
+  }).format(new Date(Date.UTC(year, month - 1, day, 12, 0, 0)));
 }
 
 function localOrderDate(){
@@ -1022,6 +1392,275 @@ async function handleApi(req, res){
     return true;
   }
 
+  if(pathname === "/api/teacher-login" && req.method === "POST"){
+    let body;
+
+    try{
+      body = JSON.parse(await readBody(req) || "{}");
+    }catch{
+      send(res, 400, JSON.stringify({ ok:false, message:"Login details could not be read." }));
+      return true;
+    }
+
+    const username = String(body.username || "").trim().toLowerCase();
+    const pin = String(body.pin || "").trim();
+
+    if(!/^\d{4}$/.test(pin)){
+      send(res, 400, JSON.stringify({ ok:false, message:"Password must contain exactly 4 digits." }));
+      return true;
+    }
+
+    if(!safeCredentialEqual(username, teacherUsername) || !safeCredentialEqual(pin, teacherPin)){
+      send(res, 401, JSON.stringify({ ok:false, message:"Incorrect username or password." }));
+      return true;
+    }
+
+    res.writeHead(200, {
+      "Content-Type":"application/json; charset=utf-8",
+      "Cache-Control":"no-store",
+      "Set-Cookie":teacherCookie(teacherSessionToken(username))
+    });
+    res.end(JSON.stringify({ ok:true, username }));
+    return true;
+  }
+
+  if(pathname === "/api/teacher-session" && req.method === "GET"){
+    send(res, validTeacherSession(req) ? 200 : 401, JSON.stringify({
+      ok:validTeacherSession(req),
+      username:validTeacherSession(req) ? teacherUsername : ""
+    }));
+    return true;
+  }
+
+  if(pathname === "/api/teacher-consent" && req.method === "POST"){
+    const session = readTeacherSession(req);
+
+    if(!session){
+      send(res, 401, JSON.stringify({ ok:false, message:"Your login session has expired. Please sign in again." }));
+      return true;
+    }
+
+    res.writeHead(200, {
+      "Content-Type":"application/json; charset=utf-8",
+      "Cache-Control":"no-store",
+      "Set-Cookie":teacherCookie(teacherSessionToken(session.username, true))
+    });
+    res.end(JSON.stringify({ ok:true }));
+    return true;
+  }
+
+  if(pathname === "/api/teacher-logout" && req.method === "POST"){
+    res.writeHead(200, {
+      "Content-Type":"application/json; charset=utf-8",
+      "Cache-Control":"no-store",
+      "Set-Cookie":teacherCookie("", 0)
+    });
+    res.end(JSON.stringify({ ok:true }));
+    return true;
+  }
+
+  if((pathname === "/api/students" || pathname === "/api/students.csv" || pathname.startsWith("/api/students/")) && !validTeacherSession(req)){
+    send(res, 401, JSON.stringify({ ok:false, message:"Teacher login required." }));
+    return true;
+  }
+
+  if(pathname === "/api/students" && req.method === "GET"){
+    const students = await readStudents();
+    send(res, 200, JSON.stringify({ ok:true, students }));
+    return true;
+  }
+
+  if(pathname === "/api/students.csv" && req.method === "GET"){
+    const students = await readStudents();
+    const columns = [
+      ["Grade/Section", "gradeSection"],
+      ["Family Name", "familyName"],
+      ["First Name", "firstName"],
+      ["Middle Name", "middleName"],
+      ["Extension", "extension"],
+      ["Sex", "sex"],
+      ["Age", "age"],
+      ["Birthday", "birthday"],
+      ["Status Code", "statusCode"],
+      ["Date of Movement", "dateOfMovement"],
+      ["If Code 3, which class?", "code3Class"],
+      ["LRN", "lrn"],
+      ["Address", "address"],
+      ["Father", "father"],
+      ["Mother", "mother"],
+      ["Guardian", "guardian"],
+      ["Contact Number", "contactNumber"]
+    ];
+    const rows = [
+      columns.map(([label])=>label),
+      ...students.map(student=>columns.map(([, key])=>student[key] || ""))
+    ];
+    const csv = `\uFEFF${rows.map(row=>row.map(csvCell).join(",")).join("\n")}`;
+    res.writeHead(200, {
+      "Content-Type":"text/csv; charset=utf-8",
+      "Content-Disposition":`attachment; filename="student-records-${localOrderDate()}.csv"`,
+      "Cache-Control":"no-store"
+    });
+    res.end(csv);
+    return true;
+  }
+
+  if(pathname === "/api/students" && req.method === "POST"){
+    let body;
+
+    try{
+      body = JSON.parse(await readBody(req) || "{}");
+    }catch{
+      send(res, 400, JSON.stringify({ ok:false, message:"Student record could not be read." }));
+      return true;
+    }
+
+    const requestedId = String(body.id || "").trim();
+    const student = normalizeStudent({
+      ...body,
+      id:/^[a-zA-Z0-9-]{16,80}$/.test(requestedId) ? requestedId : crypto.randomUUID(),
+      createdAt:new Date().toISOString(),
+      updatedAt:new Date().toISOString()
+    });
+
+    if(!student || !student.gradeSection || !student.familyName || !student.firstName){
+      send(res, 400, JSON.stringify({ ok:false, message:"Grade/Section, Family Name, and First Name are required." }));
+      return true;
+    }
+
+    const students = await readStudents();
+    const existingId = students.find(existing=>existing.id === student.id);
+
+    if(existingId){
+      send(res, 200, JSON.stringify({ ok:true, student:existingId, alreadySynced:true }));
+      return true;
+    }
+
+    const duplicate = duplicateStudentLrn(students, student.lrn);
+
+    if(duplicate){
+      send(res, 409, JSON.stringify({
+        ok:false,
+        message:`LRN ${student.lrn} already belongs to ${duplicate.familyName}, ${duplicate.firstName}.`
+      }));
+      return true;
+    }
+
+    students.unshift(student);
+    await writeStudents(students);
+    send(res, 201, JSON.stringify({ ok:true, student }));
+    return true;
+  }
+
+  if(pathname.startsWith("/api/students/") && req.method === "PUT"){
+    const id = decodeURIComponent(pathname.split("/")[3] || "");
+    let body;
+
+    try{
+      body = JSON.parse(await readBody(req) || "{}");
+    }catch{
+      send(res, 400, JSON.stringify({ ok:false, message:"Student record could not be read." }));
+      return true;
+    }
+
+    const students = await readStudents();
+    const index = students.findIndex(student=>student.id === id);
+
+    if(index < 0){
+      send(res, 404, JSON.stringify({ ok:false, message:"Student record not found." }));
+      return true;
+    }
+
+    const student = normalizeStudent({
+      ...students[index],
+      ...body,
+      id,
+      createdAt:students[index].createdAt,
+      updatedAt:new Date().toISOString()
+    });
+
+    if(!student || !student.gradeSection || !student.familyName || !student.firstName){
+      send(res, 400, JSON.stringify({ ok:false, message:"Grade/Section, Family Name, and First Name are required." }));
+      return true;
+    }
+
+    const duplicate = duplicateStudentLrn(students, student.lrn, id);
+
+    if(duplicate){
+      send(res, 409, JSON.stringify({
+        ok:false,
+        message:`LRN ${student.lrn} already belongs to ${duplicate.familyName}, ${duplicate.firstName}.`
+      }));
+      return true;
+    }
+
+    students[index] = student;
+    await writeStudents(students);
+    send(res, 200, JSON.stringify({ ok:true, student }));
+    return true;
+  }
+
+  if(pathname.startsWith("/api/students/") && req.method === "DELETE"){
+    const id = decodeURIComponent(pathname.split("/")[3] || "");
+    const students = await readStudents();
+    const index = students.findIndex(student=>student.id === id);
+
+    if(index < 0){
+      send(res, 404, JSON.stringify({ ok:false, message:"Student record not found." }));
+      return true;
+    }
+
+    const [student] = students.splice(index, 1);
+    await writeStudents(students);
+    send(res, 200, JSON.stringify({ ok:true, student }));
+    return true;
+  }
+
+  if(pathname === "/api/kiosk-settings" && req.method === "GET"){
+    const settings = await readKioskSettings();
+    send(res, 200, JSON.stringify({
+      ok:true,
+      settings,
+      status:kioskBusinessStatus(settings)
+    }));
+    return true;
+  }
+
+  if(pathname === "/api/kiosk-settings" && req.method === "PUT"){
+    let body;
+
+    try{
+      body = JSON.parse(await readBody(req) || "{}");
+    }catch{
+      send(res, 400, JSON.stringify({ ok:false, message:"Kiosk settings could not be read." }));
+      return true;
+    }
+
+    try{
+      const settings = await writeKioskSettings(body);
+      send(res, 200, JSON.stringify({
+        ok:true,
+        settings,
+        status:kioskBusinessStatus(settings)
+      }));
+    }catch(error){
+      const message = databaseUrl
+        ? "Server could not save kiosk operating days."
+        : "Save blocked: DATABASE_URL is missing, so kiosk settings cannot be saved safely.";
+      send(res, 500, JSON.stringify({ ok:false, message, detail:error.message }));
+    }
+    return true;
+  }
+
+  if(pathname === "/api/kiosk-status" && req.method === "GET"){
+    const settings = await readKioskSettings();
+    send(res, 200, JSON.stringify({
+      ok:true,
+      status:kioskBusinessStatus(settings)
+    }));
+    return true;
+  }
+
   if(pathname === "/api/menu" && req.method === "GET"){
     const view = url.searchParams.get("view");
     const fullMenu = normalizeMenu(await readMenu());
@@ -1296,6 +1935,16 @@ async function handleApi(req, res){
       ? orders.find(order=>order.source === "cashier" && order.clientTransactionId === clientTransactionId)
       : null;
 
+    if(!isCashierOrder){
+      const settings = await readKioskSettings();
+      const status = kioskBusinessStatus(settings);
+
+      if(!status.open){
+        send(res, 400, JSON.stringify({ ok:false, message:status.message, status }));
+        return true;
+      }
+    }
+
     if(existingCashierOrder){
       send(res, 200, JSON.stringify({ ok:true, duplicate:true, order:existingCashierOrder }));
       return true;
@@ -1489,9 +2138,28 @@ async function serveStatic(req, res){
     "/transaction": "transactions.html",
     "/transactions": "transactions.html",
     "/expenses": "expenses.html",
+    "/teacher-login": "teacher-login.html",
+    "/student-dashboard": "student-dashboard.html",
+    "/students": "students.html",
     "/teacher-profile": "teacher-profile.html",
+    "/mineralex": "mineralex/index.html",
     "/qr": "qr.html"
   };
+
+  if((
+    pathname === "/students"
+    || pathname === "/students.html"
+    || pathname === "/student-dashboard"
+    || pathname === "/student-dashboard.html"
+  ) && !validTeacherSession(req)){
+    sendRedirect(res, `/teacher-login?next=${encodeURIComponent(pathname + new URL(req.url, "http://localhost").search)}`);
+    return;
+  }
+
+  if(pathname === "/teacher-login" && validTeacherSession(req)){
+    sendRedirect(res, "/student-dashboard");
+    return;
+  }
 
   const requested = routes[pathname] || pathname.replace(/^\//, "");
   const filePath = path.normalize(path.join(publicDir, requested));

@@ -9,6 +9,7 @@ const summaryTimeText = document.getElementById("summaryTime");
 const summaryTitleText = document.getElementById("summaryTitle");
 const menuList = document.getElementById("menuContainer");
 const orderButton = document.getElementById("orderBtn");
+const kioskClosedMessage = document.getElementById("kioskClosedMessage");
 const currentTimeText = document.getElementById("nowTime");
 const summaryItems = document.getElementById("liveSummary");
 const totalText = document.getElementById("liveTotal");
@@ -39,6 +40,10 @@ let statusCheckInFlight = false;
 let cashierSyncInFlight = false;
 let cashierOfflineReady = !isCashierPage;
 let cashierSyncWarning = "";
+let kioskStatus = {
+  open:true,
+  message:""
+};
 const requiredMenuVersion = "20260518-admin-canonical-menu";
 
 function kioskBranchName(){
@@ -200,6 +205,7 @@ function generateTimes(){
   if(timePickerWrap){
     timePickerWrap.classList.toggle("has-time", Boolean(timeDropdown.value));
   }
+  updateKioskClosedMessage();
 }
 
 if(timeDropdown){
@@ -421,13 +427,15 @@ function validate(){
   const hasDeliveryTime = !timeDropdown || Boolean(timeDropdown.value);
   const needsCustomerFields = Boolean(nameInput || contactInput || timeDropdown);
   const cashValid = !cashInput || Number(cashInput.value || 0) >= currentTotal;
+  const kioskOpen = isCashierPage || kioskStatus.open !== false;
   const valid = needsCustomerFields
-    ? (!nameInput || nameVal) && (!contactInput || normalizeMobileNumber(contactVal)) && hasItem && hasDeliveryTime && cashValid
-    : hasItem && cashValid;
+    ? (!nameInput || nameVal) && (!contactInput || normalizeMobileNumber(contactVal)) && hasItem && hasDeliveryTime && cashValid && kioskOpen
+    : hasItem && cashValid && kioskOpen;
   const canStoreOrder = storageWriteReady || (isCashierPage && cashierOfflineReady);
   orderButton.disabled = orderSubmitted || !valid || !canStoreOrder;
-  orderButton.innerText = canStoreOrder ? orderButtonReadyText : "Database Required";
+  orderButton.innerText = kioskOpen ? (canStoreOrder ? orderButtonReadyText : "Database Required") : "Closed Today";
   orderButton.style.background = valid && !orderSubmitted && canStoreOrder ? "#1f8f4d" : "#ccc";
+  updateKioskClosedMessage();
 }
 
 async function loadStorageStatus(){
@@ -449,6 +457,39 @@ async function loadStorageStatus(){
   }
 
   validate();
+}
+
+async function loadKioskStatus(){
+  if(isCashierPage){
+    kioskStatus = { open:true, message:"" };
+    return;
+  }
+
+  try{
+    const res = await fetch(`/api/kiosk-status?fresh=${Date.now()}`, { cache:"no-store" });
+    const data = await res.json();
+
+    if(!res.ok || !data.ok || !data.status){
+      throw new Error("Kiosk status unavailable");
+    }
+
+    kioskStatus = data.status;
+  }catch{
+    kioskStatus = { open:true, message:"" };
+  }
+
+  generateTimes();
+  validate();
+}
+
+function updateKioskClosedMessage(){
+  if(!kioskClosedMessage){
+    return;
+  }
+
+  const closed = kioskStatus.open === false;
+  kioskClosedMessage.innerText = closed ? kioskStatus.message || "The kiosk is closed today." : "";
+  kioskClosedMessage.classList.toggle("hidden", !closed);
 }
 
 function updateChange(){
@@ -515,6 +556,12 @@ function hideCashPresets(){
 
 async function openSummary(){
   if(orderSubmitted){
+    return;
+  }
+
+  if(!isCashierPage && kioskStatus.open === false){
+    alert(kioskStatus.message || "The kiosk is closed today.");
+    validate();
     return;
   }
 
@@ -873,12 +920,13 @@ function deliveryTimeLimits(){
   }
   roundUpToMinuteInterval(earliest, 5);
   const minTime = earliest > opening ? earliest : opening;
+  const closedBySettings = !isCashierPage && kioskStatus.open === false;
 
   return {
     min:formatTimeValue(minTime),
     max:"16:00",
     earliest:formatTimeValue(earliest),
-    closed:earliest > closing
+    closed:closedBySettings || earliest > closing
   };
 }
 
@@ -1003,19 +1051,23 @@ async function checkActiveOrder(){
 
 setInterval(updateNowTime, 60000);
 setInterval(loadStorageStatus, 60000);
+setInterval(loadKioskStatus, 60000);
 setInterval(checkActiveOrder, 7000);
 setInterval(refreshMenuIfIdle, 60000);
 setInterval(syncPendingCashierSales, 60000);
 window.addEventListener("focus", ()=>{
   refreshMenuIfIdle();
   loadStorageStatus();
+  loadKioskStatus();
 });
 window.addEventListener("pageshow", ()=>{
   refreshMenuIfIdle();
   loadStorageStatus();
+  loadKioskStatus();
 });
 window.addEventListener("online", ()=>{
   refreshMenuIfIdle();
+  loadKioskStatus();
   syncPendingCashierSales();
   updateCashierOfflineUi();
 });
@@ -1024,6 +1076,7 @@ document.addEventListener("visibilitychange", ()=>{
   if(document.visibilityState === "visible"){
     refreshMenuIfIdle();
     loadStorageStatus();
+    loadKioskStatus();
   }
 });
 updateNowTime();
@@ -1036,5 +1089,6 @@ updatePaymentVisibility();
 updateCashInputWidth();
 loadMenu();
 setTimeout(loadStorageStatus, 1200);
+loadKioskStatus();
 checkActiveOrder();
 validate();

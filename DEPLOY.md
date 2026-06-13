@@ -9,6 +9,9 @@ NODE_ENV=production
 DATABASE_URL=<Render Postgres connection string>
 PANTANAN_WHATSAPP_LINK=https://wa.me/639695093050
 PANTANAN_MESSENGER_LINK=https://m.me/your-page-username
+TEACHER_USERNAME=alexander.moreno
+TEACHER_PIN=1111
+TEACHER_SESSION_SECRET=<long random secret>
 ```
 
 `PORT` is usually provided by the host. Locally it defaults to `3001`.
@@ -29,6 +32,20 @@ Open:
 - Kitchen page: `http://localhost:3001/kitchen`
 - Admin page: `http://localhost:3001/admin`
 - QR page: `http://localhost:3001/qr`
+
+## Online Link
+
+After deploying this Render blueprint, open:
+
+- Customer page: `https://foodkiosk1.onrender.com/`
+- Kitchen page: `https://foodkiosk1.onrender.com/kitchen`
+- Admin page: `https://foodkiosk1.onrender.com/admin`
+- QR page: `https://foodkiosk1.onrender.com/qr`
+- Teacher login: `https://foodkiosk1.onrender.com/teacher-login`
+- Learner dashboard: `https://foodkiosk1.onrender.com/student-dashboard`
+- Learner profiles: `https://foodkiosk1.onrender.com/students`
+
+The learner pages prepare an offline copy after the first successful online login and privacy agreement on each device. Cached learner records remain searchable offline, and add/edit/delete changes are queued in IndexedDB and synchronized automatically when the connection returns.
 
 ## Production Notes
 

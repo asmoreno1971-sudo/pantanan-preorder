@@ -7,15 +7,32 @@ let lastSavedSignature = "";
 let lastSavedCount = 0;
 let storageWriteReady = true;
 let storageWarning = "";
+let kioskSettings = {
+  operatingDays:[1, 2, 3, 4, 5],
+  closedDates:[]
+};
 
 const autosaveDelayMs = 10000;
 const menuDraftKey = "adminMenuDraft";
 const menuBackupKey = "adminMenuLastGood";
 const requiredMenuVersion = "20260518-admin-canonical-menu";
 const categories = ["Sandwiches", "Drinks", "Dimsum", "Noodle", "Other"];
+const weekDays = [
+  { value:0, label:"Sun" },
+  { value:1, label:"Mon" },
+  { value:2, label:"Tue" },
+  { value:3, label:"Wed" },
+  { value:4, label:"Thu" },
+  { value:5, label:"Fri" },
+  { value:6, label:"Sat" }
+];
 const editorBox = document.getElementById("editorPanel");
 const editorList = document.getElementById("productEditor");
 const statusLabel = document.getElementById("status");
+const operationDaysBox = document.getElementById("operationDays");
+const closedDateInput = document.getElementById("closedDateInput");
+const closedDatesList = document.getElementById("closedDatesList");
+const settingsStatusLabel = document.getElementById("settingsStatus");
 
 async function loadMenu(){
   if(isLoadingMenu){
@@ -79,6 +96,162 @@ function scrollAdminToBottom(){
       }, 250);
     });
   });
+}
+
+async function loadKioskSettings(){
+  try{
+    const res = await fetch(`/api/kiosk-settings?fresh=${Date.now()}`, { cache:"no-store" });
+    const data = await res.json();
+
+    if(!res.ok || !data.ok){
+      throw new Error(data.message || "Settings failed");
+    }
+
+    kioskSettings = normalizeKioskSettings(data.settings);
+    renderKioskSettings();
+    settingsStatusText(data.status && data.status.open
+      ? "Kiosk is open today."
+      : (data.status && data.status.message) || "Operating days loaded.");
+  }catch{
+    kioskSettings = normalizeKioskSettings(kioskSettings);
+    renderKioskSettings();
+    settingsStatusText("Could not load operating days yet.");
+  }
+}
+
+function renderKioskSettings(){
+  if(operationDaysBox){
+    operationDaysBox.innerHTML = weekDays.map(day=>`
+      <label class="operation-day ${kioskSettings.operatingDays.includes(day.value) ? "selected" : ""}">
+        <input type="checkbox" value="${day.value}" ${kioskSettings.operatingDays.includes(day.value) ? "checked" : ""}>
+        <span>${day.label}</span>
+      </label>
+    `).join("");
+
+    operationDaysBox.querySelectorAll("input").forEach(input=>{
+      input.addEventListener("change", ()=>{
+        const value = Number(input.value);
+        const days = new Set(kioskSettings.operatingDays);
+
+        if(input.checked){
+          days.add(value);
+        }else{
+          days.delete(value);
+        }
+
+        kioskSettings.operatingDays = [...days].sort((a, b)=>a - b);
+        renderKioskSettings();
+        settingsStatusText("Operating days changed. Save when ready.");
+      });
+    });
+  }
+
+  if(closedDatesList){
+    closedDatesList.innerHTML = kioskSettings.closedDates.length
+      ? kioskSettings.closedDates.map(date=>`
+        <button class="closed-date-chip" type="button" data-date="${date}" title="Remove ${formatAdminDate(date)}">
+          <span>${formatAdminDate(date)}</span>
+          <b aria-hidden="true">x</b>
+        </button>
+      `).join("")
+      : `<div class="closed-dates-empty">No holiday closures added.</div>`;
+
+    closedDatesList.querySelectorAll(".closed-date-chip").forEach(button=>{
+      button.addEventListener("click", ()=>{
+        removeClosedDate(button.dataset.date);
+      });
+    });
+  }
+}
+
+function tickWeekdays(){
+  kioskSettings.operatingDays = [1, 2, 3, 4, 5];
+  renderKioskSettings();
+  settingsStatusText("Monday to Friday selected. Save operating days.");
+}
+
+function addClosedDate(){
+  const date = closedDateInput ? closedDateInput.value : "";
+
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){
+    settingsStatusText("Choose a holiday or closed date first.");
+    return;
+  }
+
+  kioskSettings.closedDates = [...new Set([...kioskSettings.closedDates, date])].sort();
+  if(closedDateInput){
+    closedDateInput.value = "";
+  }
+  renderKioskSettings();
+  settingsStatusText("Closed date added. Save operating days.");
+}
+
+function removeClosedDate(date){
+  kioskSettings.closedDates = kioskSettings.closedDates.filter(item=>item !== date);
+  renderKioskSettings();
+  settingsStatusText("Closed date removed. Save operating days.");
+}
+
+async function saveKioskSettings(){
+  settingsStatusText("Saving operating days...");
+
+  try{
+    const res = await fetch("/api/kiosk-settings", {
+      method:"PUT",
+      headers:{ "Content-Type":"application/json" },
+      cache:"no-store",
+      body:JSON.stringify(normalizeKioskSettings(kioskSettings))
+    });
+    const data = await res.json().catch(()=>({ ok:false, message:"Server did not return JSON." }));
+
+    if(!res.ok || !data.ok){
+      settingsStatusText(data.message || `Save failed (${res.status})`);
+      return false;
+    }
+
+    kioskSettings = normalizeKioskSettings(data.settings);
+    renderKioskSettings();
+    settingsStatusText(data.status && data.status.open
+      ? "Saved. Kiosk is open today."
+      : `Saved. ${data.status.message}`);
+    return true;
+  }catch{
+    settingsStatusText("Save failed. Please try again.");
+    return false;
+  }
+}
+
+function normalizeKioskSettings(settings){
+  const source = settings && typeof settings === "object" ? settings : {};
+  const days = Array.isArray(source.operatingDays) ? source.operatingDays : [1, 2, 3, 4, 5];
+  const operatingDays = [...new Set(days
+    .map(day=>Number(day))
+    .filter(day=>Number.isInteger(day) && day >= 0 && day <= 6)
+  )].sort((a, b)=>a - b);
+  const closedDates = [...new Set((Array.isArray(source.closedDates) ? source.closedDates : [])
+    .map(date=>String(date || "").trim())
+    .filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date))
+  )].sort();
+
+  return {
+    operatingDays:operatingDays.length ? operatingDays : [1, 2, 3, 4, 5],
+    closedDates
+  };
+}
+
+function formatAdminDate(dateValue){
+  const [year, month, day] = String(dateValue || "").split("-").map(Number);
+
+  if(!year || !month || !day){
+    return dateValue;
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    weekday:"short",
+    month:"short",
+    day:"numeric",
+    year:"numeric"
+  }).format(new Date(year, month - 1, day));
 }
 
 function renderEditor(){
@@ -411,7 +584,7 @@ async function verifyCustomerMenuSync(options = {}){
 function publicMenuSignature(items){
   return (Array.isArray(items) ? items : []).map(item=>{
     const imageKey = item.imageFingerprint || imageFingerprint(item.image);
-    return `${item.id}|${item.name}|${Number(item.price) || 0}|${normalizeCategory(item.category)}|${imageKey}`;
+    return `${item.id}|${item.name}|${Number(item.price) || 0}|${normalizeCategory(item.category)}|${item.available !== false}|${imageKey}`;
   }).join("\n");
 }
 
@@ -451,6 +624,12 @@ async function exportCustomers(){
 
 function statusText(message){
   statusLabel.innerText = message;
+}
+
+function settingsStatusText(message){
+  if(settingsStatusLabel){
+    settingsStatusLabel.innerText = message;
+  }
 }
 
 function saveMenuDraft(savedAt = Date.now()){
@@ -558,6 +737,7 @@ function resizeImage(src, maxSize, quality){
 async function startAdmin(){
   editorBox.classList.remove("hidden");
   await loadStorageStatus();
+  await loadKioskSettings();
   await loadMenu();
 }
 
