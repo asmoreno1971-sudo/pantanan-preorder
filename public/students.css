@@ -433,7 +433,7 @@ tbody tr:hover{ background:#f8fbf9; }
 
 .record-detail-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns:repeat(8, minmax(180px, 1fr));
   gap:5px;
 }
 
@@ -544,7 +544,7 @@ dialog::backdrop{ background:rgba(15, 35, 25, .58); }
   .stats-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
   .toolbar{ grid-template-columns:1fr 1fr; }
   .form-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
-  .record-detail-grid{ grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); }
+  .record-detail-grid{ grid-template-columns:repeat(8, minmax(150px, 1fr)); }
 }
 
 @media (max-width:560px){
@@ -555,7 +555,7 @@ dialog::backdrop{ background:rgba(15, 35, 25, .58); }
   .stats-grid{ grid-template-columns:1fr; gap:8px; }
   .toolbar{ grid-template-columns:1fr; }
   .form-grid{ grid-template-columns:1fr; }
-  .record-detail-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .record-detail-grid{ grid-template-columns:repeat(8, minmax(140px, 1fr)); }
   .wide-field{ grid-column:auto; }
   .dialog-actions{ flex-wrap:wrap; }
   .dialog-actions .status{ width:100%; }
