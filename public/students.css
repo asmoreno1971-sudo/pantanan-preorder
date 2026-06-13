@@ -319,10 +319,11 @@ table{
 
 th,
 td{
-  padding:8px 11px;
+  padding:4px 9px;
   border-bottom:1px solid #e7ede9;
   text-align:left;
   vertical-align:middle;
+  line-height:1.2;
 }
 
 th{
@@ -368,7 +369,7 @@ tbody tr:hover{ background:#f8fbf9; }
 }
 
 .row-button{
-  padding:5px 8px;
+  padding:3px 7px;
   border:1px solid #cddbd2;
   border-radius:8px;
   background:#fff;
@@ -391,7 +392,7 @@ tbody tr:hover{ background:#f8fbf9; }
 .full-record-row:hover{ background:transparent; }
 
 .full-record-row td{
-  padding:0 11px 10px;
+  padding:0 9px 7px;
   background:#f8fbf9;
   white-space:normal;
 }

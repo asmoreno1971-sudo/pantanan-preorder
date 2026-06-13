@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260613-sheet-sections";
+const shellCache = "bakhaw-learner-shell-20260613-compact-rows";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -10,11 +10,11 @@ const shellFiles = [
   "/teacher-session.js?v=20260613-self-pin",
   "/students",
   "/students.html",
-  "/students.css?v=20260613-count-column",
+  "/students.css?v=20260613-compact-rows",
   "/students.js?v=20260613-sheet-sections",
   "/student-dashboard",
   "/student-dashboard.html",
-  "/student-dashboard.css?v=20260613-status-labels",
+  "/student-dashboard.css?v=20260613-compact-rows",
   "/student-dashboard.js?v=20260613-entry-login",
   "/bakhaw-school-logo.png"
 ];

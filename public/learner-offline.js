@@ -133,7 +133,7 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      await navigator.serviceWorker.register("/learner-sw.js?v=20260613-sheet-sections", { scope:"/" });
+      await navigator.serviceWorker.register("/learner-sw.js?v=20260613-compact-rows", { scope:"/" });
       await navigator.serviceWorker.ready;
     }
   }

@@ -278,10 +278,11 @@ table{
 
 th,
 td{
-  padding:8px 11px;
+  padding:4px 9px;
   border-bottom:1px solid #e4ece7;
   text-align:left;
   white-space:nowrap;
+  line-height:1.2;
 }
 
 th{
@@ -344,8 +345,8 @@ tbody tr:hover{ background:#f7fbf8; }
 .muted-number{ color:#8a6840; }
 
 .view-section{
-  min-height:30px;
-  padding:4px 9px;
+  min-height:26px;
+  padding:2px 8px;
   background:#126f49;
   color:#fff;
   font-size:12px;

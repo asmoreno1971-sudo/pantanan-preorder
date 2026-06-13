@@ -82,14 +82,14 @@ select{ font:inherit; }
 .account-panel > .status{ padding:0 24px 12px; }
 .table-wrap{ overflow:auto; }
 table{ width:100%; border-collapse:collapse; }
-th, td{ padding:13px 18px; border-top:1px solid #dfebe4; text-align:left; }
+th, td{ padding:7px 14px; border-top:1px solid #dfebe4; text-align:left; line-height:1.2; }
 th{ background:#e2f1e8; color:#285d46; font-size:13px; text-transform:uppercase; }
 td{ font-size:15px; }
 .role-badge,
 .state-badge{ display:inline-block; padding:5px 9px; border-radius:999px; background:#e5f3eb; color:#17613e; font-size:12px; font-weight:850; }
 .state-badge.disabled{ background:#f7e5e2; color:#973e36; }
 .row-actions{ display:flex; flex-wrap:wrap; gap:7px; }
-.row-actions button{ padding:7px 10px; border:1px solid #bad1c4; border-radius:8px; background:#f5faf7; color:#23533d; cursor:pointer; font-weight:750; }
+.row-actions button{ padding:4px 8px; border:1px solid #bad1c4; border-radius:8px; background:#f5faf7; color:#23533d; cursor:pointer; font-weight:750; }
 .row-actions .danger{ border-color:#e3bbb7; color:#a23f38; }
 
 dialog{
