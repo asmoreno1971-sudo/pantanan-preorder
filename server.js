@@ -17,6 +17,7 @@ const transactionLedgerPath = path.resolve(process.env.TRANSACTION_LEDGER_PATH |
 const expensesPath = path.resolve(process.env.EXPENSES_PATH || path.join(dataDir, "expenses.json"));
 const kioskSettingsPath = path.resolve(process.env.KIOSK_SETTINGS_PATH || path.join(dataDir, "kiosk-settings.json"));
 const studentsPath = path.resolve(process.env.STUDENTS_PATH || path.join(dataDir, "students.json"));
+const teacherAccountsPath = path.resolve(process.env.TEACHER_ACCOUNTS_PATH || path.join(dataDir, "teacher-accounts.json"));
 const studentsImportPath = path.join(root, "students-import.csv");
 const port = Number(process.env.PORT) || 3001;
 const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
@@ -111,9 +112,15 @@ function parseCookies(req){
     }, {});
 }
 
-function teacherSessionToken(username, privacyAccepted = false){
+function teacherSessionToken(account, privacyAccepted = false){
   const expiresAt = Date.now() + (12 * 60 * 60 * 1000);
-  const payload = Buffer.from(JSON.stringify({ username, expiresAt, privacyAccepted })).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({
+    username:account.username,
+    displayName:account.displayName,
+    role:account.role,
+    expiresAt,
+    privacyAccepted
+  })).toString("base64url");
   const signature = crypto.createHmac("sha256", teacherSessionSecret).update(payload).digest("base64url");
   return `${payload}.${signature}`;
 }
@@ -141,7 +148,7 @@ function readTeacherSession(req){
 
   try{
     const session = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-    return session.username === teacherUsername && Number(session.expiresAt) > Date.now() ? session : null;
+    return session.username && Number(session.expiresAt) > Date.now() ? session : null;
   }catch{
     return null;
   }
@@ -160,6 +167,92 @@ function safeCredentialEqual(received, expected){
   const receivedHash = crypto.createHash("sha256").update(String(received || "")).digest();
   const expectedHash = crypto.createHash("sha256").update(String(expected || "")).digest();
   return crypto.timingSafeEqual(receivedHash, expectedHash);
+}
+
+function normalizedTeacherUsername(value){
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ".")
+    .replace(/[^a-z0-9._-]/g, "");
+}
+
+function teacherPinHash(pin, salt){
+  return crypto.pbkdf2Sync(String(pin), salt, 120000, 32, "sha256").toString("hex");
+}
+
+function createTeacherAccount({ username, displayName, pin, role = "teacher", active = true }){
+  const cleanUsername = normalizedTeacherUsername(username);
+  const salt = crypto.randomBytes(16).toString("hex");
+  const now = new Date().toISOString();
+  return {
+    username:cleanUsername,
+    displayName:String(displayName || cleanUsername).trim(),
+    role:role === "admin" ? "admin" : "teacher",
+    active:active !== false,
+    pinSalt:salt,
+    pinHash:teacherPinHash(pin, salt),
+    createdAt:now,
+    updatedAt:now
+  };
+}
+
+function publicTeacherAccount(account){
+  return {
+    username:account.username,
+    displayName:account.displayName,
+    role:account.role,
+    active:account.active !== false,
+    createdAt:account.createdAt,
+    updatedAt:account.updatedAt
+  };
+}
+
+async function readTeacherAccounts(){
+  const seed = [createTeacherAccount({
+    username:teacherUsername,
+    displayName:"Alexander Moreno",
+    pin:teacherPin,
+    role:"admin"
+  })];
+  const accounts = await readDataRecord("teacher-accounts", teacherAccountsPath, seed);
+
+  if(!Array.isArray(accounts)){
+    throw new Error("Teacher account storage is not an array.");
+  }
+
+  let normalized = accounts.filter(account=>account && account.username && account.pinSalt && account.pinHash)
+    .map(account=>({
+      ...account,
+      username:normalizedTeacherUsername(account.username),
+      displayName:String(account.displayName || account.username).trim(),
+      role:account.role === "admin" ? "admin" : "teacher",
+      active:account.active !== false
+    }));
+
+  if(!normalized.some(account=>account.username === teacherUsername)){
+    normalized = [...seed, ...normalized];
+    await writeTeacherAccounts(normalized);
+  }
+
+  return normalized;
+}
+
+async function writeTeacherAccounts(accounts){
+  await writeDataRecord("teacher-accounts", teacherAccountsPath, accounts);
+}
+
+function validTeacherPin(pin, account){
+  return safeCredentialEqual(teacherPinHash(pin, account.pinSalt), account.pinHash);
+}
+
+function requireTeacherAdmin(req, res){
+  const session = readTeacherSession(req);
+  if(!session || !session.privacyAccepted || session.role !== "admin"){
+    send(res, 403, JSON.stringify({ ok:false, message:"Administrator access required." }));
+    return null;
+  }
+  return session;
 }
 
 async function readBody(req){
@@ -644,7 +737,8 @@ function requirePersistentStorageForProduction(key, operation){
     "transaction-ledger",
     "expenses",
     "kiosk-settings",
-    "students"
+    "students",
+    "teacher-accounts"
   ]);
 
   if(!isProduction || databaseUrl || !protectedKeys.has(key)){
@@ -1410,7 +1504,10 @@ async function handleApi(req, res){
       return true;
     }
 
-    if(!safeCredentialEqual(username, teacherUsername) || !safeCredentialEqual(pin, teacherPin)){
+    const accounts = await readTeacherAccounts();
+    const account = accounts.find(candidate=>candidate.username === username);
+
+    if(!account || !account.active || !validTeacherPin(pin, account)){
       send(res, 401, JSON.stringify({ ok:false, message:"Incorrect username or password." }));
       return true;
     }
@@ -1418,16 +1515,25 @@ async function handleApi(req, res){
     res.writeHead(200, {
       "Content-Type":"application/json; charset=utf-8",
       "Cache-Control":"no-store",
-      "Set-Cookie":teacherCookie(teacherSessionToken(username))
+      "Set-Cookie":teacherCookie(teacherSessionToken(account))
     });
-    res.end(JSON.stringify({ ok:true, username }));
+    res.end(JSON.stringify({
+      ok:true,
+      username:account.username,
+      displayName:account.displayName,
+      role:account.role
+    }));
     return true;
   }
 
   if(pathname === "/api/teacher-session" && req.method === "GET"){
-    send(res, validTeacherSession(req) ? 200 : 401, JSON.stringify({
-      ok:validTeacherSession(req),
-      username:validTeacherSession(req) ? teacherUsername : ""
+    const session = readTeacherSession(req);
+    const valid = Boolean(session?.privacyAccepted);
+    send(res, valid ? 200 : 401, JSON.stringify({
+      ok:valid,
+      username:valid ? session.username : "",
+      displayName:valid ? session.displayName : "",
+      role:valid ? session.role : ""
     }));
     return true;
   }
@@ -1443,9 +1549,142 @@ async function handleApi(req, res){
     res.writeHead(200, {
       "Content-Type":"application/json; charset=utf-8",
       "Cache-Control":"no-store",
-      "Set-Cookie":teacherCookie(teacherSessionToken(session.username, true))
+      "Set-Cookie":teacherCookie(teacherSessionToken(session, true))
     });
     res.end(JSON.stringify({ ok:true }));
+    return true;
+  }
+
+  if(pathname === "/api/teacher-accounts" && req.method === "GET"){
+    if(!requireTeacherAdmin(req, res)){
+      return true;
+    }
+    const accounts = await readTeacherAccounts();
+    send(res, 200, JSON.stringify({
+      ok:true,
+      accounts:accounts.map(publicTeacherAccount).sort((a, b)=>a.displayName.localeCompare(b.displayName))
+    }));
+    return true;
+  }
+
+  if(pathname === "/api/teacher-accounts" && req.method === "POST"){
+    if(!requireTeacherAdmin(req, res)){
+      return true;
+    }
+
+    let body;
+    try{
+      body = JSON.parse(await readBody(req) || "{}");
+    }catch{
+      send(res, 400, JSON.stringify({ ok:false, message:"Teacher account details could not be read." }));
+      return true;
+    }
+
+    const username = normalizedTeacherUsername(body.username);
+    const displayName = String(body.displayName || "").trim();
+    const pin = String(body.pin || "").trim();
+
+    if(!/^[a-z0-9]+(?:[._-][a-z0-9]+)+$/.test(username)){
+      send(res, 400, JSON.stringify({ ok:false, message:"Use a username such as firstname.familyname." }));
+      return true;
+    }
+    if(!displayName){
+      send(res, 400, JSON.stringify({ ok:false, message:"Teacher name is required." }));
+      return true;
+    }
+    if(!/^\d{4}$/.test(pin)){
+      send(res, 400, JSON.stringify({ ok:false, message:"PIN must contain exactly 4 digits." }));
+      return true;
+    }
+
+    const accounts = await readTeacherAccounts();
+    if(accounts.some(account=>account.username === username)){
+      send(res, 409, JSON.stringify({ ok:false, message:"That username is already registered." }));
+      return true;
+    }
+
+    const account = createTeacherAccount({ username, displayName, pin, role:"teacher" });
+    accounts.push(account);
+    await writeTeacherAccounts(accounts);
+    send(res, 201, JSON.stringify({ ok:true, account:publicTeacherAccount(account) }));
+    return true;
+  }
+
+  if(pathname.startsWith("/api/teacher-accounts/") && req.method === "PUT"){
+    const session = requireTeacherAdmin(req, res);
+    if(!session){
+      return true;
+    }
+
+    const username = normalizedTeacherUsername(decodeURIComponent(pathname.split("/")[3] || ""));
+    let body;
+    try{
+      body = JSON.parse(await readBody(req) || "{}");
+    }catch{
+      send(res, 400, JSON.stringify({ ok:false, message:"Teacher account changes could not be read." }));
+      return true;
+    }
+
+    const accounts = await readTeacherAccounts();
+    const index = accounts.findIndex(account=>account.username === username);
+    if(index < 0){
+      send(res, 404, JSON.stringify({ ok:false, message:"Teacher account not found." }));
+      return true;
+    }
+
+    const account = { ...accounts[index] };
+    if(body.displayName !== undefined){
+      const displayName = String(body.displayName || "").trim();
+      if(!displayName){
+        send(res, 400, JSON.stringify({ ok:false, message:"Teacher name is required." }));
+        return true;
+      }
+      account.displayName = displayName;
+    }
+    if(body.pin !== undefined && String(body.pin).trim()){
+      const pin = String(body.pin).trim();
+      if(!/^\d{4}$/.test(pin)){
+        send(res, 400, JSON.stringify({ ok:false, message:"PIN must contain exactly 4 digits." }));
+        return true;
+      }
+      account.pinSalt = crypto.randomBytes(16).toString("hex");
+      account.pinHash = teacherPinHash(pin, account.pinSalt);
+    }
+    if(body.active !== undefined){
+      if(username === session.username && body.active === false){
+        send(res, 400, JSON.stringify({ ok:false, message:"You cannot disable your own administrator account." }));
+        return true;
+      }
+      account.active = body.active !== false;
+    }
+    account.updatedAt = new Date().toISOString();
+    accounts[index] = account;
+    await writeTeacherAccounts(accounts);
+    send(res, 200, JSON.stringify({ ok:true, account:publicTeacherAccount(account) }));
+    return true;
+  }
+
+  if(pathname.startsWith("/api/teacher-accounts/") && req.method === "DELETE"){
+    const session = requireTeacherAdmin(req, res);
+    if(!session){
+      return true;
+    }
+
+    const username = normalizedTeacherUsername(decodeURIComponent(pathname.split("/")[3] || ""));
+    if(username === session.username){
+      send(res, 400, JSON.stringify({ ok:false, message:"You cannot delete your own administrator account." }));
+      return true;
+    }
+
+    const accounts = await readTeacherAccounts();
+    const index = accounts.findIndex(account=>account.username === username);
+    if(index < 0){
+      send(res, 404, JSON.stringify({ ok:false, message:"Teacher account not found." }));
+      return true;
+    }
+    const [account] = accounts.splice(index, 1);
+    await writeTeacherAccounts(accounts);
+    send(res, 200, JSON.stringify({ ok:true, account:publicTeacherAccount(account) }));
     return true;
   }
 
@@ -2140,6 +2379,7 @@ async function serveStatic(req, res){
     "/transactions": "transactions.html",
     "/expenses": "expenses.html",
     "/teacher-login": "teacher-login.html",
+    "/teacher-accounts": "teacher-accounts.html",
     "/student-dashboard": "student-dashboard.html",
     "/students": "students.html",
     "/teacher-profile": "teacher-profile.html",
@@ -2160,8 +2400,15 @@ async function serveStatic(req, res){
     || pathname === "/students.html"
     || pathname === "/student-dashboard"
     || pathname === "/student-dashboard.html"
+    || pathname === "/teacher-accounts"
+    || pathname === "/teacher-accounts.html"
   ) && !validTeacherSession(req)){
     sendRedirect(res, `/teacher-login?next=${encodeURIComponent(pathname + requestUrl.search)}`);
+    return;
+  }
+
+  if((pathname === "/teacher-accounts" || pathname === "/teacher-accounts.html") && readTeacherSession(req)?.role !== "admin"){
+    sendRedirect(res, "/student-dashboard");
     return;
   }
 

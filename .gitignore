@@ -4,6 +4,7 @@ node_modules/
 menu.json
 orders.json
 students.json
+teacher-accounts.json*
 preorder-preview.html
 start-pantanan-server.cmd
 server.out.log

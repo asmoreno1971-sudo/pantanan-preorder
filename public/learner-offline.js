@@ -106,12 +106,13 @@
       username:normalizedUsername,
       verifier,
       savedAt:new Date().toISOString()
-    }, "teacher-credentials"));
+    }, `teacher-credentials:${normalizedUsername}`));
   }
 
   async function verifyCredentials(username, pin){
-    const saved = await useStore(metaStore, "readonly", store=>store.get("teacher-credentials"));
     const normalizedUsername = String(username || "").trim().toLowerCase();
+    const saved = await useStore(metaStore, "readonly", store=>store.get(`teacher-credentials:${normalizedUsername}`))
+      || await useStore(metaStore, "readonly", store=>store.get("teacher-credentials"));
     if(!saved || saved.username !== normalizedUsername){
       return false;
     }
@@ -132,7 +133,7 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      await navigator.serviceWorker.register("/learner-sw.js?v=20260613-login-fix", { scope:"/" });
+      await navigator.serviceWorker.register("/learner-sw.js?v=20260613-accounts", { scope:"/" });
       await navigator.serviceWorker.ready;
     }
   }

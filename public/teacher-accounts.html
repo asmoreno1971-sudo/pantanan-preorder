@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<title>Teacher Accounts | Bakhaw Integrated School</title>
+<meta name="theme-color" content="#0c6842">
+<link rel="icon" href="/bakhaw-school-logo.png">
+<link rel="stylesheet" href="/teacher-accounts.css?v=20260613">
+</head>
+<body>
+<main class="accounts-shell">
+  <header class="accounts-header">
+    <div class="brand">
+      <img src="/bakhaw-school-logo.png" alt="Bakhaw Integrated School logo">
+      <div>
+        <p>Bakhaw Integrated School</p>
+        <h1>Teacher Accounts</h1>
+        <span>Create teacher logins and reset 4-digit PINs.</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="/student-dashboard">Dashboard</a>
+      <button type="button" data-teacher-logout>Logout</button>
+    </div>
+  </header>
+
+  <section class="account-panel">
+    <div class="panel-heading">
+      <div>
+        <p>Account administration</p>
+        <h2>Registered Teachers</h2>
+      </div>
+      <button id="addTeacherButton" class="primary" type="button">Add Teacher</button>
+    </div>
+    <p id="accountStatus" class="status" role="status">Loading teacher accounts...</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Teacher Name</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="accountRows"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<dialog id="accountDialog">
+  <form id="accountForm">
+    <div class="dialog-heading">
+      <div>
+        <p>Teacher login</p>
+        <h2 id="accountDialogTitle">Add Teacher</h2>
+      </div>
+      <button id="closeAccountDialog" class="icon-button" type="button" aria-label="Close">x</button>
+    </div>
+    <input id="originalUsername" type="hidden">
+    <label>
+      <span>Teacher Name *</span>
+      <input id="teacherDisplayName" required placeholder="Noe Balajidiong">
+    </label>
+    <label>
+      <span>Username *</span>
+      <input id="accountUsername" required placeholder="firstname.familyname" autocomplete="off">
+    </label>
+    <label>
+      <span id="pinLabel">4-Digit PIN *</span>
+      <input id="accountPin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="****" autocomplete="new-password">
+    </label>
+    <p class="pin-help" id="pinHelp">Give this temporary PIN privately to the teacher.</p>
+    <div class="dialog-actions">
+      <span id="formStatus" class="status" role="status"></span>
+      <button id="cancelAccountDialog" type="button">Cancel</button>
+      <button id="saveAccountButton" class="primary" type="submit">Create Account</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/teacher-session.js?v=20260613-accounts"></script>
+<script src="/teacher-accounts.js?v=20260613"></script>
+</body>
+</html>

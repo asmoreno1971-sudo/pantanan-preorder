@@ -1,0 +1,122 @@
+:root{
+  --green:#0b6b43;
+  --dark:#10412f;
+  --line:#cee0d5;
+  --muted:#60736a;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  min-height:100vh;
+  margin:0;
+  background:linear-gradient(135deg, #edf7f1, #fff5d7);
+  color:#19392d;
+  font-family:"Segoe UI", Arial, sans-serif;
+}
+
+button,
+input{ font:inherit; }
+
+.accounts-shell{ padding:14px; }
+
+.accounts-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding:22px 28px;
+  border-radius:20px;
+  background:linear-gradient(135deg, #075f3b, #168052);
+  color:#fff;
+  box-shadow:0 16px 42px rgba(8, 75, 46, .2);
+}
+
+.brand{ display:flex; align-items:center; gap:18px; }
+.brand img{ width:88px; height:88px; border:4px solid #fff; border-radius:50%; object-fit:cover; }
+.brand p{ margin:0 0 5px; color:#ffe29a; font-weight:850; letter-spacing:.08em; text-transform:uppercase; }
+.brand h1{ margin:0 0 6px; font-size:38px; }
+.brand span{ color:#dbede4; font-size:17px; }
+
+.header-actions{ display:flex; gap:10px; }
+.header-actions a,
+.header-actions button,
+.primary{
+  min-height:44px;
+  padding:10px 18px;
+  border:0;
+  border-radius:10px;
+  background:#fff;
+  color:var(--green);
+  cursor:pointer;
+  font-weight:850;
+  text-decoration:none;
+}
+
+.account-panel{
+  margin-top:14px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:#fffefa;
+  box-shadow:0 14px 38px rgba(15, 74, 47, .12);
+}
+
+.panel-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:20px 24px 10px;
+}
+
+.panel-heading p,
+.dialog-heading p{ margin:0 0 3px; color:var(--green); font-size:12px; font-weight:850; letter-spacing:.08em; text-transform:uppercase; }
+.panel-heading h2,
+.dialog-heading h2{ margin:0; color:var(--dark); font-size:28px; }
+.panel-heading .primary,
+.dialog-actions .primary{ background:var(--green); color:#fff; }
+
+.status{ min-height:20px; margin:0; color:var(--muted); font-size:14px; font-weight:700; }
+.account-panel > .status{ padding:0 24px 12px; }
+.table-wrap{ overflow:auto; }
+table{ width:100%; border-collapse:collapse; }
+th, td{ padding:13px 18px; border-top:1px solid #dfebe4; text-align:left; }
+th{ background:#e2f1e8; color:#285d46; font-size:13px; text-transform:uppercase; }
+td{ font-size:15px; }
+.role-badge,
+.state-badge{ display:inline-block; padding:5px 9px; border-radius:999px; background:#e5f3eb; color:#17613e; font-size:12px; font-weight:850; }
+.state-badge.disabled{ background:#f7e5e2; color:#973e36; }
+.row-actions{ display:flex; flex-wrap:wrap; gap:7px; }
+.row-actions button{ padding:7px 10px; border:1px solid #bad1c4; border-radius:8px; background:#f5faf7; color:#23533d; cursor:pointer; font-weight:750; }
+.row-actions .danger{ border-color:#e3bbb7; color:#a23f38; }
+
+dialog{
+  width:min(500px, calc(100% - 28px));
+  padding:0;
+  border:0;
+  border-radius:18px;
+  box-shadow:0 30px 90px rgba(3, 42, 25, .35);
+}
+dialog::backdrop{ background:rgba(3, 35, 23, .68); backdrop-filter:blur(4px); }
+#accountForm{ display:grid; gap:15px; padding:24px; }
+.dialog-heading{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.icon-button{ border:0; background:transparent; color:#566b61; cursor:pointer; font-size:22px; }
+label{ display:grid; gap:6px; }
+label span{ color:#365c49; font-size:13px; font-weight:800; }
+input{ min-height:46px; padding:9px 11px; border:1px solid #bfd2c6; border-radius:9px; }
+input:focus{ border-color:#3f946a; outline:3px solid rgba(63, 148, 106, .14); }
+input:disabled{ background:#edf1ee; color:#64746c; }
+.pin-help{ margin:-5px 0 0; color:#708078; font-size:12px; }
+.dialog-actions{ display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:9px; }
+.dialog-actions .status{ margin-right:auto; color:#9d3c34; }
+.dialog-actions button{ min-height:42px; padding:8px 15px; border:1px solid #c7d7ce; border-radius:9px; cursor:pointer; font-weight:800; }
+
+@media (max-width:700px){
+  .accounts-header,
+  .panel-heading{ align-items:stretch; flex-direction:column; }
+  .brand{ align-items:flex-start; }
+  .brand img{ width:68px; height:68px; }
+  .brand h1{ font-size:30px; }
+  .header-actions{ flex-wrap:wrap; }
+}

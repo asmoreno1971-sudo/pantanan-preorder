@@ -47,6 +47,8 @@ After deploying this Render blueprint, open:
 
 The learner pages prepare an offline copy after the first successful online login and privacy agreement on each device. Cached learner records remain searchable offline, and add/edit/delete changes are queued in IndexedDB and synchronized automatically when the connection returns.
 
+The initial `TEACHER_USERNAME` and `TEACHER_PIN` seed the administrator account. After signing in, use `/teacher-accounts` to create individual co-teacher usernames, reset their 4-digit PINs, disable access, or delete accounts. Teacher account PINs are stored as salted hashes in PostgreSQL.
+
 ## Production Notes
 
 - Admin product changes and order records must be saved to Postgres. Without `DATABASE_URL`, Render's free web service filesystem can reset on redeploy, restart, or spin-down.
