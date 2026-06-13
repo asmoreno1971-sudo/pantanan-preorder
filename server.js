@@ -57,6 +57,7 @@ let studentSeedPromise = null;
 let teacherDirectoryCache = null;
 let teacherDirectoryCachedAt = 0;
 let gradeSectionCache = null;
+let advisoryDirectoryCache = null;
 const legacyMenuPaths = [...new Set([
   path.join(root, "menu.json"),
   path.join(dataDir, "menu.json"),
@@ -268,6 +269,33 @@ async function readGradeSections(){
   }
 
   return gradeSectionCache;
+}
+
+async function readAdvisoryDirectory(){
+  try{
+    const response = await fetch(teacherDirectoryCsvUrl, { signal:AbortSignal.timeout(10000) });
+    if(!response.ok){
+      throw new Error(`Google Sheet returned ${response.status}.`);
+    }
+    const rows = parseCsvRows(await response.text());
+    const advisories = rows.slice(1)
+      .map(row=>({
+        teacher:String(row[10] || "").trim(),
+        department:String(row[11] || "").trim(),
+        gradeSection:String(row[14] || "").trim()
+      }))
+      .filter(entry=>entry.teacher && entry.gradeSection);
+    if(!advisories.length){
+      throw new Error("Columns K, L, and O did not contain advisory assignments.");
+    }
+    advisoryDirectoryCache = advisories;
+  }catch{
+    if(!advisoryDirectoryCache){
+      advisoryDirectoryCache = [];
+    }
+  }
+
+  return advisoryDirectoryCache;
 }
 
 function teacherPinHash(pin, salt){
@@ -1651,6 +1679,12 @@ async function handleApi(req, res){
   if(pathname === "/api/grade-sections" && req.method === "GET"){
     const sections = await readGradeSections();
     send(res, 200, JSON.stringify({ ok:true, sections }));
+    return true;
+  }
+
+  if(pathname === "/api/advisory-directory" && req.method === "GET"){
+    const advisories = await readAdvisoryDirectory();
+    send(res, 200, JSON.stringify({ ok:true, advisories }));
     return true;
   }
 

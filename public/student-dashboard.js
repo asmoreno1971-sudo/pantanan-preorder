@@ -1,37 +1,38 @@
-const TEACHERS = {
-  "0 GOLD A":{ name:"CHARLEY A. EMPESTAN", department:"Elementary" },
-  "0 GOLD B":{ name:"ROXAN C. FIGUEROA", department:"Elementary" },
-  "1 AMBER":{ name:"JOAN S. QUITOS", department:"Elementary" },
-  "1 PEARL":{ name:"ROSELYN D. SANTILLAN", department:"Elementary" },
-  "1 RUBY":{ name:"LORRAINE GRACE S. PETROLA", department:"Elementary" },
-  "2 JADE":{ name:"EDEN P. BARCEBAS", department:"Elementary" },
-  "2 OPAL":{ name:"ANGEL HELLARES ZAFRA", department:"Elementary" },
-  "2 QUARTZ":{ name:"GINA M. MUYUELA", department:"Elementary" },
-  "3 EMERALD":{ name:"BENITA T. LIZADA", department:"Elementary" },
-  "3 SAPPHIRE":{ name:"ZARAH C. CAPINIG", department:"Elementary" },
-  "4 CITRINE":{ name:"JANICE G. REMANDABAN", department:"Elementary" },
-  "4 TURQUOISE":{ name:"GIRLY G. ALBUYA", department:"Elementary" },
-  "5 AMETHYST":{ name:"DARLYN JOY C. HERRERA", department:"Elementary" },
-  "5 PERIDOT":{ name:"LOVELLA S. FUENTES", department:"Elementary" },
-  "6 BERYL":{ name:"ANALYN L. PORRAS", department:"Elementary" },
-  "6 GARNET":{ name:"JOSIE V. DEVIZA", department:"Elementary" },
-  "7 HONESTY":{ name:"JULIE ANN T. VASQUEZ", department:"JHS" },
-  "7 RESPECT":{ name:"MARIDEL N. ONATO", department:"JHS" },
-  "8 CHARITY":{ name:"CJ D. CORTEZ", department:"JHS" },
-  "8 FAITH":{ name:"JYLEN P. ADUANA", department:"JHS" },
-  "9 JUSTICE":{ name:"CRISTY R. DENIEGA", department:"JHS" },
-  "9 PEACE":{ name:"SANDRA M. DIONIO", department:"JHS" },
-  "10 FORTITUDE":{ name:"LORENCE A. TAGACAY", department:"JHS" },
-  "10 PRUDENCE":{ name:"RISHELLE G. HURTADA", department:"JHS" }
-};
-
 const dashboardRows = document.getElementById("dashboardRows");
 const dashboardStatus = document.getElementById("dashboardStatus");
 const dashboardDateTime = document.getElementById("dashboardDateTime");
 let sectionSummaries = [];
+let advisoryDirectory = {};
+
+function savedAdvisoryDirectory(){
+  try{
+    const saved = JSON.parse(localStorage.getItem("bakhawAdvisoryDirectory") || "{}");
+    return saved && typeof saved === "object" ? saved : {};
+  }catch{
+    return {};
+  }
+}
+
+async function loadAdvisoryDirectory(){
+  try{
+    const response = await fetch("/api/advisory-directory", { cache:"no-store" });
+    const data = await response.json();
+    if(!response.ok || !data.ok){
+      throw new Error(data.message || "Advisory assignments could not be loaded.");
+    }
+    advisoryDirectory = Object.fromEntries((data.advisories || []).map(entry=>[
+      entry.gradeSection,
+      { name:entry.teacher, department:entry.department || "Not assigned" }
+    ]));
+    localStorage.setItem("bakhawAdvisoryDirectory", JSON.stringify(advisoryDirectory));
+  }catch{
+    advisoryDirectory = savedAdvisoryDirectory();
+  }
+}
 
 async function loadDashboard(){
   try{
+    await loadAdvisoryDirectory();
     const response = await fetch("/api/students", { cache:"no-store" });
     const data = await response.json();
 
@@ -46,6 +47,9 @@ async function loadDashboard(){
     renderSections();
     dashboardStatus.textContent = `${students.length.toLocaleString()} learner records loaded`;
   }catch(error){
+    if(!Object.keys(advisoryDirectory).length){
+      advisoryDirectory = savedAdvisoryDirectory();
+    }
     const students = await LearnerOffline.loadRecords();
     if(students.length){
       sectionSummaries = buildSectionSummaries(students);
@@ -75,7 +79,7 @@ function buildSectionSummaries(students){
 
   return [...grouped.entries()]
     .map(([section, records])=>{
-      const advisory = TEACHERS[section] || { name:"To be assigned", department:"Not assigned" };
+      const advisory = advisoryDirectory[section] || { name:"To be assigned", department:"Not assigned" };
       return {
         section,
         teacher:advisory.name,

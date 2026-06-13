@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260613-short-field-boxes";
+const shellCache = "bakhaw-learner-shell-20260613-live-advisers";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -15,7 +15,7 @@ const shellFiles = [
   "/student-dashboard",
   "/student-dashboard.html",
   "/student-dashboard.css?v=20260613-compact-rows",
-  "/student-dashboard.js?v=20260613-entry-login",
+  "/student-dashboard.js?v=20260613-live-advisers",
   "/bakhaw-school-logo.png"
 ];
 

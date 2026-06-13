@@ -133,7 +133,7 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      await navigator.serviceWorker.register("/learner-sw.js?v=20260613-short-field-boxes", { scope:"/" });
+      await navigator.serviceWorker.register("/learner-sw.js?v=20260613-live-advisers", { scope:"/" });
       await navigator.serviceWorker.ready;
     }
   }
