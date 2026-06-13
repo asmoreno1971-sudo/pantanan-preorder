@@ -7,7 +7,7 @@
 <title>Teacher Accounts | Bakhaw Integrated School</title>
 <meta name="theme-color" content="#0c6842">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/teacher-accounts.css?v=20260613-compact-rows">
+<link rel="stylesheet" href="/teacher-accounts.css?v=20260614-page-password">
 <link rel="stylesheet" href="/teacher-session.css?v=20260613-self-pin">
 </head>
 <body class="teacher-accounts-page">
@@ -54,6 +54,26 @@
   </section>
 </main>
 
+<dialog id="adminUnlockDialog" class="unlock-dialog">
+  <form id="adminUnlockForm">
+    <div class="unlock-brand">
+      <img src="/bakhaw-school-logo.png" alt="">
+      <div>
+        <p>Protected administration</p>
+        <h2>Teacher Accounts Password</h2>
+      </div>
+    </div>
+    <p>Enter the 4-digit password to manage teacher accounts.</p>
+    <label>
+      <span>Password</span>
+      <input id="adminUnlockPassword" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="current-password" required autofocus>
+    </label>
+    <p id="adminUnlockError" class="unlock-error" role="alert"></p>
+    <button id="adminUnlockButton" class="primary" type="submit">Unlock Teacher Accounts</button>
+    <a href="/student-dashboard">Return to Dashboard</a>
+  </form>
+</dialog>
+
 <dialog id="accountDialog">
   <form id="accountForm">
     <div class="dialog-heading">
@@ -85,6 +105,6 @@
 
 <script src="/learner-offline.js?v=20260613-entry-login"></script>
 <script src="/teacher-session.js?v=20260613-self-pin"></script>
-<script src="/teacher-accounts.js?v=20260613-entry-login"></script>
+<script src="/teacher-accounts.js?v=20260614-page-password"></script>
 </body>
 </html>

@@ -24,6 +24,7 @@ const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
 const semaphoreSenderName = process.env.SEMAPHORE_SENDER_NAME || "";
 const teacherUsername = String(process.env.TEACHER_USERNAME || "alexander.moreno").trim().toLowerCase();
 const teacherPin = String(process.env.TEACHER_PIN || "1111").trim();
+const teacherAdminPassword = String(process.env.TEACHER_ADMIN_PASSWORD || "1111").trim();
 const teacherSessionSecret = process.env.TEACHER_SESSION_SECRET || crypto.createHash("sha256")
   .update(`${teacherUsername}:${teacherPin}:bakhaw-learner-portal`)
   .digest("hex");
@@ -132,14 +133,15 @@ function parseCookies(req){
     }, {});
 }
 
-function teacherSessionToken(account, privacyAccepted = false){
+function teacherSessionToken(account, privacyAccepted = false, adminUnlocked = account.adminUnlocked === true){
   const expiresAt = Date.now() + (12 * 60 * 60 * 1000);
   const payload = Buffer.from(JSON.stringify({
     username:account.username,
     displayName:account.displayName,
     role:account.role,
     expiresAt,
-    privacyAccepted
+    privacyAccepted,
+    adminUnlocked
   })).toString("base64url");
   const signature = crypto.createHmac("sha256", teacherSessionSecret).update(payload).digest("base64url");
   return `${payload}.${signature}`;
@@ -409,8 +411,8 @@ function validTeacherPin(pin, account){
 
 function requireTeacherAdmin(req, res){
   const session = readTeacherSession(req);
-  if(!session || !session.privacyAccepted || session.role !== "admin"){
-    send(res, 403, JSON.stringify({ ok:false, message:"Administrator access required." }));
+  if(!session || !session.privacyAccepted || session.role !== "admin" || !session.adminUnlocked){
+    send(res, 403, JSON.stringify({ ok:false, message:"Teacher Accounts password required." }));
     return null;
   }
   return session;
@@ -1735,7 +1737,8 @@ async function handleApi(req, res){
       ok:valid,
       username:valid ? session.username : "",
       displayName:valid ? session.displayName : "",
-      role:valid ? session.role : ""
+      role:valid ? session.role : "",
+      adminUnlocked:valid && session.adminUnlocked === true
     }));
     return true;
   }
@@ -1808,6 +1811,35 @@ async function handleApi(req, res){
       username:account.username,
       message:"Your PIN was changed successfully."
     }));
+    return true;
+  }
+
+  if(pathname === "/api/teacher-admin-unlock" && req.method === "POST"){
+    const session = readTeacherSession(req);
+    if(!session?.privacyAccepted || session.role !== "admin"){
+      send(res, 403, JSON.stringify({ ok:false, message:"Administrator access required." }));
+      return true;
+    }
+
+    let body;
+    try{
+      body = JSON.parse(await readBody(req) || "{}");
+    }catch{
+      send(res, 400, JSON.stringify({ ok:false, message:"Password could not be read." }));
+      return true;
+    }
+
+    if(!safeCredentialEqual(String(body.password || ""), teacherAdminPassword)){
+      send(res, 401, JSON.stringify({ ok:false, message:"Incorrect Teacher Accounts password." }));
+      return true;
+    }
+
+    res.writeHead(200, {
+      "Content-Type":"application/json; charset=utf-8",
+      "Cache-Control":"no-store",
+      "Set-Cookie":teacherCookie(teacherSessionToken(session, true, true))
+    });
+    res.end(JSON.stringify({ ok:true }));
     return true;
   }
 

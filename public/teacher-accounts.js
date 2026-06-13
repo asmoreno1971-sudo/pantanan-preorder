@@ -10,6 +10,11 @@ const pinHelp = document.getElementById("pinHelp");
 const dialogTitle = document.getElementById("accountDialogTitle");
 const saveButton = document.getElementById("saveAccountButton");
 const formStatus = document.getElementById("formStatus");
+const adminUnlockDialog = document.getElementById("adminUnlockDialog");
+const adminUnlockForm = document.getElementById("adminUnlockForm");
+const adminUnlockPassword = document.getElementById("adminUnlockPassword");
+const adminUnlockButton = document.getElementById("adminUnlockButton");
+const adminUnlockError = document.getElementById("adminUnlockError");
 let accounts = [];
 let teacherDirectory = [];
 
@@ -206,6 +211,55 @@ accountRows.addEventListener("click", async event=>{
 document.getElementById("addTeacherButton").addEventListener("click", openCreateDialog);
 document.getElementById("closeAccountDialog").addEventListener("click", closeDialog);
 document.getElementById("cancelAccountDialog").addEventListener("click", closeDialog);
+
+adminUnlockDialog.addEventListener("cancel", event=>event.preventDefault());
+adminUnlockPassword.addEventListener("input", ()=>{
+  adminUnlockPassword.value = adminUnlockPassword.value.replace(/\D/g, "").slice(0, 4);
+});
+adminUnlockForm.addEventListener("submit", async event=>{
+  event.preventDefault();
+  adminUnlockError.textContent = "";
+  if(!/^\d{4}$/.test(adminUnlockPassword.value)){
+    adminUnlockError.textContent = "Enter the 4-digit password.";
+    adminUnlockPassword.focus();
+    return;
+  }
+
+  adminUnlockButton.disabled = true;
+  adminUnlockButton.textContent = "Unlocking...";
+  try{
+    await apiRequest("/api/teacher-admin-unlock", {
+      method:"POST",
+      body:JSON.stringify({ password:adminUnlockPassword.value })
+    });
+    adminUnlockDialog.close();
+    adminUnlockForm.reset();
+    await Promise.all([loadTeacherDirectory(), loadAccounts()]);
+  }catch(error){
+    adminUnlockError.textContent = error.message;
+    adminUnlockPassword.value = "";
+    adminUnlockPassword.focus();
+  }finally{
+    adminUnlockButton.disabled = false;
+    adminUnlockButton.textContent = "Unlock Teacher Accounts";
+  }
+});
+
+async function initializeTeacherAccounts(){
+  try{
+    const session = await apiRequest("/api/teacher-session", { cache:"no-store" });
+    if(session.adminUnlocked){
+      await Promise.all([loadTeacherDirectory(), loadAccounts()]);
+      return;
+    }
+  }catch{
+    window.location.replace("/teacher-login?next=/teacher-accounts");
+    return;
+  }
+  adminUnlockDialog.showModal();
+  adminUnlockPassword.focus();
+}
+
 if(window.teacherEntryAllowed !== false){
-  Promise.all([loadTeacherDirectory(), loadAccounts()]);
+  initializeTeacherAccounts();
 }

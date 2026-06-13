@@ -92,6 +92,65 @@ td{ font-size:15px; }
 .row-actions button{ padding:4px 8px; border:1px solid #bad1c4; border-radius:8px; background:#f5faf7; color:#23533d; cursor:pointer; font-weight:750; }
 .row-actions .danger{ border-color:#e3bbb7; color:#a23f38; }
 
+.unlock-dialog{
+  width:min(470px, calc(100% - 28px));
+}
+
+#adminUnlockForm{
+  display:grid;
+  gap:14px;
+  padding:26px;
+  background:#fffdf7;
+}
+
+.unlock-brand{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.unlock-brand img{
+  width:64px;
+  height:64px;
+  border-radius:50%;
+}
+
+.unlock-brand p,
+.unlock-brand h2,
+#adminUnlockForm > p{
+  margin:0;
+}
+
+.unlock-brand p{
+  color:var(--green);
+  font-size:12px;
+  font-weight:850;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.unlock-brand h2{
+  margin-top:3px;
+  color:var(--dark);
+  font-size:25px;
+}
+
+#adminUnlockPassword{
+  letter-spacing:.24em;
+}
+
+.unlock-error{
+  min-height:20px;
+  color:#a23f38;
+  font-weight:750;
+}
+
+#adminUnlockForm > a{
+  color:var(--green);
+  font-weight:800;
+  text-align:center;
+}
+
 dialog{
   width:min(500px, calc(100% - 28px));
   padding:0;
