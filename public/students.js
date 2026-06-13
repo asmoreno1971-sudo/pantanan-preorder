@@ -586,7 +586,9 @@ statusCodeInput.addEventListener("change", updateCode3ClassState);
 updateLiveDateTime();
 window.setInterval(updateLiveDateTime, 1000);
 LearnerOffline.registerServiceWorker().catch(()=>{});
-if(!navigator.onLine && !LearnerOffline.hasOfflineSession()){
+if(window.teacherEntryAllowed === false){
+  // The entry guard is redirecting to Teacher Login.
+}else if(!navigator.onLine && !LearnerOffline.hasOfflineSession()){
   window.location.replace("/teacher-login?next=/students");
 }else{
   loadStudents();

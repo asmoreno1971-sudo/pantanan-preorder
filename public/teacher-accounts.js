@@ -206,4 +206,6 @@ accountRows.addEventListener("click", async event=>{
 document.getElementById("addTeacherButton").addEventListener("click", openCreateDialog);
 document.getElementById("closeAccountDialog").addEventListener("click", closeDialog);
 document.getElementById("cancelAccountDialog").addEventListener("click", closeDialog);
-Promise.all([loadTeacherDirectory(), loadAccounts()]);
+if(window.teacherEntryAllowed !== false){
+  Promise.all([loadTeacherDirectory(), loadAccounts()]);
+}

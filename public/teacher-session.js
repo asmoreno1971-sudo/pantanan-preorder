@@ -1,4 +1,16 @@
 (function(){
+  const protectedPage = document.body.matches(".teacher-accounts-page")
+    || ["/students", "/students.html", "/student-dashboard", "/student-dashboard.html", "/teacher-accounts", "/teacher-accounts.html"]
+      .includes(window.location.pathname);
+  window.teacherEntryAllowed = !protectedPage || Boolean(window.LearnerOffline?.hasOfflineSession());
+
+  if(!window.teacherEntryAllowed){
+    window.LearnerOffline?.clearOfflineSession();
+    window.location.replace(`/teacher-login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+    window.stop();
+    return;
+  }
+
   async function logout(){
     try{
       if(window.LearnerOffline){

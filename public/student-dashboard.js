@@ -158,7 +158,9 @@ function escapeHtml(value){
 updateDashboardClock();
 window.setInterval(updateDashboardClock, 1000);
 LearnerOffline.registerServiceWorker().catch(()=>{});
-if(!navigator.onLine && !LearnerOffline.hasOfflineSession()){
+if(window.teacherEntryAllowed === false){
+  // The entry guard is redirecting to Teacher Login.
+}else if(!navigator.onLine && !LearnerOffline.hasOfflineSession()){
   window.location.replace("/teacher-login?next=/student-dashboard");
 }else{
   loadDashboard();

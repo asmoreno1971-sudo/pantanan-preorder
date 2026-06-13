@@ -1,20 +1,20 @@
-const shellCache = "bakhaw-learner-shell-20260613-teacher-dropdown";
+const shellCache = "bakhaw-learner-shell-20260613-entry-login";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260613-teacher-dropdown",
   "/teacher-login.js?v=20260613-teacher-dropdown",
-  "/learner-offline.js?v=20260613-teacher-dropdown",
+  "/learner-offline.js?v=20260613-entry-login",
   "/learner-manifest.webmanifest",
-  "/teacher-session.js?v=20260613-accounts",
+  "/teacher-session.js?v=20260613-entry-login",
   "/students",
   "/students.html",
   "/students.css?v=20260613-count-column",
-  "/students.js?v=20260613-learner-counts",
+  "/students.js?v=20260613-entry-login",
   "/student-dashboard",
   "/student-dashboard.html",
   "/student-dashboard.css?v=20260613-status-labels",
-  "/student-dashboard.js?v=20260613-online",
+  "/student-dashboard.js?v=20260613-entry-login",
   "/bakhaw-school-logo.png"
 ];
 

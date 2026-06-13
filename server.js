@@ -172,9 +172,10 @@ function validTeacherSession(req){
   return readTeacherSession(req)?.privacyAccepted === true;
 }
 
-function teacherCookie(token, maxAge = 43200){
+function teacherCookie(token, maxAge = null){
   const secure = isProduction ? "; Secure" : "";
-  return `${teacherSessionCookie}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
+  const lifetime = maxAge === null ? "" : `; Max-Age=${maxAge}`;
+  return `${teacherSessionCookie}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax${lifetime}${secure}`;
 }
 
 function safeCredentialEqual(received, expected){
@@ -2477,11 +2478,6 @@ async function serveStatic(req, res){
   }
 
   if((pathname === "/teacher-accounts" || pathname === "/teacher-accounts.html") && readTeacherSession(req)?.role !== "admin"){
-    sendRedirect(res, "/student-dashboard");
-    return;
-  }
-
-  if(pathname === "/teacher-login" && validTeacherSession(req)){
     sendRedirect(res, "/student-dashboard");
     return;
   }
