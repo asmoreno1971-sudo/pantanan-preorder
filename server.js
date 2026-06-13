@@ -217,8 +217,8 @@ function teacherDirectoryEntries(names){
     .filter(entry=>entry.username.includes("."));
 }
 
-async function readTeacherDirectory(){
-  if(teacherDirectoryCache && Date.now() - teacherDirectoryCachedAt < 15 * 60 * 1000){
+async function readTeacherDirectory(forceRefresh = false){
+  if(!forceRefresh && teacherDirectoryCache && Date.now() - teacherDirectoryCachedAt < 15 * 60 * 1000){
     return teacherDirectoryCache;
   }
 
@@ -234,7 +234,9 @@ async function readTeacherDirectory(){
     }
     teacherDirectoryCache = teacherDirectoryEntries(names);
   }catch{
-    teacherDirectoryCache = teacherDirectoryEntries(teacherDirectoryFallback);
+    if(!teacherDirectoryCache){
+      teacherDirectoryCache = teacherDirectoryEntries(teacherDirectoryFallback);
+    }
   }
 
   teacherDirectoryCachedAt = Date.now();
@@ -1591,7 +1593,7 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/teacher-directory" && req.method === "GET"){
-    const teachers = await readTeacherDirectory();
+    const teachers = await readTeacherDirectory(true);
     send(res, 200, JSON.stringify({ ok:true, teachers }));
     return true;
   }
