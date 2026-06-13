@@ -217,7 +217,7 @@ h1{
 
 .toolbar{
   display:grid;
-  grid-template-columns:minmax(240px, 1fr) minmax(190px, 300px) auto minmax(180px, .45fr);
+  grid-template-columns:minmax(240px, 1fr) minmax(190px, 300px) auto auto minmax(180px, .45fr);
   gap:9px;
   align-items:end;
   padding:12px 14px;
@@ -237,6 +237,25 @@ h1{
 
 .toolbar-add-record:hover{
   background:#055d35;
+}
+
+.toolbar-download-class{
+  min-width:155px;
+  min-height:42px;
+  align-self:end;
+  background:#126f49;
+  box-shadow:0 8px 18px rgba(18, 111, 73, .2);
+}
+
+.toolbar-download-class:hover:not(:disabled){
+  background:#0b5738;
+}
+
+.toolbar-download-class:disabled{
+  cursor:not-allowed;
+  background:#91aa9e;
+  box-shadow:none;
+  opacity:.7;
 }
 
 .search-field,

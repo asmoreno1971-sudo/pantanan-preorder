@@ -29,6 +29,7 @@ const studentRows = document.getElementById("studentRows");
 const studentSearch = document.getElementById("studentSearch");
 const sectionFilter = document.getElementById("sectionFilter");
 const recordsStatus = document.getElementById("recordsStatus");
+const downloadClassButton = document.getElementById("downloadClassButton");
 const liveDateTime = document.getElementById("liveDateTime");
 const studentDialog = document.getElementById("studentDialog");
 const studentForm = document.getElementById("studentForm");
@@ -266,6 +267,7 @@ function applyFilters(){
   const query = normalizeSearchText(studentSearch.value);
   const queryTokens = query.split(" ").filter(Boolean);
   const section = sectionFilter.value;
+  downloadClassButton.disabled = !section;
 
   filteredStudents = students.filter(student=>{
     if(section && student.gradeSection !== section){
@@ -298,6 +300,51 @@ function applyFilters(){
     `<span><strong>${femaleCount.toLocaleString()}</strong> Females</span>`
   ].join("");
   renderStudents();
+}
+
+function csvCell(value){
+  let text = String(value || "");
+  if(/^[=+\-@]/.test(text)){
+    text = `'${text}`;
+  }
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function downloadSelectedClass(){
+  const section = sectionFilter.value;
+  if(!section){
+    recordsStatus.textContent = "Select a Grade / Section before downloading.";
+    sectionFilter.focus();
+    return;
+  }
+
+  const classStudents = students
+    .filter(student=>student.gradeSection === section)
+    .sort((a, b)=>
+      String(a.familyName).localeCompare(String(b.familyName))
+      || String(a.firstName).localeCompare(String(b.firstName))
+    );
+  if(!classStudents.length){
+    recordsStatus.textContent = `No learners are recorded in ${section}.`;
+    return;
+  }
+
+  const rows = [
+    RECORD_DETAILS.map(([label])=>label),
+    ...classStudents.map(student=>RECORD_DETAILS.map(([, field])=>student[field] || ""))
+  ];
+  const csv = `\uFEFF${rows.map(row=>row.map(csvCell).join(",")).join("\r\n")}`;
+  const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const fileSection = section.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  link.href = url;
+  link.download = `${fileSection || "class"}-learners.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  recordsStatus.textContent = `${classStudents.length} learners downloaded for ${section}.`;
 }
 
 function renderStudents(){
@@ -581,6 +628,7 @@ function escapeHtml(value){
 }
 
 document.getElementById("addStudentButton").addEventListener("click", ()=>openStudentDialog());
+downloadClassButton.addEventListener("click", downloadSelectedClass);
 document.getElementById("closeDialogButton").addEventListener("click", closeStudentDialog);
 document.getElementById("cancelDialogButton").addEventListener("click", closeStudentDialog);
 studentSearch.addEventListener("input", ()=>{
