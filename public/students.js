@@ -236,7 +236,13 @@ function applyFilters(){
 
   const totalPages = Math.max(1, Math.ceil(filteredStudents.length / PAGE_SIZE));
   currentPage = Math.min(currentPage, totalPages);
-  recordsStatus.innerHTML = `<strong>${filteredStudents.length.toLocaleString()}</strong> profile${filteredStudents.length === 1 ? "" : "s"} shown`;
+  const maleCount = filteredStudents.filter(student=>String(student.sex || "").toUpperCase() === "MALE").length;
+  const femaleCount = filteredStudents.filter(student=>String(student.sex || "").toUpperCase() === "FEMALE").length;
+  recordsStatus.innerHTML = [
+    `<span><strong>${filteredStudents.length.toLocaleString()}</strong> Learners</span>`,
+    `<span><strong>${maleCount.toLocaleString()}</strong> Males</span>`,
+    `<span><strong>${femaleCount.toLocaleString()}</strong> Females</span>`
+  ].join("");
   renderStudents();
 }
 

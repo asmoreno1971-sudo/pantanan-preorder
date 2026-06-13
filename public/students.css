@@ -290,6 +290,10 @@ select:disabled{
 .toolbar .status{
   align-self:center;
   justify-self:center;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:8px 20px;
   color:#000;
   font-size:17px;
   font-weight:400;
@@ -298,6 +302,10 @@ select:disabled{
 
 .toolbar .status strong{
   font-weight:800;
+}
+
+.toolbar .status span{
+  white-space:nowrap;
 }
 
 .table-wrap{ overflow:auto; }
