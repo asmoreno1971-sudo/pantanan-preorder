@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260613-compact-rows";
+const shellCache = "bakhaw-learner-shell-20260613-sheet-write-sync";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -11,7 +11,7 @@ const shellFiles = [
   "/students",
   "/students.html",
   "/students.css?v=20260613-compact-rows",
-  "/students.js?v=20260613-sheet-sections",
+  "/students.js?v=20260613-sheet-write-sync",
   "/student-dashboard",
   "/student-dashboard.html",
   "/student-dashboard.css?v=20260613-compact-rows",

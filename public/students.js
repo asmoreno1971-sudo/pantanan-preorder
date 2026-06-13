@@ -504,7 +504,9 @@ async function saveStudent(event){
     currentPage = 1;
     buildSectionFilter();
     applyFilters();
-    recordsStatus.textContent = id ? "Record updated." : "Record added.";
+    recordsStatus.textContent = data.sheetSynced
+      ? (id ? "Record updated in the app and Google Sheet." : "Record added to the app and Google Sheet.")
+      : (id ? "Record updated in the app. Google Sheet sync needs setup." : "Record added to the app. Google Sheet sync needs setup.");
     window.setTimeout(()=>{ recordsStatus.textContent = ""; }, 2500);
   }catch(error){
     if(navigator.onLine && !(error instanceof TypeError)){
@@ -551,7 +553,9 @@ async function deleteStudent(student){
     students = students.filter(item=>item.id !== student.id);
     buildSectionFilter();
     applyFilters();
-    recordsStatus.textContent = "Record deleted.";
+    recordsStatus.textContent = data.sheetSynced
+      ? "Record deleted from the app and Google Sheet."
+      : "Record deleted from the app. Google Sheet sync needs setup.";
     window.setTimeout(()=>{ recordsStatus.textContent = ""; }, 2500);
   }catch(error){
     if(navigator.onLine && !(error instanceof TypeError)){

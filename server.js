@@ -31,6 +31,8 @@ const teacherSessionCookie = "bakhawTeacherSession";
 const teacherDefaultPin = "1234";
 const teacherDefaultPinVersion = "20260613-all-directory-teachers";
 const teacherDirectoryCsvUrl = "https://docs.google.com/spreadsheets/d/1llV9k9pReCpe7HAYt2-vZjlqMYXDmlQixgifcfRPOy0/export?format=csv&gid=785227885";
+const studentSheetSyncUrl = String(process.env.STUDENT_SHEET_SYNC_URL || "").trim();
+const studentSheetSyncSecret = String(process.env.STUDENT_SHEET_SYNC_SECRET || "").trim();
 const teacherDirectoryFallback = [
   "ALEXANDER S. MORENO", "ANALYN L. PORRAS", "BENITA T. LIZADA", "CHARLEY A. EMPESTAN",
   "CRISTY R. DENIEGA", "DARLYN JOY C. HERRERA", "EDEN P. BARCEBAS", "GELINE JR. L. ARELLANO",
@@ -559,6 +561,29 @@ async function writeStudents(students){
   }
 
   await writeDataRecord("students", studentsPath, students.map(normalizeStudent).filter(Boolean));
+}
+
+async function syncStudentToGoogleSheet(action, student, previousStudent = null){
+  if(!studentSheetSyncUrl || !studentSheetSyncSecret){
+    return false;
+  }
+
+  const response = await fetch(studentSheetSyncUrl, {
+    method:"POST",
+    headers:{ "Content-Type":"text/plain; charset=utf-8" },
+    body:JSON.stringify({
+      secret:studentSheetSyncSecret,
+      action,
+      student,
+      previousStudent
+    }),
+    signal:AbortSignal.timeout(15000)
+  });
+  const result = await response.json().catch(()=>({}));
+  if(!response.ok || !result.ok){
+    throw new Error(result.message || `Google Sheet sync failed with status ${response.status}.`);
+  }
+  return true;
 }
 
 async function readStudentSeed(){
@@ -1985,8 +2010,15 @@ async function handleApi(req, res){
     }
 
     students.unshift(student);
+    let sheetSynced;
+    try{
+      sheetSynced = await syncStudentToGoogleSheet("create", student);
+    }catch(error){
+      send(res, 502, JSON.stringify({ ok:false, message:`Record was not saved because ${error.message}` }));
+      return true;
+    }
     await writeStudents(students);
-    send(res, 201, JSON.stringify({ ok:true, student }));
+    send(res, 201, JSON.stringify({ ok:true, student, sheetSynced }));
     return true;
   }
 
@@ -2032,9 +2064,17 @@ async function handleApi(req, res){
       return true;
     }
 
+    const previousStudent = students[index];
+    let sheetSynced;
+    try{
+      sheetSynced = await syncStudentToGoogleSheet("update", student, previousStudent);
+    }catch(error){
+      send(res, 502, JSON.stringify({ ok:false, message:`Record was not saved because ${error.message}` }));
+      return true;
+    }
     students[index] = student;
     await writeStudents(students);
-    send(res, 200, JSON.stringify({ ok:true, student }));
+    send(res, 200, JSON.stringify({ ok:true, student, sheetSynced }));
     return true;
   }
 
@@ -2048,9 +2088,17 @@ async function handleApi(req, res){
       return true;
     }
 
-    const [student] = students.splice(index, 1);
+    const student = students[index];
+    let sheetSynced;
+    try{
+      sheetSynced = await syncStudentToGoogleSheet("delete", student, student);
+    }catch(error){
+      send(res, 502, JSON.stringify({ ok:false, message:`Record was not deleted because ${error.message}` }));
+      return true;
+    }
+    students.splice(index, 1);
     await writeStudents(students);
-    send(res, 200, JSON.stringify({ ok:true, student }));
+    send(res, 200, JSON.stringify({ ok:true, student, sheetSynced }));
     return true;
   }
 
