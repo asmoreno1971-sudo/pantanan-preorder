@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: foodkiosk1
+    name: bis1
     env: node
     plan: free
     buildCommand: npm install
