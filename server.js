@@ -1665,6 +1665,60 @@ async function handleApi(req, res){
     return true;
   }
 
+  if(pathname === "/api/teacher-change-pin" && req.method === "POST"){
+    const session = readTeacherSession(req);
+    if(!session?.privacyAccepted){
+      send(res, 401, JSON.stringify({ ok:false, message:"Your login session has expired. Please sign in again." }));
+      return true;
+    }
+
+    let body;
+    try{
+      body = JSON.parse(await readBody(req) || "{}");
+    }catch{
+      send(res, 400, JSON.stringify({ ok:false, message:"PIN details could not be read." }));
+      return true;
+    }
+
+    const currentPin = String(body.currentPin || "").trim();
+    const newPin = String(body.newPin || "").trim();
+    if(!/^\d{4}$/.test(currentPin) || !/^\d{4}$/.test(newPin)){
+      send(res, 400, JSON.stringify({ ok:false, message:"Both PINs must contain exactly 4 digits." }));
+      return true;
+    }
+    if(currentPin === newPin){
+      send(res, 400, JSON.stringify({ ok:false, message:"Choose a new PIN that is different from your current PIN." }));
+      return true;
+    }
+
+    const accounts = await readTeacherAccounts();
+    const index = accounts.findIndex(account=>account.username === session.username);
+    const account = index >= 0 ? accounts[index] : null;
+    if(!account || !account.active){
+      send(res, 404, JSON.stringify({ ok:false, message:"Your teacher account is not active." }));
+      return true;
+    }
+    if(!validTeacherPin(currentPin, account)){
+      send(res, 401, JSON.stringify({ ok:false, message:"Current PIN is incorrect." }));
+      return true;
+    }
+
+    const pinSalt = crypto.randomBytes(16).toString("hex");
+    accounts[index] = {
+      ...account,
+      pinSalt,
+      pinHash:teacherPinHash(newPin, pinSalt),
+      updatedAt:new Date().toISOString()
+    };
+    await writeTeacherAccounts(accounts);
+    send(res, 200, JSON.stringify({
+      ok:true,
+      username:account.username,
+      message:"Your PIN was changed successfully."
+    }));
+    return true;
+  }
+
   if(pathname === "/api/teacher-accounts" && req.method === "GET"){
     if(!requireTeacherAdmin(req, res)){
       return true;

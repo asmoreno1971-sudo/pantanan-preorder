@@ -9,6 +9,7 @@
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
 <link rel="stylesheet" href="/student-dashboard.css?v=20260613-status-labels">
+<link rel="stylesheet" href="/teacher-session.css?v=20260613-self-pin">
 </head>
 <body>
 <main class="dashboard-shell">
@@ -28,6 +29,7 @@
     <div class="dashboard-actions">
       <a class="profile-link admin-only-link" href="/teacher-accounts" data-admin-only hidden>Teacher Accounts</a>
       <a class="profile-link" href="/students">Learner Profile</a>
+      <button class="logout-button" type="button" data-reset-pin>Reset PIN</button>
       <button class="logout-button" type="button" data-teacher-logout>Logout</button>
     </div>
   </header>
@@ -88,7 +90,7 @@
 </main>
 
 <script src="/learner-offline.js?v=20260613-entry-login"></script>
-<script src="/teacher-session.js?v=20260613-entry-login"></script>
+<script src="/teacher-session.js?v=20260613-self-pin"></script>
 <script src="/student-dashboard.js?v=20260613-entry-login"></script>
 </body>
 </html>
