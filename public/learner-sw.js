@@ -1,9 +1,9 @@
-const shellCache = "bakhaw-learner-shell-20260613-entry-login";
+const shellCache = "bakhaw-learner-shell-20260613-default-1234";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
-  "/teacher-login.css?v=20260613-teacher-dropdown",
-  "/teacher-login.js?v=20260613-teacher-dropdown",
+  "/teacher-login.css?v=20260613-default-1234",
+  "/teacher-login.js?v=20260613-default-1234",
   "/learner-offline.js?v=20260613-entry-login",
   "/learner-manifest.webmanifest",
   "/teacher-session.js?v=20260613-entry-login",

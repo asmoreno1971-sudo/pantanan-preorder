@@ -28,6 +28,8 @@ const teacherSessionSecret = process.env.TEACHER_SESSION_SECRET || crypto.create
   .update(`${teacherUsername}:${teacherPin}:bakhaw-learner-portal`)
   .digest("hex");
 const teacherSessionCookie = "bakhawTeacherSession";
+const teacherDefaultPin = "1234";
+const teacherDefaultPinVersion = "20260613-all-directory-teachers";
 const teacherDirectoryCsvUrl = "https://docs.google.com/spreadsheets/d/1llV9k9pReCpe7HAYt2-vZjlqMYXDmlQixgifcfRPOy0/export?format=csv&gid=785227885";
 const teacherDirectoryFallback = [
   "ALEXANDER S. MORENO", "ANALYN L. PORRAS", "BENITA T. LIZADA", "CHARLEY A. EMPESTAN",
@@ -294,6 +296,46 @@ async function readTeacherAccounts(){
 
   if(!normalized.some(account=>account.username === teacherUsername)){
     normalized = [...seed, ...normalized];
+  }
+
+  const directory = await readTeacherDirectory();
+  let changed = false;
+
+  for(const teacher of directory){
+    const index = normalized.findIndex(account=>account.username === teacher.username);
+
+    if(index < 0){
+      normalized.push({
+        ...createTeacherAccount({
+          username:teacher.username,
+          displayName:teacher.displayName,
+          pin:teacherDefaultPin,
+          role:teacher.username === teacherUsername ? "admin" : "teacher"
+        }),
+        defaultPinVersion:teacherDefaultPinVersion
+      });
+      changed = true;
+      continue;
+    }
+
+    const account = normalized[index];
+    if(account.defaultPinVersion !== teacherDefaultPinVersion){
+      const salt = crypto.randomBytes(16).toString("hex");
+      normalized[index] = {
+        ...account,
+        displayName:teacher.displayName,
+        role:teacher.username === teacherUsername ? "admin" : account.role,
+        active:true,
+        pinSalt:salt,
+        pinHash:teacherPinHash(teacherDefaultPin, salt),
+        defaultPinVersion:teacherDefaultPinVersion,
+        updatedAt:new Date().toISOString()
+      };
+      changed = true;
+    }
+  }
+
+  if(changed){
     await writeTeacherAccounts(normalized);
   }
 

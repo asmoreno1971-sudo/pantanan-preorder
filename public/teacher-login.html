@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0c6842">
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/teacher-login.css?v=20260613-teacher-dropdown">
+<link rel="stylesheet" href="/teacher-login.css?v=20260613-default-1234">
 </head>
 <body>
 <main class="login-page">
@@ -35,6 +35,7 @@
         <input id="teacherPin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="current-password" placeholder="****" required>
       </label>
       <button id="loginButton" type="submit">Login</button>
+      <p class="default-pin-note">First-time/default PIN: <strong>1234</strong></p>
       <p id="loginError" class="login-error" role="alert"></p>
     </form>
   </section>
@@ -52,6 +53,6 @@
 </dialog>
 
 <script src="/learner-offline.js?v=20260613-entry-login"></script>
-<script src="/teacher-login.js?v=20260613-teacher-dropdown"></script>
+<script src="/teacher-login.js?v=20260613-default-1234"></script>
 </body>
 </html>

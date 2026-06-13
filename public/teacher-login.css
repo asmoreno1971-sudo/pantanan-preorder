@@ -127,6 +127,13 @@ button:disabled{ opacity:.55; cursor:wait; }
   text-align:center;
 }
 
+.default-pin-note{
+  margin:-5px 0 0;
+  color:#64776e;
+  font-size:13px;
+  text-align:center;
+}
+
 .privacy-dialog{
   width:min(520px, calc(100% - 32px));
   padding:30px;
