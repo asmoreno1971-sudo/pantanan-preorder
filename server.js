@@ -2124,6 +2124,7 @@ async function handleApi(req, res){
 
 async function serveStatic(req, res){
   const pathname = requestPath(req);
+  const requestUrl = new URL(req.url, "http://localhost");
   const host = String(req.headers.host || "").toLowerCase();
   const rootPage = teacherProfileHome || host.startsWith("teacher-profile.")
     ? "teacher-profile.html"
@@ -2146,13 +2147,21 @@ async function serveStatic(req, res){
     "/qr": "qr.html"
   };
 
+  if(pathname === "/teacher-login" && (requestUrl.searchParams.has("username") || requestUrl.searchParams.has("pin"))){
+    const next = requestUrl.searchParams.get("next");
+    sendRedirect(res, next && next.startsWith("/") && !next.startsWith("//")
+      ? `/teacher-login?next=${encodeURIComponent(next)}`
+      : "/teacher-login");
+    return;
+  }
+
   if((
     pathname === "/students"
     || pathname === "/students.html"
     || pathname === "/student-dashboard"
     || pathname === "/student-dashboard.html"
   ) && !validTeacherSession(req)){
-    sendRedirect(res, `/teacher-login?next=${encodeURIComponent(pathname + new URL(req.url, "http://localhost").search)}`);
+    sendRedirect(res, `/teacher-login?next=${encodeURIComponent(pathname + requestUrl.search)}`);
     return;
   }
 

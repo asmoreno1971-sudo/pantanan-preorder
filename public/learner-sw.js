@@ -1,10 +1,10 @@
-const shellCache = "bakhaw-learner-shell-20260613-online";
+const shellCache = "bakhaw-learner-shell-20260613-login-fix";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260613-2",
-  "/teacher-login.js?v=20260613-online",
-  "/learner-offline.js?v=20260613-online",
+  "/teacher-login.js?v=20260613-login-fix",
+  "/learner-offline.js?v=20260613-login-fix",
   "/learner-manifest.webmanifest",
   "/teacher-session.js?v=20260613-online",
   "/students",

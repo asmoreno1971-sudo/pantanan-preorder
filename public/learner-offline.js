@@ -132,7 +132,7 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      await navigator.serviceWorker.register("/learner-sw.js?v=20260613-online", { scope:"/" });
+      await navigator.serviceWorker.register("/learner-sw.js?v=20260613-login-fix", { scope:"/" });
       await navigator.serviceWorker.ready;
     }
   }
