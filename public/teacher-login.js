@@ -7,6 +7,11 @@ const privacyDialog = document.getElementById("privacyDialog");
 const agreeButton = document.getElementById("agreeButton");
 const disagreeButton = document.getElementById("disagreeButton");
 const teacherDirectoryKey = "bakhawTeacherDirectory";
+const guidanceLogin = nextPage() === "/guidance";
+const guidanceAdmin = {
+  username:"alexander.moreno",
+  displayName:"Alexander Moreno"
+};
 
 function escapeHtml(value){
   return String(value || "")
@@ -18,6 +23,9 @@ function escapeHtml(value){
 }
 
 function renderTeacherDirectory(teachers){
+  if(guidanceLogin){
+    teachers = [guidanceAdmin];
+  }
   const current = usernameInput.value;
   usernameInput.innerHTML = `<option value="">Select your name</option>${teachers
     .map(teacher=>`<option value="${escapeHtml(teacher.username)}">${escapeHtml(teacher.displayName)}</option>`)
@@ -28,6 +36,17 @@ function renderTeacherDirectory(teachers){
 }
 
 async function loadTeacherDirectory(){
+  if(guidanceLogin){
+    renderTeacherDirectory([guidanceAdmin]);
+    usernameInput.value = guidanceAdmin.username;
+    usernameInput.disabled = true;
+    document.body.classList.add("guidance-login");
+    document.querySelector(".login-brand h1").textContent = "Guidance Admin Login";
+    document.querySelector(".login-intro").textContent = "Restricted access for Alexander Moreno.";
+    document.querySelector(".default-pin-note").innerHTML = "Administrator password: <strong>1111</strong>";
+    return;
+  }
+
   try{
     const response = await fetch("/api/teacher-directory", { cache:"no-store" });
     const data = await response.json();
@@ -78,7 +97,8 @@ loginForm.addEventListener("submit", async event=>{
           headers:{ "Content-Type":"application/json" },
           body:JSON.stringify({
             username:usernameInput.value.trim(),
-            pin:pinInput.value
+            pin:pinInput.value,
+            guidanceLogin
           })
         });
         const data = await response.json();
@@ -100,6 +120,15 @@ loginForm.addEventListener("submit", async event=>{
     }
 
     LearnerOffline.setOfflineSession(false);
+    if(guidanceLogin){
+      LearnerOffline.setOfflineSession(true);
+      LearnerOffline.setGuidanceSession(true);
+      if(navigator.onLine){
+        await LearnerOffline.registerServiceWorker();
+      }
+      window.location.replace("/guidance");
+      return;
+    }
     privacyDialog.showModal();
     agreeButton.focus();
   }catch(error){

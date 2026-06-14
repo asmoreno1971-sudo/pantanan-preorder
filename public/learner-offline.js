@@ -148,11 +148,20 @@
 
   function clearOfflineSession(){
     sessionStorage.removeItem("bakhawOfflineTeacher");
+    sessionStorage.removeItem("bakhawGuidanceAdmin");
+  }
+
+  function setGuidanceSession(accepted){
+    sessionStorage.setItem("bakhawGuidanceAdmin", accepted ? "accepted" : "pending");
+  }
+
+  function hasGuidanceSession(){
+    return sessionStorage.getItem("bakhawGuidanceAdmin") === "accepted";
   }
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      await navigator.serviceWorker.register("/learner-sw.js?v=20260614-guidance-cases", { scope:"/" });
+      await navigator.serviceWorker.register("/learner-sw.js?v=20260614-guidance-admin", { scope:"/" });
       await navigator.serviceWorker.ready;
     }
   }
@@ -171,6 +180,8 @@
     verifyCredentials,
     setOfflineSession,
     hasOfflineSession,
+    setGuidanceSession,
+    hasGuidanceSession,
     clearOfflineSession,
     registerServiceWorker
   };

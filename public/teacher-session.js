@@ -1,8 +1,12 @@
 (function(){
+  const guidancePage = ["/guidance", "/guidance.html"].includes(window.location.pathname);
   const protectedPage = document.body.matches(".teacher-accounts-page")
     || ["/students", "/students.html", "/student-dashboard", "/student-dashboard.html", "/guidance", "/guidance.html", "/teacher-accounts", "/teacher-accounts.html"]
       .includes(window.location.pathname);
-  window.teacherEntryAllowed = !protectedPage || Boolean(window.LearnerOffline?.hasOfflineSession());
+  window.teacherEntryAllowed = !protectedPage || (
+    Boolean(window.LearnerOffline?.hasOfflineSession())
+    && (!guidancePage || Boolean(window.LearnerOffline?.hasGuidanceSession()))
+  );
 
   if(!window.teacherEntryAllowed){
     window.LearnerOffline?.clearOfflineSession();

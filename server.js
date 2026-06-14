@@ -26,6 +26,8 @@ const semaphoreSenderName = process.env.SEMAPHORE_SENDER_NAME || "";
 const teacherUsername = String(process.env.TEACHER_USERNAME || "alexander.moreno").trim().toLowerCase();
 const teacherPin = String(process.env.TEACHER_PIN || "1111").trim();
 const teacherAdminPassword = String(process.env.TEACHER_ADMIN_PASSWORD || "1111").trim();
+const guidanceAdminUsername = "alexander.moreno";
+const guidanceAdminPin = "1111";
 const teacherSessionSecret = process.env.TEACHER_SESSION_SECRET || crypto.createHash("sha256")
   .update(`${teacherUsername}:${teacherPin}:bakhaw-learner-portal`)
   .digest("hex");
@@ -134,7 +136,12 @@ function parseCookies(req){
     }, {});
 }
 
-function teacherSessionToken(account, privacyAccepted = false, adminUnlocked = account.adminUnlocked === true){
+function teacherSessionToken(
+  account,
+  privacyAccepted = false,
+  adminUnlocked = account.adminUnlocked === true,
+  guidanceAccess = account.guidanceAccess === true
+){
   const expiresAt = Date.now() + (12 * 60 * 60 * 1000);
   const payload = Buffer.from(JSON.stringify({
     username:account.username,
@@ -142,7 +149,8 @@ function teacherSessionToken(account, privacyAccepted = false, adminUnlocked = a
     role:account.role,
     expiresAt,
     privacyAccepted,
-    adminUnlocked
+    adminUnlocked,
+    guidanceAccess
   })).toString("base64url");
   const signature = crypto.createHmac("sha256", teacherSessionSecret).update(payload).digest("base64url");
   return `${payload}.${signature}`;
@@ -179,6 +187,14 @@ function readTeacherSession(req){
 
 function validTeacherSession(req){
   return readTeacherSession(req)?.privacyAccepted === true;
+}
+
+function validGuidanceSession(req){
+  const session = readTeacherSession(req);
+  return session?.privacyAccepted === true
+    && session.username === guidanceAdminUsername
+    && session.role === "admin"
+    && session.guidanceAccess === true;
 }
 
 function teacherCookie(token, maxAge = null){
@@ -1836,9 +1852,45 @@ async function handleApi(req, res){
 
     const username = String(body.username || "").trim().toLowerCase();
     const pin = String(body.pin || "").trim();
+    const guidanceLogin = body.guidanceLogin === true;
 
     if(!/^\d{4}$/.test(pin)){
       send(res, 400, JSON.stringify({ ok:false, message:"Password must contain exactly 4 digits." }));
+      return true;
+    }
+
+    if(guidanceLogin){
+      if(username !== guidanceAdminUsername || !safeCredentialEqual(pin, guidanceAdminPin)){
+        send(res, 401, JSON.stringify({ ok:false, message:"Guidance access is restricted to Alexander Moreno." }));
+        return true;
+      }
+
+      const accounts = await readTeacherAccounts();
+      const account = accounts.find(candidate=>candidate.username === guidanceAdminUsername);
+      const guidanceAdmin = account || {
+        username:guidanceAdminUsername,
+        displayName:"Alexander Moreno",
+        role:"admin"
+      };
+
+      res.writeHead(200, {
+        "Content-Type":"application/json; charset=utf-8",
+        "Cache-Control":"no-store",
+        "Set-Cookie":teacherCookie(teacherSessionToken(
+          { ...guidanceAdmin, role:"admin", guidanceAccess:true },
+          true,
+          false,
+          true
+        ))
+      });
+      res.end(JSON.stringify({
+        ok:true,
+        username:guidanceAdminUsername,
+        displayName:guidanceAdmin.displayName || "Alexander Moreno",
+        role:"admin",
+        guidanceAccess:true,
+        privacyAccepted:true
+      }));
       return true;
     }
 
@@ -1872,7 +1924,8 @@ async function handleApi(req, res){
       username:valid ? session.username : "",
       displayName:valid ? session.displayName : "",
       role:valid ? session.role : "",
-      adminUnlocked:valid && session.adminUnlocked === true
+      adminUnlocked:valid && session.adminUnlocked === true,
+      guidanceAccess:valid && session.guidanceAccess === true
     }));
     return true;
   }
@@ -2122,8 +2175,8 @@ async function handleApi(req, res){
     return true;
   }
 
-  if(pathname.startsWith("/api/guidance-cases") && !validTeacherSession(req)){
-    send(res, 401, JSON.stringify({ ok:false, message:"Teacher login required." }));
+  if(pathname.startsWith("/api/guidance-cases") && !validGuidanceSession(req)){
+    send(res, 403, JSON.stringify({ ok:false, message:"Guidance administrator access required." }));
     return true;
   }
 
@@ -2977,6 +3030,11 @@ async function serveStatic(req, res){
     || pathname === "/teacher-accounts.html"
   ) && !validTeacherSession(req)){
     sendRedirect(res, `/teacher-login?next=${encodeURIComponent(pathname + requestUrl.search)}`);
+    return;
+  }
+
+  if((pathname === "/guidance" || pathname === "/guidance.html") && !validGuidanceSession(req)){
+    sendRedirect(res, "/teacher-login?next=%2Fguidance");
     return;
   }
 
