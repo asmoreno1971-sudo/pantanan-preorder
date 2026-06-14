@@ -1,8 +1,10 @@
 (function(){
   const databaseName = "bakhaw-learner-offline-v1";
-  const databaseVersion = 1;
+  const databaseVersion = 2;
   const recordsStore = "records";
   const changesStore = "pending-changes";
+  const guidanceCasesStore = "guidance-cases";
+  const guidanceChangesStore = "pending-guidance-changes";
   const metaStore = "meta";
   const recordOrderKey = "student-record-order";
 
@@ -17,6 +19,12 @@
         }
         if(!db.objectStoreNames.contains(changesStore)){
           db.createObjectStore(changesStore, { keyPath:"changeId" });
+        }
+        if(!db.objectStoreNames.contains(guidanceCasesStore)){
+          db.createObjectStore(guidanceCasesStore, { keyPath:"id" });
+        }
+        if(!db.objectStoreNames.contains(guidanceChangesStore)){
+          db.createObjectStore(guidanceChangesStore, { keyPath:"changeId" });
         }
         if(!db.objectStoreNames.contains(metaStore)){
           db.createObjectStore(metaStore);
@@ -112,6 +120,76 @@
     return useStore(changesStore, "readonly", store=>store.count());
   }
 
+  async function replaceGuidanceCases(cases){
+    const db = await openDatabase();
+    return new Promise((resolve, reject)=>{
+      const transaction = db.transaction(guidanceCasesStore, "readwrite");
+      const store = transaction.objectStore(guidanceCasesStore);
+      store.clear();
+      (Array.isArray(cases) ? cases : []).forEach(guidanceCase=>store.put(guidanceCase));
+      transaction.oncomplete = ()=>{ db.close(); resolve(); };
+      transaction.onerror = ()=>{ db.close(); reject(transaction.error); };
+    });
+  }
+
+  async function loadGuidanceCases(){
+    const guidanceCases = await useStore(guidanceCasesStore, "readonly", store=>store.getAll());
+    return guidanceCases.sort((a, b)=>
+      String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || ""))
+    );
+  }
+
+  async function saveGuidanceCase(guidanceCase){
+    await useStore(guidanceCasesStore, "readwrite", store=>store.put(guidanceCase));
+  }
+
+  async function removeGuidanceCase(id){
+    await useStore(guidanceCasesStore, "readwrite", store=>store.delete(id));
+  }
+
+  async function queueGuidanceChange(method, guidanceCase){
+    const id = String(guidanceCase.id || uuid());
+    const changes = await pendingGuidanceChanges();
+    const existing = changes.find(change=>change.id === id);
+
+    if(existing){
+      if(existing.method === "POST"){
+        if(method === "DELETE"){
+          await removeGuidanceChange(existing.changeId);
+          return null;
+        }
+        existing.record = { ...guidanceCase, id };
+        existing.queuedAt = new Date().toISOString();
+        await useStore(guidanceChangesStore, "readwrite", store=>store.put(existing));
+        return existing;
+      }
+      await removeGuidanceChange(existing.changeId);
+    }
+
+    const change = {
+      changeId:`${Date.now()}-${uuid()}`,
+      method,
+      id,
+      record:{ ...guidanceCase, id },
+      queuedAt:new Date().toISOString()
+    };
+    await useStore(guidanceChangesStore, "readwrite", store=>store.put(change));
+    return change;
+  }
+
+  async function pendingGuidanceChanges(){
+    const changes = await useStore(guidanceChangesStore, "readonly", store=>store.getAll());
+    return changes.sort((a, b)=>String(a.queuedAt).localeCompare(String(b.queuedAt)));
+  }
+
+  async function removeGuidanceChange(changeId){
+    await useStore(guidanceChangesStore, "readwrite", store=>store.delete(changeId));
+  }
+
+  async function pendingGuidanceCount(){
+    return useStore(guidanceChangesStore, "readonly", store=>store.count());
+  }
+
   async function digest(value){
     const bytes = new TextEncoder().encode(String(value));
     const hash = await crypto.subtle.digest("SHA-256", bytes);
@@ -161,7 +239,7 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      await navigator.serviceWorker.register("/learner-sw.js?v=20260614-half-summary", { scope:"/" });
+      await navigator.serviceWorker.register("/learner-sw.js?v=20260614-guidance-offline", { scope:"/" });
       await navigator.serviceWorker.ready;
     }
   }
@@ -176,6 +254,14 @@
     pendingChanges,
     removeChange,
     pendingCount,
+    replaceGuidanceCases,
+    loadGuidanceCases,
+    saveGuidanceCase,
+    removeGuidanceCase,
+    queueGuidanceChange,
+    pendingGuidanceChanges,
+    removeGuidanceChange,
+    pendingGuidanceCount,
     rememberCredentials,
     verifyCredentials,
     setOfflineSession,

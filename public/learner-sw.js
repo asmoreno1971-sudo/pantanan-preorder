@@ -1,10 +1,10 @@
-const shellCache = "bakhaw-learner-shell-20260614-half-summary";
+const shellCache = "bakhaw-learner-shell-20260614-guidance-offline";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260614-guidance-admin",
   "/teacher-login.js?v=20260614-password-only",
-  "/learner-offline.js?v=20260614-guidance-admin",
+  "/learner-offline.js?v=20260614-guidance-offline",
   "/learner-manifest.webmanifest",
   "/teacher-session.css?v=20260613-self-pin",
   "/teacher-session.js?v=20260614-guidance-admin",
@@ -19,7 +19,7 @@ const shellFiles = [
   "/guidance",
   "/guidance.html",
   "/guidance.css?v=20260614-hover-actions",
-  "/guidance.js?v=20260614-incident-type",
+  "/guidance.js?v=20260614-guidance-offline",
   "/bakhaw-school-logo.png"
 ];
 
