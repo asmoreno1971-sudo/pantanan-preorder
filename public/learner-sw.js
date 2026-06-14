@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260614-manual-order";
+const shellCache = "bakhaw-learner-shell-20260614-guidance-cases";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -14,8 +14,12 @@ const shellFiles = [
   "/students.js?v=20260614-manual-order",
   "/student-dashboard",
   "/student-dashboard.html",
-  "/student-dashboard.css?v=20260613-compact-rows",
+  "/student-dashboard.css?v=20260614-action-columns",
   "/student-dashboard.js?v=20260613-live-advisers",
+  "/guidance",
+  "/guidance.html",
+  "/guidance.css?v=20260614-guidance-cases",
+  "/guidance.js?v=20260614-guidance-cases",
   "/bakhaw-school-logo.png"
 ];
 
@@ -59,7 +63,7 @@ self.addEventListener("fetch", event=>{
     return;
   }
 
-  if(url.pathname === "/teacher-login" || url.pathname === "/students" || url.pathname === "/student-dashboard"){
+  if(url.pathname === "/teacher-login" || url.pathname === "/students" || url.pathname === "/student-dashboard" || url.pathname === "/guidance"){
     event.respondWith(cachedShell(event.request, url.pathname));
     return;
   }

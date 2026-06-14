@@ -152,7 +152,7 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      await navigator.serviceWorker.register("/learner-sw.js?v=20260614-download-class", { scope:"/" });
+      await navigator.serviceWorker.register("/learner-sw.js?v=20260614-guidance-cases", { scope:"/" });
       await navigator.serviceWorker.ready;
     }
   }

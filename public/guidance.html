@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<title>Guidance Cases | Bakhaw Integrated School</title>
+<meta name="theme-color" content="#0c6842">
+<link rel="manifest" href="/learner-manifest.webmanifest">
+<link rel="icon" href="/bakhaw-school-logo.png">
+<link rel="stylesheet" href="/guidance.css?v=20260614-guidance-cases">
+<link rel="stylesheet" href="/teacher-session.css?v=20260613-self-pin">
+</head>
+<body>
+<main class="guidance-shell">
+  <header class="guidance-header">
+    <div class="guidance-brand">
+      <img src="/bakhaw-school-logo.png" alt="Bakhaw Integrated School logo">
+      <div>
+        <p>Bakhaw Integrated School</p>
+        <h1>Guidance</h1>
+        <span>Confidential learner incident and intervention records</span>
+      </div>
+    </div>
+    <div class="guidance-actions">
+      <a href="/student-dashboard">Dashboard</a>
+      <a href="/students">Learner Profile</a>
+      <button type="button" data-reset-pin>Reset PIN</button>
+      <button type="button" data-teacher-logout>Logout</button>
+    </div>
+  </header>
+
+  <section class="guidance-grid">
+    <form id="guidanceForm" class="case-form">
+      <div class="section-title">
+        <div>
+          <p>Confidential case record</p>
+          <h2 id="formTitle">New Guidance Case</h2>
+        </div>
+        <strong id="caseNumberPreview">Auto-generated when saved</strong>
+      </div>
+      <input id="guidanceCaseId" type="hidden">
+
+      <div class="form-grid four">
+        <label><span>Report Date *</span><input id="reportDate" type="date" required></label>
+        <label><span>Incident Date *</span><input id="incidentDate" type="date" required></label>
+        <label><span>Incident Time</span><input id="incidentTime" type="time"></label>
+        <label><span>Incident Location</span><input id="incidentLocation" placeholder="Classroom, hallway, online..."></label>
+      </div>
+
+      <section class="form-section">
+        <div class="section-title compact">
+          <div><p>Main learner</p><h3>Child Profile</h3></div>
+        </div>
+        <div class="form-grid two">
+          <label>
+            <span>Learner Name *</span>
+            <select id="primaryStudent" required><option value="">Select learner</option></select>
+          </label>
+          <label>
+            <span>Role in Incident *</span>
+            <select id="primaryRole" required>
+              <option>Victim</option>
+              <option>Perpetrator</option>
+              <option>Conniver</option>
+              <option>Witness</option>
+              <option>Bystander</option>
+              <option>Reporter</option>
+              <option>Other</option>
+            </select>
+          </label>
+        </div>
+        <div id="primaryProfile" class="profile-card empty">Select a learner to reveal the complete profile.</div>
+      </section>
+
+      <section class="form-section">
+        <div class="section-title compact">
+          <div><p>Other participants</p><h3>Involved Learners</h3></div>
+          <button id="addInvolvedButton" class="secondary" type="button">Add Learner</button>
+        </div>
+        <div id="involvedList" class="involved-list"></div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-grid two">
+          <label>
+            <span>Type of Aggression *</span>
+            <select id="aggressionType" required>
+              <option value="">Select aggression</option>
+              <option>Verbal Bullying</option>
+              <option>Psychological Bullying</option>
+              <option>Physical Bullying</option>
+              <option>Cyber Bullying</option>
+              <option>Retaliation</option>
+              <option>Social / Relational Aggression</option>
+              <option>Sexual Harassment</option>
+              <option>Threat / Intimidation</option>
+              <option>Property Damage / Extortion</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label>
+            <span>Case Status</span>
+            <select id="caseStatus">
+              <option>Open</option>
+              <option>For Monitoring</option>
+              <option>Resolved</option>
+              <option>Referred</option>
+            </select>
+          </label>
+          <label class="wide">
+            <span>Incident Narrative / Evidence</span>
+            <textarea id="aggressionDetails" rows="4" placeholder="Describe what happened, witnesses, evidence, frequency, and immediate response."></textarea>
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-grid two">
+          <label>
+            <span>School Intervention *</span>
+            <select id="intervention" required>
+              <option value="">Select intervention</option>
+              <option>Called Parent's Attention as Warning</option>
+              <option>Called Parents / Guardians for a Meeting</option>
+              <option>Learner Counseling and Reflection</option>
+              <option>Restorative Conference / Mediation</option>
+              <option>Safety Plan and Close Monitoring</option>
+              <option>Behavior Contract</option>
+              <option>Referred to School Child Protection Committee</option>
+              <option>Referred to DSWD</option>
+              <option>Referred to PNP / Women and Children Protection Desk</option>
+              <option>Referred to Barangay Council for the Protection of Children</option>
+              <option>Referred to Other Government Agency or NGO</option>
+              <option>Medical / Psychological Referral</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label class="wide">
+            <span>Intervention Details and Follow-up Plan</span>
+            <textarea id="interventionDetails" rows="4" placeholder="Record meetings, warnings, referrals, commitments, follow-up dates, and outcomes."></textarea>
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section notice-section">
+        <div>
+          <p class="mini-label">Class adviser notification</p>
+          <div id="adviserSummary" class="adviser-summary">Select learners to identify their class adviser(s).</div>
+        </div>
+        <label class="check-field">
+          <input id="adviserInformed" type="checkbox">
+          <span>Class adviser(s) informed</span>
+        </label>
+        <label><span>Date Informed</span><input id="adviserInformedAt" type="date" disabled></label>
+      </section>
+
+      <section class="signatory-card">
+        <span>Prepared for signature by</span>
+        <strong id="signatoryPreview">Elementary Guidance Designate</strong>
+        <small id="signatoryReason">Automatically based on involved learner grade level.</small>
+      </section>
+
+      <div class="form-actions">
+        <p id="formMessage" role="status"></p>
+        <button id="clearCaseButton" type="button">Clear</button>
+        <button id="saveCaseButton" class="primary" type="submit">Save Guidance Case</button>
+      </div>
+    </form>
+
+    <aside class="case-register">
+      <div class="section-title">
+        <div><p>Case register</p><h2>Saved Cases</h2></div>
+      </div>
+      <label class="case-search"><span>Find a case</span><input id="caseSearch" type="search" placeholder="Case number, learner, section..."></label>
+      <p id="caseStatusMessage" role="status">Loading guidance cases...</p>
+      <div id="caseList" class="case-list"></div>
+    </aside>
+  </section>
+</main>
+
+<script src="/learner-offline.js?v=20260614-record-order"></script>
+<script src="/teacher-session.js?v=20260613-self-pin"></script>
+<script src="/guidance.js?v=20260614-guidance-cases"></script>
+</body>
+</html>

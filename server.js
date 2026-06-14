@@ -18,6 +18,7 @@ const expensesPath = path.resolve(process.env.EXPENSES_PATH || path.join(dataDir
 const kioskSettingsPath = path.resolve(process.env.KIOSK_SETTINGS_PATH || path.join(dataDir, "kiosk-settings.json"));
 const studentsPath = path.resolve(process.env.STUDENTS_PATH || path.join(dataDir, "students.json"));
 const teacherAccountsPath = path.resolve(process.env.TEACHER_ACCOUNTS_PATH || path.join(dataDir, "teacher-accounts.json"));
+const guidanceCasesPath = path.resolve(process.env.GUIDANCE_CASES_PATH || path.join(dataDir, "guidance-cases.json"));
 const studentsImportPath = path.join(root, "students-import.csv");
 const port = Number(process.env.PORT) || 3001;
 const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
@@ -593,6 +594,138 @@ async function writeStudents(students){
   await writeDataRecord("students", studentsPath, students.map(normalizeStudent).filter(Boolean));
 }
 
+async function readGuidanceCases(){
+  const cases = await readDataRecord("guidance-cases", guidanceCasesPath, []);
+  if(!Array.isArray(cases)){
+    throw new Error("Guidance case storage is not an array.");
+  }
+  return cases;
+}
+
+async function writeGuidanceCases(cases){
+  if(!Array.isArray(cases)){
+    throw new Error("Guidance case write blocked: invalid case data.");
+  }
+  await writeDataRecord("guidance-cases", guidanceCasesPath, cases);
+}
+
+function guidanceStudentName(student){
+  const given = [student.firstName, student.middleName, student.extension].filter(Boolean).join(" ");
+  return [student.familyName, given].filter(Boolean).join(", ");
+}
+
+function guidanceStudentSnapshot(student){
+  return {
+    id:student.id,
+    name:guidanceStudentName(student),
+    gradeSection:student.gradeSection,
+    sex:student.sex,
+    age:student.age,
+    birthday:student.birthday,
+    lrn:student.lrn,
+    address:student.address,
+    father:student.father,
+    mother:student.mother,
+    guardian:student.guardian,
+    contactNumber:student.contactNumber
+  };
+}
+
+function guidanceDepartment(gradeSection){
+  const grade = Number(String(gradeSection || "").match(/^\d+/)?.[0]);
+  return grade >= 7 && grade <= 10 ? "JHS" : "Elementary";
+}
+
+function nextGuidanceCaseNumber(cases, date){
+  const year = String(date || localOrderDate()).slice(0, 4);
+  const pattern = new RegExp(`^GDC-${year}-(\\d+)$`);
+  const sequence = cases.reduce((highest, item)=>{
+    const match = String(item.caseNumber || "").match(pattern);
+    return match ? Math.max(highest, Number(match[1]) || 0) : highest;
+  }, 0) + 1;
+  return `GDC-${year}-${String(sequence).padStart(4, "0")}`;
+}
+
+async function buildGuidanceCase(body, existingCase = null, session = null){
+  const students = await readStudents();
+  const studentById = new Map(students.map(student=>[student.id, student]));
+  const primaryStudent = studentById.get(String(body.primaryStudentId || ""));
+  if(!primaryStudent){
+    throw new Error("Select the learner whose case profile will be opened.");
+  }
+
+  const seen = new Set();
+  const involved = (Array.isArray(body.involved) ? body.involved : [])
+    .map(item=>({
+      student:studentById.get(String(item.studentId || "")),
+      role:String(item.role || "").trim(),
+      notes:String(item.notes || "").trim()
+    }))
+    .filter(item=>item.student && item.student.id !== primaryStudent.id)
+    .filter(item=>{
+      if(seen.has(item.student.id)){
+        return false;
+      }
+      seen.add(item.student.id);
+      return true;
+    });
+
+  const participants = [primaryStudent, ...involved.map(item=>item.student)];
+  const hasJhsLearner = participants.some(student=>guidanceDepartment(student.gradeSection) === "JHS");
+  const advisories = await readAdvisoryDirectory();
+  const advisoryBySection = new Map(advisories.map(item=>[item.gradeSection, item]));
+  const advisers = [...new Map(participants.map(student=>{
+    const advisory = advisoryBySection.get(student.gradeSection);
+    return [student.gradeSection, {
+      gradeSection:student.gradeSection,
+      teacher:advisory?.teacher || "Adviser not assigned",
+      department:advisory?.department || guidanceDepartment(student.gradeSection)
+    }];
+  })).values()];
+
+  const reportDate = String(body.reportDate || localOrderDate()).trim();
+  const incidentDate = String(body.incidentDate || "").trim();
+  const aggressionType = String(body.aggressionType || "").trim();
+  const intervention = String(body.intervention || "").trim();
+  if(!incidentDate || !aggressionType || !intervention){
+    throw new Error("Incident date, aggression type, and intervention are required.");
+  }
+
+  const now = new Date().toISOString();
+  return {
+    id:existingCase?.id || crypto.randomUUID(),
+    caseNumber:existingCase?.caseNumber || "",
+    reportDate,
+    incidentDate,
+    incidentTime:String(body.incidentTime || "").trim(),
+    incidentLocation:String(body.incidentLocation || "").trim(),
+    primaryStudent:guidanceStudentSnapshot(primaryStudent),
+    primaryRole:String(body.primaryRole || "Victim").trim(),
+    involved:involved.map(item=>({
+      student:guidanceStudentSnapshot(item.student),
+      role:item.role || "Witness",
+      notes:item.notes
+    })),
+    aggressionType,
+    aggressionDetails:String(body.aggressionDetails || "").trim(),
+    intervention,
+    interventionDetails:String(body.interventionDetails || "").trim(),
+    advisers,
+    adviserInformed:body.adviserInformed === true,
+    adviserInformedAt:body.adviserInformed === true
+      ? String(body.adviserInformedAt || reportDate).trim()
+      : "",
+    status:["Open", "For Monitoring", "Resolved", "Referred"].includes(body.status)
+      ? body.status
+      : "Open",
+    guidanceLevel:hasJhsLearner ? "JHS" : "Elementary",
+    signatory:hasJhsLearner ? "JHS Guidance Designate" : "Elementary Guidance Designate",
+    createdBy:existingCase?.createdBy || session?.displayName || session?.username || "",
+    createdAt:existingCase?.createdAt || now,
+    updatedAt:now
+  };
+}
+
 async function syncStudentToGoogleSheet(action, student, previousStudent = null){
   if(!studentSheetSyncUrl || !studentSheetSyncSecret){
     return false;
@@ -924,7 +1057,8 @@ function requirePersistentStorageForProduction(key, operation){
     "expenses",
     "kiosk-settings",
     "students",
-    "teacher-accounts"
+    "teacher-accounts",
+    "guidance-cases"
   ]);
 
   if(!isProduction || databaseUrl || !protectedKeys.has(key)){
@@ -1988,6 +2122,82 @@ async function handleApi(req, res){
     return true;
   }
 
+  if(pathname.startsWith("/api/guidance-cases") && !validTeacherSession(req)){
+    send(res, 401, JSON.stringify({ ok:false, message:"Teacher login required." }));
+    return true;
+  }
+
+  if(pathname === "/api/guidance-cases" && req.method === "GET"){
+    const cases = await readGuidanceCases();
+    send(res, 200, JSON.stringify({ ok:true, cases }));
+    return true;
+  }
+
+  if(pathname === "/api/guidance-cases" && req.method === "POST"){
+    let body;
+    try{
+      body = JSON.parse(await readBody(req) || "{}");
+    }catch{
+      send(res, 400, JSON.stringify({ ok:false, message:"Guidance case details could not be read." }));
+      return true;
+    }
+
+    try{
+      const cases = await readGuidanceCases();
+      const guidanceCase = await buildGuidanceCase(body, null, readTeacherSession(req));
+      guidanceCase.caseNumber = nextGuidanceCaseNumber(cases, guidanceCase.reportDate);
+      cases.unshift(guidanceCase);
+      await writeGuidanceCases(cases);
+      send(res, 201, JSON.stringify({ ok:true, guidanceCase }));
+    }catch(error){
+      send(res, 400, JSON.stringify({ ok:false, message:error.message }));
+    }
+    return true;
+  }
+
+  if(pathname.startsWith("/api/guidance-cases/") && req.method === "PUT"){
+    const id = decodeURIComponent(pathname.split("/")[3] || "");
+    let body;
+    try{
+      body = JSON.parse(await readBody(req) || "{}");
+    }catch{
+      send(res, 400, JSON.stringify({ ok:false, message:"Guidance case details could not be read." }));
+      return true;
+    }
+
+    const cases = await readGuidanceCases();
+    const index = cases.findIndex(item=>item.id === id);
+    if(index < 0){
+      send(res, 404, JSON.stringify({ ok:false, message:"Guidance case not found." }));
+      return true;
+    }
+
+    try{
+      const guidanceCase = await buildGuidanceCase(body, cases[index], readTeacherSession(req));
+      guidanceCase.caseNumber = cases[index].caseNumber;
+      cases[index] = guidanceCase;
+      await writeGuidanceCases(cases);
+      send(res, 200, JSON.stringify({ ok:true, guidanceCase }));
+    }catch(error){
+      send(res, 400, JSON.stringify({ ok:false, message:error.message }));
+    }
+    return true;
+  }
+
+  if(pathname.startsWith("/api/guidance-cases/") && req.method === "DELETE"){
+    const id = decodeURIComponent(pathname.split("/")[3] || "");
+    const cases = await readGuidanceCases();
+    const index = cases.findIndex(item=>item.id === id);
+    if(index < 0){
+      send(res, 404, JSON.stringify({ ok:false, message:"Guidance case not found." }));
+      return true;
+    }
+    const [guidanceCase] = cases.splice(index, 1);
+    await writeGuidanceCases(cases);
+    send(res, 200, JSON.stringify({ ok:true, guidanceCase }));
+    return true;
+  }
+
   if((pathname === "/api/students" || pathname === "/api/students.csv" || pathname.startsWith("/api/students/")) && !validTeacherSession(req)){
     send(res, 401, JSON.stringify({ ok:false, message:"Teacher login required." }));
     return true;
@@ -2742,6 +2952,7 @@ async function serveStatic(req, res){
     "/teacher-accounts": "teacher-accounts.html",
     "/student-dashboard": "student-dashboard.html",
     "/students": "students.html",
+    "/guidance": "guidance.html",
     "/teacher-profile": "teacher-profile.html",
     "/mineralex": "mineralex/index.html",
     "/qr": "qr.html"
@@ -2760,6 +2971,8 @@ async function serveStatic(req, res){
     || pathname === "/students.html"
     || pathname === "/student-dashboard"
     || pathname === "/student-dashboard.html"
+    || pathname === "/guidance"
+    || pathname === "/guidance.html"
     || pathname === "/teacher-accounts"
     || pathname === "/teacher-accounts.html"
   ) && !validTeacherSession(req)){

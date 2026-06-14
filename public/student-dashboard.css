@@ -122,9 +122,20 @@ h1{
 }
 
 .dashboard-actions{
-  display:flex;
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
   gap:8px;
-  align-items:center;
+  min-width:305px;
+}
+
+.dashboard-action-column{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.dashboard-action-column > *{
+  width:100%;
 }
 
 .logout-button{
@@ -377,6 +388,7 @@ tbody tr:hover{ background:#f7fbf8; }
   .dashboard-header{ display:flex; align-items:stretch; flex-direction:column; padding:20px; }
   .dashboard-brand{ align-items:flex-start; gap:14px; }
   .dashboard-brand img{ width:76px; height:76px; border-width:3px; }
+  .dashboard-actions{ min-width:0; }
   .summary-grid,
   .status-grid{ grid-template-columns:1fr 1fr; }
   .section-heading{ align-items:stretch; flex-direction:column; }
