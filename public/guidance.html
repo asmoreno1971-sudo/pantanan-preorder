@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0c6842">
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/guidance.css?v=20260614-thin-actions">
+<link rel="stylesheet" href="/guidance.css?v=20260614-consolidation">
 <link rel="stylesheet" href="/teacher-session.css?v=20260613-self-pin">
 </head>
 <body>
@@ -23,6 +23,7 @@
       </div>
     </div>
     <div class="guidance-actions">
+      <button id="openConsolidation" type="button">Consolidation</button>
       <a href="/student-dashboard">Dashboard</a>
       <a href="/students">Learner Profile</a>
       <button type="button" data-reset-pin>Reset PIN</button>
@@ -257,8 +258,51 @@
   <article id="caseReportSheet" class="report-sheet"></article>
 </dialog>
 
+<dialog id="consolidationDialog" class="consolidation-dialog" aria-labelledby="consolidationTitle">
+  <div class="report-toolbar">
+    <div>
+      <strong id="consolidationTitle">Guidance Case Consolidation</strong>
+      <span>All learners appearing in saved cases</span>
+    </div>
+    <div>
+      <button id="printConsolidation" class="primary" type="button">Print / Save PDF</button>
+      <button id="closeConsolidation" type="button">Close</button>
+    </div>
+  </div>
+  <section class="consolidation-sheet">
+    <div class="consolidation-heading">
+      <img src="/bakhaw-school-logo.png" alt="">
+      <div>
+        <p>Bakhaw Integrated School</p>
+        <h2>Guidance Case Consolidation</h2>
+        <span id="consolidationSummary"></span>
+      </div>
+    </div>
+    <label class="consolidation-search">
+      <span>Find learner</span>
+      <input id="consolidationSearch" type="search" placeholder="Search learner name or grade / section...">
+    </label>
+    <div class="consolidation-table-wrap">
+      <table class="consolidation-table">
+        <thead>
+          <tr>
+            <th>Learner Name</th>
+            <th>Grade / Section</th>
+            <th>Times Appeared</th>
+            <th>Involvement</th>
+            <th>Date of Incident</th>
+            <th>Case Status</th>
+            <th>Case Number</th>
+          </tr>
+        </thead>
+        <tbody id="consolidationBody"></tbody>
+      </table>
+    </div>
+  </section>
+</dialog>
+
 <script src="/learner-offline.js?v=20260614-guidance-admin"></script>
 <script src="/teacher-session.js?v=20260614-guidance-admin"></script>
-<script src="/guidance.js?v=20260614-thin-actions"></script>
+<script src="/guidance.js?v=20260614-consolidation"></script>
 </body>
 </html>

@@ -19,6 +19,10 @@ const formTitle = document.getElementById("formTitle");
 const incidentTime = document.getElementById("incidentTime");
 const caseReportDialog = document.getElementById("caseReportDialog");
 const caseReportSheet = document.getElementById("caseReportSheet");
+const consolidationDialog = document.getElementById("consolidationDialog");
+const consolidationBody = document.getElementById("consolidationBody");
+const consolidationSearch = document.getElementById("consolidationSearch");
+const consolidationSummary = document.getElementById("consolidationSummary");
 
 let students = [];
 let cases = [];
@@ -250,6 +254,66 @@ function renderCaseReport(item){
 function openCaseReport(item){
   renderCaseReport(item);
   caseReportDialog.showModal();
+}
+
+function consolidatedLearners(){
+  const learnerMap = new Map();
+  cases.forEach(item=>{
+    const appearances = [
+      { student:item.primaryStudent, role:item.primaryRole },
+      ...(item.involved || []).map(entry=>({ student:entry.student, role:entry.role }))
+    ];
+    appearances.forEach(entry=>{
+      if(!entry.student){
+        return;
+      }
+      const key = entry.student.id || `${entry.student.name}|${entry.student.gradeSection}`;
+      if(!learnerMap.has(key)){
+        learnerMap.set(key,{
+          name:entry.student.name || "Not provided",
+          gradeSection:entry.student.gradeSection || "Not provided",
+          appearances:[]
+        });
+      }
+      learnerMap.get(key).appearances.push({
+        role:entry.role || "Not provided",
+        incidentDate:item.incidentDate,
+        status:item.status || "Not provided",
+        caseNumber:item.caseNumber || "Not provided"
+      });
+    });
+  });
+  return [...learnerMap.values()].sort((a,b)=>a.name.localeCompare(b.name));
+}
+
+function detailLines(appearances,key,formatter = value=>value){
+  return appearances.map(entry=>`<div>${reportValue(formatter(entry[key]))}</div>`).join("");
+}
+
+function renderConsolidation(){
+  const query = consolidationSearch.value.trim().toLowerCase();
+  const allLearners = consolidatedLearners();
+  const visible = allLearners.filter(item=>
+    `${item.name} ${item.gradeSection}`.toLowerCase().includes(query)
+  );
+  const totalAppearances = allLearners.reduce((sum,item)=>sum + item.appearances.length,0);
+  consolidationSummary.textContent = `${allLearners.length} learner${allLearners.length === 1 ? "" : "s"} | ${totalAppearances} total appearance${totalAppearances === 1 ? "" : "s"}`;
+  consolidationBody.innerHTML = visible.length ? visible.map(item=>`
+    <tr>
+      <td><strong>${reportValue(item.name)}</strong></td>
+      <td>${reportValue(item.gradeSection)}</td>
+      <td class="count-cell">${item.appearances.length}</td>
+      <td class="detail-cell">${detailLines(item.appearances,"role")}</td>
+      <td class="detail-cell">${detailLines(item.appearances,"incidentDate",value=>displayDate(value) || value)}</td>
+      <td class="detail-cell">${detailLines(item.appearances,"status")}</td>
+      <td class="detail-cell">${detailLines(item.appearances,"caseNumber")}</td>
+    </tr>`).join("") : `<tr><td class="consolidation-empty" colspan="7">No learners found in saved cases.</td></tr>`;
+}
+
+function openConsolidation(){
+  consolidationSearch.value = "";
+  renderConsolidation();
+  consolidationDialog.showModal();
 }
 
 function bindDatePicker(textInputId, pickerId){
@@ -524,6 +588,15 @@ document.getElementById("printCaseReport").addEventListener("click",()=>{
 });
 window.addEventListener("afterprint",()=>document.body.classList.remove("report-printing"));
 caseReportDialog.addEventListener("close",()=>document.body.classList.remove("report-printing"));
+document.getElementById("openConsolidation").addEventListener("click",openConsolidation);
+document.getElementById("closeConsolidation").addEventListener("click",()=>consolidationDialog.close());
+consolidationSearch.addEventListener("input",renderConsolidation);
+document.getElementById("printConsolidation").addEventListener("click",()=>{
+  document.body.classList.add("consolidation-printing");
+  window.print();
+});
+window.addEventListener("afterprint",()=>document.body.classList.remove("consolidation-printing"));
+consolidationDialog.addEventListener("close",()=>document.body.classList.remove("consolidation-printing"));
 caseList.addEventListener("click",async event=>{
   const button = event.target.closest("[data-action]");
   if(!button) return;

@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260614-thin-actions";
+const shellCache = "bakhaw-learner-shell-20260614-consolidation";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -18,8 +18,8 @@ const shellFiles = [
   "/student-dashboard.js?v=20260613-live-advisers",
   "/guidance",
   "/guidance.html",
-  "/guidance.css?v=20260614-thin-actions",
-  "/guidance.js?v=20260614-thin-actions",
+  "/guidance.css?v=20260614-consolidation",
+  "/guidance.js?v=20260614-consolidation",
   "/bakhaw-school-logo.png"
 ];
 
