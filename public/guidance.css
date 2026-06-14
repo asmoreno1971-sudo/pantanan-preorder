@@ -119,7 +119,14 @@ input:focus,select:focus,textarea:focus{ border-color:#3f946a; outline:3px solid
 .case-card p{ margin:5px 0; color:#51665c; font-size:13px; }
 .case-learner-name{ margin-bottom:0 !important; font-size:14px !important; }
 .case-badge{ align-self:start; padding:4px 7px; border-radius:999px; background:#e6f3eb; color:var(--green); font-size:11px; font-weight:850; }
-.case-card-actions{ display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-top:7px; }
+.case-card-actions{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:4px; max-height:0;
+  margin-top:0; overflow:hidden; opacity:0; transform:translateY(-3px);
+  pointer-events:none; transition:max-height .18s ease, margin-top .18s ease, opacity .15s ease, transform .18s ease;
+}
+.case-card:hover .case-card-actions,.case-card:focus-within .case-card-actions{
+  max-height:32px; margin-top:7px; opacity:1; transform:translateY(0); pointer-events:auto;
+}
 .case-card-actions button{
   width:100%; min-height:25px; padding:2px 5px; border:1px solid #c8d8cf;
   border-radius:5px; background:#f6faf7; color:#27523e; cursor:pointer;
@@ -127,6 +134,12 @@ input:focus,select:focus,textarea:focus{ border-color:#3f946a; outline:3px solid
 }
 .case-card-actions .report{ background:var(--green); border-color:var(--green); color:#fff; }
 .case-card-actions .danger{ color:var(--danger); border-color:#e4c2be; }
+
+@media(hover:none){
+  .case-card-actions{
+    max-height:32px; margin-top:7px; opacity:1; transform:none; pointer-events:auto;
+  }
+}
 
 .consolidation-dialog{
   width:min(1500px, calc(100% - 20px)); max-width:none; max-height:96vh; padding:0;
