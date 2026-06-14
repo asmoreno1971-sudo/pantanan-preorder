@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0c6842">
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/guidance.css?v=20260614-date-picker">
+<link rel="stylesheet" href="/guidance.css?v=20260614-a4-report">
 <link rel="stylesheet" href="/teacher-session.css?v=20260613-self-pin">
 </head>
 <body>
@@ -243,8 +243,22 @@
   </section>
 </main>
 
+<dialog id="caseReportDialog" class="report-dialog" aria-labelledby="caseReportTitle">
+  <div class="report-toolbar">
+    <div>
+      <strong id="caseReportTitle">Guidance Case Report</strong>
+      <span>A4 print preview</span>
+    </div>
+    <div>
+      <button id="printCaseReport" class="primary" type="button">Print / Save PDF</button>
+      <button id="closeCaseReport" type="button">Close</button>
+    </div>
+  </div>
+  <article id="caseReportSheet" class="report-sheet"></article>
+</dialog>
+
 <script src="/learner-offline.js?v=20260614-guidance-admin"></script>
 <script src="/teacher-session.js?v=20260614-guidance-admin"></script>
-<script src="/guidance.js?v=20260614-school-hours"></script>
+<script src="/guidance.js?v=20260614-a4-report"></script>
 </body>
 </html>

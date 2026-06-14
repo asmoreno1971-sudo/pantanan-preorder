@@ -120,7 +120,56 @@ input:focus,select:focus,textarea:focus{ border-color:#3f946a; outline:3px solid
 .case-badge{ align-self:start; padding:4px 7px; border-radius:999px; background:#e6f3eb; color:var(--green); font-size:11px; font-weight:850; }
 .case-card-actions{ display:flex; justify-content:flex-end; gap:6px; margin-top:8px; }
 .case-card-actions button{ padding:5px 9px; border:1px solid #c8d8cf; border-radius:7px; background:#f6faf7; color:#27523e; cursor:pointer; font-weight:800; }
+.case-card-actions .report{ background:var(--green); border-color:var(--green); color:#fff; }
 .case-card-actions .danger{ color:var(--danger); border-color:#e4c2be; }
+
+.report-dialog{
+  width:min(1120px, calc(100% - 20px)); max-width:none; max-height:96vh; padding:0;
+  border:0; border-radius:14px; background:#e8eee9; box-shadow:0 22px 70px rgba(10,49,34,.35);
+}
+.report-dialog::backdrop{ background:rgba(7,31,22,.68); }
+.report-toolbar{
+  position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:11px 16px; background:#0b6b43; color:#fff;
+}
+.report-toolbar strong,.report-toolbar span{ display:block; }
+.report-toolbar span{ margin-top:2px; color:#d8eee3; font-size:12px; }
+.report-toolbar > div:last-child{ display:flex; gap:8px; }
+.report-toolbar button{ min-height:38px; padding:7px 12px; border:1px solid rgba(255,255,255,.5); border-radius:8px; background:#fff; color:#145239; cursor:pointer; font-weight:800; }
+.report-toolbar .primary{ background:#f8d878; border-color:#f8d878; color:#3f3311; }
+.report-sheet{
+  width:210mm; min-height:297mm; margin:18px auto; padding:12mm 14mm;
+  background:#fff; color:#111; font-family:Arial, sans-serif; font-size:10pt; line-height:1.28;
+  box-shadow:0 5px 24px rgba(0,0,0,.18);
+}
+.report-school-header{ display:grid; grid-template-columns:24mm 1fr 24mm; align-items:center; text-align:center; border-bottom:2px solid #111; padding-bottom:4mm; }
+.report-school-header img{ width:21mm; height:21mm; object-fit:contain; }
+.report-school-header p{ margin:1px 0; }
+.report-school-header .republic{ font-family:"Times New Roman", serif; font-size:9pt; }
+.report-school-header h1{ margin:2px 0; font-size:14pt; text-transform:uppercase; }
+.report-school-header h2{ margin:1px 0; font-size:10pt; font-weight:normal; text-transform:uppercase; }
+.report-title{ margin:4mm 0 3mm; text-align:center; }
+.report-title h2{ margin:0; font-size:14pt; text-transform:uppercase; }
+.report-title p{ margin:1mm 0 0; font-size:8.5pt; font-weight:bold; letter-spacing:.08em; }
+.report-meta,.report-detail-grid,.report-profile-grid{ display:grid; border-top:1px solid #333; border-left:1px solid #333; }
+.report-meta{ grid-template-columns:repeat(4,1fr); margin-bottom:3mm; }
+.report-detail-grid{ grid-template-columns:repeat(4,1fr); }
+.report-profile-grid{ grid-template-columns:repeat(3,1fr); }
+.report-cell{ min-height:12mm; padding:2mm; border-right:1px solid #333; border-bottom:1px solid #333; overflow-wrap:anywhere; }
+.report-cell.wide-2{ grid-column:span 2; }
+.report-cell.wide-3{ grid-column:span 3; }
+.report-cell.wide-4{ grid-column:1 / -1; }
+.report-label{ display:block; margin-bottom:1mm; color:#333; font-size:7.5pt; font-weight:bold; text-transform:uppercase; }
+.report-section{ margin-top:3mm; break-inside:avoid; }
+.report-section h3{ margin:0; padding:1.5mm 2mm; border:1px solid #333; background:#e5eee8; font-size:9.5pt; text-transform:uppercase; }
+.report-narrative{ min-height:23mm; padding:2.5mm; border:1px solid #333; border-top:0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.report-table{ width:100%; border-collapse:collapse; }
+.report-table th,.report-table td{ padding:2mm; border:1px solid #333; text-align:left; vertical-align:top; }
+.report-table th{ background:#f0f3f1; font-size:8pt; text-transform:uppercase; }
+.report-signatures{ display:grid; grid-template-columns:1fr 1fr; gap:18mm; margin-top:14mm; text-align:center; break-inside:avoid; }
+.report-signature-line{ padding-top:1.5mm; border-top:1px solid #111; font-weight:bold; text-transform:uppercase; }
+.report-signatures small{ display:block; margin-top:1mm; }
+.report-footer{ margin-top:8mm; padding-top:2mm; border-top:1px solid #777; color:#444; font-size:7.5pt; text-align:center; }
 
 @media(max-width:1000px){
   .guidance-grid{ grid-template-columns:1fr; }
@@ -139,4 +188,18 @@ input:focus,select:focus,textarea:focus{ border-color:#3f946a; outline:3px solid
   .guidance-brand img{ width:65px; height:65px; }
   .guidance-brand h1{ font-size:30px; }
   .form-grid.four,.form-grid.two,.profile-card,.involved-row{ grid-template-columns:1fr; }
+}
+
+@page{ size:A4 portrait; margin:0; }
+@media print{
+  body.report-printing{ background:#fff; }
+  body.report-printing > *:not(.report-dialog){ display:none !important; }
+  body.report-printing .report-dialog{
+    position:static; display:block; width:auto; max-height:none; margin:0; padding:0;
+    border:0; border-radius:0; background:#fff; box-shadow:none;
+  }
+  body.report-printing .report-dialog::backdrop,.report-toolbar{ display:none !important; }
+  body.report-printing .report-sheet{
+    width:210mm; min-height:297mm; margin:0; padding:12mm 14mm; box-shadow:none;
+  }
 }

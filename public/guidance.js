@@ -17,6 +17,8 @@ const caseId = document.getElementById("guidanceCaseId");
 const caseNumberPreview = document.getElementById("caseNumberPreview");
 const formTitle = document.getElementById("formTitle");
 const incidentTime = document.getElementById("incidentTime");
+const caseReportDialog = document.getElementById("caseReportDialog");
+const caseReportSheet = document.getElementById("caseReportSheet");
 
 let students = [];
 let cases = [];
@@ -98,6 +100,149 @@ function setIncidentTime(value){
     incidentTime.add(new Option(`${hour12}:${minute} ${period} (saved)`,savedTime));
   }
   incidentTime.value = savedTime;
+}
+
+function displayTime(value){
+  const match = String(value || "").match(/^(\d{1,2}):(\d{2})$/);
+  if(!match){
+    return value || "Not provided";
+  }
+  const hour24 = Number(match[1]);
+  const hour12 = hour24 % 12 || 12;
+  return `${hour12}:${match[2]} ${hour24 < 12 ? "AM" : "PM"}`;
+}
+
+function reportValue(value){
+  return escapeHtml(value || "Not provided");
+}
+
+function reportCell(label,value,className = ""){
+  return `<div class="report-cell ${className}"><span class="report-label">${escapeHtml(label)}</span>${reportValue(value)}</div>`;
+}
+
+function renderCaseReport(item){
+  const primary = item.primaryStudent || {};
+  const participants = [
+    { student:primary, role:item.primaryRole || "Not provided", notes:"Main learner" },
+    ...(item.involved || [])
+  ];
+  const participantRows = participants.map(entry=>`
+    <tr>
+      <td>${reportValue(entry.student?.name)}</td>
+      <td>${reportValue(entry.student?.gradeSection)}</td>
+      <td>${reportValue(entry.role)}</td>
+      <td>${reportValue(entry.notes)}</td>
+    </tr>`).join("");
+  const adviserText = (item.advisers || [])
+    .map(adviser=>`${adviser.gradeSection}: ${adviser.teacher}`)
+    .join("; ") || "Adviser not assigned";
+
+  caseReportSheet.innerHTML = `
+    <header class="report-school-header">
+      <img src="/bakhaw-school-logo.png" alt="">
+      <div>
+        <p class="republic">Republic of the Philippines</p>
+        <p class="republic">Department of Education</p>
+        <h1>Bakhaw Integrated School</h1>
+        <h2>Guidance Office</h2>
+      </div>
+      <div></div>
+    </header>
+    <div class="report-title">
+      <h2>Confidential Guidance Incident Case Report</h2>
+      <p>FOR OFFICIAL SCHOOL USE ONLY</p>
+    </div>
+    <div class="report-meta">
+      ${reportCell("Case Number",item.caseNumber)}
+      ${reportCell("Report Date",displayDate(item.reportDate) || item.reportDate)}
+      ${reportCell("Case Status",item.status)}
+      ${reportCell("Guidance Level",item.guidanceLevel)}
+    </div>
+
+    <section class="report-section">
+      <h3>I. Incident Information</h3>
+      <div class="report-detail-grid">
+        ${reportCell("Incident Date",displayDate(item.incidentDate) || item.incidentDate)}
+        ${reportCell("Incident Time",displayTime(item.incidentTime))}
+        ${reportCell("Incident Location",item.incidentLocation,"wide-2")}
+        ${reportCell("Type of Aggression",item.aggressionType,"wide-2")}
+        ${reportCell("Referred To",item.referredTo,"wide-2")}
+      </div>
+    </section>
+
+    <section class="report-section">
+      <h3>II. Main Learner Profile</h3>
+      <div class="report-profile-grid">
+        ${reportCell("Learner Name",primary.name,"wide-2")}
+        ${reportCell("Involvement",item.primaryRole)}
+        ${reportCell("Grade / Section",primary.gradeSection)}
+        ${reportCell("Sex",primary.sex)}
+        ${reportCell("Age",primary.age)}
+        ${reportCell("Birthday",displayDate(primary.birthday) || primary.birthday)}
+        ${reportCell("LRN",primary.lrn)}
+        ${reportCell("Contact Number",primary.contactNumber)}
+        ${reportCell("Address",primary.address,"wide-3")}
+        ${reportCell("Father",primary.father)}
+        ${reportCell("Mother",primary.mother)}
+        ${reportCell("Guardian",primary.guardian)}
+      </div>
+    </section>
+
+    <section class="report-section">
+      <h3>III. Learners Involved</h3>
+      <table class="report-table">
+        <thead><tr><th>Learner Name</th><th>Grade / Section</th><th>Involvement</th><th>Notes</th></tr></thead>
+        <tbody>${participantRows}</tbody>
+      </table>
+    </section>
+
+    <section class="report-section">
+      <h3>IV. Incident Narrative / Evidence</h3>
+      <div class="report-narrative">${reportValue(item.aggressionDetails)}</div>
+    </section>
+
+    <section class="report-section">
+      <h3>V. Immediate Response Taken</h3>
+      <div class="report-narrative">${reportValue(item.immediateResponse)}</div>
+    </section>
+
+    <section class="report-section">
+      <h3>VI. Action Recommended / Needed Interventions</h3>
+      <div class="report-detail-grid">
+        ${reportCell("Recommended Action",item.intervention,"wide-2")}
+        ${reportCell("Referred To",item.referredTo,"wide-2")}
+        ${reportCell("Details and Follow-up Plan",item.interventionDetails,"wide-4")}
+      </div>
+    </section>
+
+    <section class="report-section">
+      <h3>VII. Class Adviser Notification</h3>
+      <div class="report-detail-grid">
+        ${reportCell("Class Adviser(s)",adviserText,"wide-2")}
+        ${reportCell("Informed",item.adviserInformed ? "Yes" : "No")}
+        ${reportCell("Date Informed",item.adviserInformedAt ? displayDate(item.adviserInformedAt) : "Not provided")}
+      </div>
+    </section>
+
+    <div class="report-signatures">
+      <div>
+        <div class="report-signature-line">${reportValue(item.createdBy)}</div>
+        <small>${reportValue(item.signatory)} / Prepared by</small>
+      </div>
+      <div>
+        <div class="report-signature-line">School Head / Principal</div>
+        <small>Noted by</small>
+      </div>
+    </div>
+    <footer class="report-footer">
+      Confidential learner record. Handle and store in accordance with the Data Privacy Act of 2012.
+      Generated from ${reportValue(item.caseNumber)}.
+    </footer>`;
+}
+
+function openCaseReport(item){
+  renderCaseReport(item);
+  caseReportDialog.showModal();
 }
 
 function bindDatePicker(textInputId, pickerId){
@@ -258,6 +403,7 @@ function renderCases(){
       <p>${escapeHtml(item.aggressionType)} | Incident: ${escapeHtml(displayDate(item.incidentDate) || item.incidentDate)}</p>
       <p>Signed by: ${escapeHtml(item.signatory)}</p>
       <div class="case-card-actions">
+        <button class="report" type="button" data-action="report" data-id="${escapeHtml(item.id)}">Report</button>
         <button type="button" data-action="edit" data-id="${escapeHtml(item.id)}">Edit</button>
         <button class="danger" type="button" data-action="delete" data-id="${escapeHtml(item.id)}">Delete</button>
       </div>
@@ -366,12 +512,21 @@ bindDatePicker("incidentDate","incidentDatePicker");
 bindDatePicker("adviserInformedAt","adviserInformedAtPicker");
 populateIncidentTimes();
 caseSearch.addEventListener("input",renderCases);
+document.getElementById("closeCaseReport").addEventListener("click",()=>caseReportDialog.close());
+document.getElementById("printCaseReport").addEventListener("click",()=>{
+  document.body.classList.add("report-printing");
+  window.print();
+});
+window.addEventListener("afterprint",()=>document.body.classList.remove("report-printing"));
+caseReportDialog.addEventListener("close",()=>document.body.classList.remove("report-printing"));
 caseList.addEventListener("click",async event=>{
   const button = event.target.closest("[data-action]");
   if(!button) return;
   const item = cases.find(entry=>entry.id === button.dataset.id);
   if(!item) return;
-  if(button.dataset.action === "edit"){
+  if(button.dataset.action === "report"){
+    openCaseReport(item);
+  }else if(button.dataset.action === "edit"){
     editCase(item);
   }else if(button.dataset.action === "delete" && confirm(`Delete ${item.caseNumber}? This cannot be undone.`)){
     const response = await fetch(`/api/guidance-cases/${encodeURIComponent(item.id)}`,{method:"DELETE"});
