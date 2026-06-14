@@ -90,7 +90,7 @@ function studentOptions(selected = ""){
     || String(a.firstName).localeCompare(String(b.firstName))
   );
   return `<option value="">Select learner</option>${ordered.map(student=>
-    `<option value="${escapeHtml(student.id)}" ${student.id === selected ? "selected" : ""}>${escapeHtml(student.gradeSection)} - ${escapeHtml(studentName(student))}</option>`
+    `<option value="${escapeHtml(student.id)}" ${student.id === selected ? "selected" : ""}>${escapeHtml(studentName(student))}</option>`
   ).join("")}`;
 }
 
