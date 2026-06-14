@@ -7,6 +7,7 @@ const signatoryPreview = document.getElementById("signatoryPreview");
 const signatoryReason = document.getElementById("signatoryReason");
 const adviserInformed = document.getElementById("adviserInformed");
 const adviserInformedAt = document.getElementById("adviserInformedAt");
+const adviserInformedPickerButton = document.querySelector('[data-date-picker="adviserInformedAtPicker"]');
 const formMessage = document.getElementById("formMessage");
 const saveCaseButton = document.getElementById("saveCaseButton");
 const caseList = document.getElementById("caseList");
@@ -71,6 +72,34 @@ function isoDate(displayValue, label, required = true){
 function formatDateTyping(input){
   const digits = input.value.replace(/\D/g,"").slice(0,6);
   input.value = [digits.slice(0,2),digits.slice(2,4),digits.slice(4,6)].filter(Boolean).join("/");
+}
+
+function bindDatePicker(textInputId, pickerId){
+  const textInput = document.getElementById(textInputId);
+  const picker = document.getElementById(pickerId);
+  const button = document.querySelector(`[data-date-picker="${pickerId}"]`);
+
+  button.addEventListener("click",()=>{
+    if(button.disabled){
+      return;
+    }
+    try{
+      picker.value = isoDate(textInput.value,textInput.previousElementSibling?.textContent || "Date",false);
+    }catch{
+      picker.value = "";
+    }
+    if(typeof picker.showPicker === "function"){
+      picker.showPicker();
+    }else{
+      picker.click();
+    }
+  });
+
+  picker.addEventListener("change",()=>{
+    if(picker.value){
+      textInput.value = displayDate(picker.value);
+    }
+  });
 }
 
 function escapeHtml(value){
@@ -184,6 +213,7 @@ function resetForm(){
   primaryProfile.textContent = "Select a learner to reveal the complete profile.";
   involvedList.innerHTML = "";
   adviserInformedAt.disabled = true;
+  adviserInformedPickerButton.disabled = true;
   formMessage.textContent = "";
   updateAutomaticDetails();
 }
@@ -229,6 +259,7 @@ function editCase(item){
   document.getElementById("caseStatus").value = item.status;
   adviserInformed.checked = item.adviserInformed === true;
   adviserInformedAt.disabled = !adviserInformed.checked;
+  adviserInformedPickerButton.disabled = !adviserInformed.checked;
   adviserInformedAt.value = displayDate(item.adviserInformedAt);
   renderPrimaryProfile();
   window.scrollTo({top:0,behavior:"smooth"});
@@ -298,11 +329,15 @@ document.getElementById("addInvolvedButton").addEventListener("click",()=>addInv
 document.getElementById("clearCaseButton").addEventListener("click",resetForm);
 adviserInformed.addEventListener("change",()=>{
   adviserInformedAt.disabled = !adviserInformed.checked;
+  adviserInformedPickerButton.disabled = !adviserInformed.checked;
   adviserInformedAt.value = adviserInformed.checked ? (adviserInformedAt.value || displayDate(localIsoDate())) : "";
 });
 ["reportDate","incidentDate","adviserInformedAt"].forEach(id=>{
   document.getElementById(id).addEventListener("input",event=>formatDateTyping(event.target));
 });
+bindDatePicker("reportDate","reportDatePicker");
+bindDatePicker("incidentDate","incidentDatePicker");
+bindDatePicker("adviserInformedAt","adviserInformedAtPicker");
 caseSearch.addEventListener("input",renderCases);
 caseList.addEventListener("click",async event=>{
   const button = event.target.closest("[data-action]");

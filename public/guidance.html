@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0c6842">
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/guidance.css?v=20260614-short-dates">
+<link rel="stylesheet" href="/guidance.css?v=20260614-date-picker">
 <link rel="stylesheet" href="/teacher-session.css?v=20260613-self-pin">
 </head>
 <body>
@@ -42,8 +42,22 @@
       <input id="guidanceCaseId" type="hidden">
 
       <div class="form-grid four">
-        <label><span>Report Date *</span><input id="reportDate" type="text" inputmode="numeric" maxlength="8" placeholder="mm/dd/yy" autocomplete="off" required></label>
-        <label><span>Incident Date *</span><input id="incidentDate" type="text" inputmode="numeric" maxlength="8" placeholder="mm/dd/yy" autocomplete="off" required></label>
+        <label>
+          <span>Report Date *</span>
+          <span class="date-picker-field">
+            <input id="reportDate" type="text" inputmode="numeric" maxlength="8" placeholder="mm/dd/yy" autocomplete="off" required>
+            <button class="date-picker-button" type="button" data-date-picker="reportDatePicker" aria-label="Open Report Date calendar">&#128197;</button>
+            <input id="reportDatePicker" class="native-date-picker" type="date" tabindex="-1" aria-hidden="true">
+          </span>
+        </label>
+        <label>
+          <span>Incident Date *</span>
+          <span class="date-picker-field">
+            <input id="incidentDate" type="text" inputmode="numeric" maxlength="8" placeholder="mm/dd/yy" autocomplete="off" required>
+            <button class="date-picker-button" type="button" data-date-picker="incidentDatePicker" aria-label="Open Incident Date calendar">&#128197;</button>
+            <input id="incidentDatePicker" class="native-date-picker" type="date" tabindex="-1" aria-hidden="true">
+          </span>
+        </label>
         <label><span>Incident Time</span><input id="incidentTime" type="time"></label>
         <label>
           <span>Incident Location *</span>
@@ -190,7 +204,14 @@
           <input id="adviserInformed" type="checkbox">
           <span>Class adviser(s) informed</span>
         </label>
-        <label><span>Date Informed</span><input id="adviserInformedAt" type="text" inputmode="numeric" maxlength="8" placeholder="mm/dd/yy" autocomplete="off" disabled></label>
+        <label>
+          <span>Date Informed</span>
+          <span class="date-picker-field">
+            <input id="adviserInformedAt" type="text" inputmode="numeric" maxlength="8" placeholder="mm/dd/yy" autocomplete="off" disabled>
+            <button class="date-picker-button" type="button" data-date-picker="adviserInformedAtPicker" aria-label="Open Date Informed calendar" disabled>&#128197;</button>
+            <input id="adviserInformedAtPicker" class="native-date-picker" type="date" tabindex="-1" aria-hidden="true">
+          </span>
+        </label>
       </section>
 
       <section class="signatory-card">
@@ -219,6 +240,6 @@
 
 <script src="/learner-offline.js?v=20260614-guidance-admin"></script>
 <script src="/teacher-session.js?v=20260614-guidance-admin"></script>
-<script src="/guidance.js?v=20260614-name-only"></script>
+<script src="/guidance.js?v=20260614-date-picker"></script>
 </body>
 </html>
