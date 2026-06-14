@@ -40,6 +40,7 @@ async function loadTeacherDirectory(){
     renderTeacherDirectory([guidanceAdmin]);
     usernameInput.value = guidanceAdmin.username;
     usernameInput.disabled = true;
+    usernameInput.closest("label").hidden = true;
     document.body.classList.add("guidance-login");
     document.querySelector(".login-brand h1").textContent = "Guidance Admin Login";
     document.querySelector(".login-intro").textContent = "Restricted access for Alexander Moreno.";

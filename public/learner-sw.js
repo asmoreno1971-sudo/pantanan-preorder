@@ -1,9 +1,9 @@
-const shellCache = "bakhaw-learner-shell-20260614-incident-type";
+const shellCache = "bakhaw-learner-shell-20260614-password-only";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260614-guidance-admin",
-  "/teacher-login.js?v=20260614-hide-admin-pin",
+  "/teacher-login.js?v=20260614-password-only",
   "/learner-offline.js?v=20260614-guidance-admin",
   "/learner-manifest.webmanifest",
   "/teacher-session.css?v=20260613-self-pin",
