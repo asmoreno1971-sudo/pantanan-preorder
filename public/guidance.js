@@ -176,7 +176,7 @@ function renderCaseReport(item){
         ${reportCell("Incident Date",displayDate(item.incidentDate) || item.incidentDate)}
         ${reportCell("Incident Time",displayTime(item.incidentTime))}
         ${reportCell("Incident Location",item.incidentLocation,"wide-2")}
-        ${reportCell("Type of Aggression",item.aggressionType,"wide-2")}
+        ${reportCell("Incident Type",item.aggressionType,"wide-2")}
         ${reportCell("Referred To",item.referredTo,"wide-2")}
       </div>
     </section>

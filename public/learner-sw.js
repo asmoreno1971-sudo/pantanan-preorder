@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260614-hover-actions";
+const shellCache = "bakhaw-learner-shell-20260614-incident-type";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -19,7 +19,7 @@ const shellFiles = [
   "/guidance",
   "/guidance.html",
   "/guidance.css?v=20260614-hover-actions",
-  "/guidance.js?v=20260614-consolidation",
+  "/guidance.js?v=20260614-incident-type",
   "/bakhaw-school-logo.png"
 ];
 
