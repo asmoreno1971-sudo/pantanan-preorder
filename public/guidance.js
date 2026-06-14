@@ -77,7 +77,7 @@ function formatDateTyping(input){
 
 function populateIncidentTimes(){
   const options = [];
-  for(let minutes = 0; minutes < 24 * 60; minutes += 30){
+  for(let minutes = 7 * 60; minutes <= 16 * 60; minutes += 30){
     const hour24 = Math.floor(minutes / 60);
     const minute = minutes % 60;
     const hour12 = hour24 % 12 || 12;
