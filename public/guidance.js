@@ -406,10 +406,8 @@ function renderCases(){
   caseList.innerHTML = visible.length ? visible.map(item=>`
     <article class="case-card">
       <div class="case-card-head"><h3>${escapeHtml(item.caseNumber)}</h3><span class="case-badge">${escapeHtml(item.status)}</span></div>
-      <p><strong>${escapeHtml(item.primaryStudent?.name)}</strong><br>${escapeHtml(item.primaryStudent?.gradeSection)} - ${escapeHtml(item.primaryRole)}</p>
-      <p>${escapeHtml(item.aggressionType)} | Incident: ${escapeHtml(displayDate(item.incidentDate) || item.incidentDate)}</p>
-      <p>Signed by: ${escapeHtml(guidanceSignatory(item))}</p>
-      <div class="case-card-actions">
+      <p class="case-learner-name"><strong>${escapeHtml(item.primaryStudent?.name)}</strong></p>
+      <div class="case-card-actions" hidden>
         <button class="report" type="button" data-action="report" data-id="${escapeHtml(item.id)}">Report</button>
         <button type="button" data-action="edit" data-id="${escapeHtml(item.id)}">Edit</button>
         <button class="danger" type="button" data-action="delete" data-id="${escapeHtml(item.id)}">Delete</button>
@@ -528,7 +526,14 @@ window.addEventListener("afterprint",()=>document.body.classList.remove("report-
 caseReportDialog.addEventListener("close",()=>document.body.classList.remove("report-printing"));
 caseList.addEventListener("click",async event=>{
   const button = event.target.closest("[data-action]");
-  if(!button) return;
+  if(!button){
+    const card = event.target.closest(".case-card");
+    if(card){
+      const actions = card.querySelector(".case-card-actions");
+      actions.hidden = !actions.hidden;
+    }
+    return;
+  }
   const item = cases.find(entry=>entry.id === button.dataset.id);
   if(!item) return;
   if(button.dataset.action === "report"){
