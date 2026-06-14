@@ -113,15 +113,18 @@ input:focus,select:focus,textarea:focus{ border-color:#3f946a; outline:3px solid
 .case-search{ margin-bottom:10px; }
 #caseStatusMessage{ color:var(--muted); font-size:13px; font-weight:750; }
 .case-list{ display:grid; gap:8px; }
-.case-card{ padding:11px; border:1px solid #d7e5dc; border-radius:11px; background:#fff; cursor:pointer; }
+.case-card{ padding:11px; border:1px solid #d7e5dc; border-radius:11px; background:#fff; }
 .case-card-head{ display:flex; justify-content:space-between; gap:8px; }
 .case-card h3{ margin:0; color:var(--green-dark); font-size:17px; }
 .case-card p{ margin:5px 0; color:#51665c; font-size:13px; }
 .case-learner-name{ margin-bottom:0 !important; font-size:14px !important; }
 .case-badge{ align-self:start; padding:4px 7px; border-radius:999px; background:#e6f3eb; color:var(--green); font-size:11px; font-weight:850; }
-.case-card-actions{ display:flex; justify-content:flex-end; gap:6px; margin-top:8px; }
-.case-card-actions[hidden]{ display:none; }
-.case-card-actions button{ padding:5px 9px; border:1px solid #c8d8cf; border-radius:7px; background:#f6faf7; color:#27523e; cursor:pointer; font-weight:800; }
+.case-card-actions{ display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-top:7px; }
+.case-card-actions button{
+  width:100%; min-height:25px; padding:2px 5px; border:1px solid #c8d8cf;
+  border-radius:5px; background:#f6faf7; color:#27523e; cursor:pointer;
+  font-size:11px; font-weight:750; line-height:1.1;
+}
 .case-card-actions .report{ background:var(--green); border-color:var(--green); color:#fff; }
 .case-card-actions .danger{ color:var(--danger); border-color:#e4c2be; }
 

@@ -407,7 +407,7 @@ function renderCases(){
     <article class="case-card">
       <div class="case-card-head"><h3>${escapeHtml(item.caseNumber)}</h3><span class="case-badge">${escapeHtml(item.status)}</span></div>
       <p class="case-learner-name"><strong>${escapeHtml(item.primaryStudent?.name)}</strong></p>
-      <div class="case-card-actions" hidden>
+      <div class="case-card-actions">
         <button class="report" type="button" data-action="report" data-id="${escapeHtml(item.id)}">Report</button>
         <button type="button" data-action="edit" data-id="${escapeHtml(item.id)}">Edit</button>
         <button class="danger" type="button" data-action="delete" data-id="${escapeHtml(item.id)}">Delete</button>
@@ -526,14 +526,7 @@ window.addEventListener("afterprint",()=>document.body.classList.remove("report-
 caseReportDialog.addEventListener("close",()=>document.body.classList.remove("report-printing"));
 caseList.addEventListener("click",async event=>{
   const button = event.target.closest("[data-action]");
-  if(!button){
-    const card = event.target.closest(".case-card");
-    if(card){
-      const actions = card.querySelector(".case-card-actions");
-      actions.hidden = !actions.hidden;
-    }
-    return;
-  }
+  if(!button) return;
   const item = cases.find(entry=>entry.id === button.dataset.id);
   if(!item) return;
   if(button.dataset.action === "report"){
