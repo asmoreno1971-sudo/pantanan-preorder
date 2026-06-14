@@ -56,7 +56,16 @@ button,input,select,textarea{ font:inherit; }
 label{ display:grid; gap:5px; color:#365c49; font-size:13px; font-weight:800; }
 input,select,textarea{
   width:100%; min-height:42px; padding:8px 10px; border:1px solid #bfd2c6;
-  border-radius:9px; background:#fff; color:#19392d;
+  border-radius:9px; background:#fff; color:#19392d; font-weight:400;
+}
+input::placeholder,textarea::placeholder{
+  color:#d4d9d6; font-weight:400; opacity:1;
+}
+select:required:invalid{
+  color:#d4d9d6; font-weight:400;
+}
+select option{
+  color:#19392d; font-weight:400;
 }
 textarea{ resize:vertical; line-height:1.4; }
 input:focus,select:focus,textarea:focus{ border-color:#3f946a; outline:3px solid rgba(63,148,106,.14); }
