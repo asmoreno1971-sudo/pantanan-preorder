@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0c6842">
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/guidance.css?v=20260614-light-placeholders">
+<link rel="stylesheet" href="/guidance.css?v=20260614-short-dates">
 <link rel="stylesheet" href="/teacher-session.css?v=20260613-self-pin">
 </head>
 <body>
@@ -42,8 +42,8 @@
       <input id="guidanceCaseId" type="hidden">
 
       <div class="form-grid four">
-        <label><span>Report Date *</span><input id="reportDate" type="date" required></label>
-        <label><span>Incident Date *</span><input id="incidentDate" type="date" required></label>
+        <label><span>Report Date *</span><input id="reportDate" type="text" inputmode="numeric" maxlength="8" placeholder="mm/dd/yy" autocomplete="off" required></label>
+        <label><span>Incident Date *</span><input id="incidentDate" type="text" inputmode="numeric" maxlength="8" placeholder="mm/dd/yy" autocomplete="off" required></label>
         <label><span>Incident Time</span><input id="incidentTime" type="time"></label>
         <label>
           <span>Incident Location *</span>
@@ -190,7 +190,7 @@
           <input id="adviserInformed" type="checkbox">
           <span>Class adviser(s) informed</span>
         </label>
-        <label><span>Date Informed</span><input id="adviserInformedAt" type="date" disabled></label>
+        <label><span>Date Informed</span><input id="adviserInformedAt" type="text" inputmode="numeric" maxlength="8" placeholder="mm/dd/yy" autocomplete="off" disabled></label>
       </section>
 
       <section class="signatory-card">
@@ -219,6 +219,6 @@
 
 <script src="/learner-offline.js?v=20260614-guidance-admin"></script>
 <script src="/teacher-session.js?v=20260614-guidance-admin"></script>
-<script src="/guidance.js?v=20260614-guidance-options"></script>
+<script src="/guidance.js?v=20260614-short-dates"></script>
 </body>
 </html>
