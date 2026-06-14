@@ -1,10 +1,10 @@
-const shellCache = "bakhaw-learner-shell-20260614-sticky-table";
+const shellCache = "bakhaw-learner-shell-20260615-guidance-route";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260614-hide-guidance-name",
-  "/teacher-login.js?v=20260614-instant-offline-all",
-  "/learner-offline.js?v=20260614-instant-offline-all",
+  "/teacher-login.js?v=20260615-guidance-route",
+  "/learner-offline.js?v=20260615-guidance-route",
   "/learner-manifest.webmanifest",
   "/teacher-session.css?v=20260613-self-pin",
   "/teacher-session.js?v=20260614-guidance-admin",
@@ -19,7 +19,7 @@ const shellFiles = [
   "/guidance",
   "/guidance.html",
   "/guidance.css?v=20260614-hover-actions",
-  "/guidance.js?v=20260614-instant-offline-all",
+  "/guidance.js?v=20260615-guidance-route",
   "/teacher-accounts",
   "/teacher-accounts.html",
   "/teacher-accounts.css?v=20260614-page-password",
@@ -50,6 +50,37 @@ self.addEventListener("fetch", event=>{
 
   const url = new URL(event.request.url);
   if(url.origin !== self.location.origin){
+    return;
+  }
+
+  if(["/guidance", "/guidance.html"].includes(url.pathname)){
+    event.respondWith((async ()=>{
+      const cache = await caches.open(shellCache);
+      const cached = await cache.match(event.request, { ignoreSearch:true })
+        || await cache.match("/guidance", { ignoreSearch:true });
+      const cachedPath = cached?.url ? new URL(cached.url).pathname : "";
+      const validCachedGuidance = cached
+        && !cached.redirected
+        && !["/teacher-login", "/teacher-login.html"].includes(cachedPath);
+      if(validCachedGuidance){
+        return cached;
+      }
+      try{
+        const response = await fetch(event.request);
+        if(response.ok && !response.redirected){
+          await Promise.all([
+            cache.put("/guidance", response.clone()),
+            cache.put("/guidance.html", response.clone())
+          ]);
+        }
+        return response;
+      }catch{
+        return new Response("Guidance must be opened online once after a successful Guidance Admin login.", {
+          status:503,
+          headers:{ "Content-Type":"text/plain; charset=utf-8" }
+        });
+      }
+    })());
     return;
   }
 

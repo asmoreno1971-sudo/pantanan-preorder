@@ -108,9 +108,6 @@ loginForm.addEventListener("submit", async event=>{
           throw new Error(data.message || "Login failed.");
         }
         await LearnerOffline.rememberCredentials(usernameInput.value, pinInput.value);
-        if(guidanceLogin){
-          await LearnerOffline.registerServiceWorker();
-        }
         onlineLoginComplete = true;
       }catch(error){
         if(!(error instanceof TypeError)){
@@ -127,6 +124,10 @@ loginForm.addEventListener("submit", async event=>{
     if(guidanceLogin){
       LearnerOffline.setOfflineSession(true);
       LearnerOffline.setGuidanceSession(true);
+      loginButton.textContent = "Opening Guidance...";
+      if(navigator.onLine){
+        await LearnerOffline.registerServiceWorker();
+      }
       window.location.replace("/guidance");
       return;
     }

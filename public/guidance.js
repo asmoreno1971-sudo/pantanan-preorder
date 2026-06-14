@@ -871,5 +871,6 @@ window.addEventListener("online",async ()=>{
 window.addEventListener("offline",()=>updateGuidanceSyncStatus("Offline mode: changes remain on this device."));
 
 if(window.teacherEntryAllowed !== false){
+  LearnerOffline.registerServiceWorker().catch(()=>{});
   loadData();
 }
