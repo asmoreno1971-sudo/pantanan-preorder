@@ -1,8 +1,8 @@
-const shellCache = "bakhaw-learner-shell-20260614-instant-dashboard";
+const shellCache = "bakhaw-learner-shell-20260614-hide-guidance-name";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
-  "/teacher-login.css?v=20260614-guidance-admin",
+  "/teacher-login.css?v=20260614-hide-guidance-name",
   "/teacher-login.js?v=20260614-offline-login",
   "/learner-offline.js?v=20260614-guidance-offline",
   "/learner-manifest.webmanifest",
