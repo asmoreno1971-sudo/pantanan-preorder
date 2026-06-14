@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0c6842">
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/guidance.css?v=20260614-guidance-cases">
+<link rel="stylesheet" href="/guidance.css?v=20260614-guidance-options">
 <link rel="stylesheet" href="/teacher-session.css?v=20260613-self-pin">
 </head>
 <body>
@@ -45,7 +45,21 @@
         <label><span>Report Date *</span><input id="reportDate" type="date" required></label>
         <label><span>Incident Date *</span><input id="incidentDate" type="date" required></label>
         <label><span>Incident Time</span><input id="incidentTime" type="time"></label>
-        <label><span>Incident Location</span><input id="incidentLocation" placeholder="Classroom, hallway, online..."></label>
+        <label>
+          <span>Incident Location *</span>
+          <select id="incidentLocation" required>
+            <option value="">Select location</option>
+            <option>School Gym</option>
+            <option>School Gate</option>
+            <option>Near the School Gate</option>
+            <option>Classroom</option>
+            <option>Outside School Going Home</option>
+            <option>Outside Going to School</option>
+            <option>Outside School</option>
+            <option>Hallway</option>
+            <option>Online</option>
+          </select>
+        </label>
       </div>
 
       <section class="form-section">
@@ -58,15 +72,16 @@
             <select id="primaryStudent" required><option value="">Select learner</option></select>
           </label>
           <label>
-            <span>Role in Incident *</span>
+            <span>Involvement to the Incident *</span>
             <select id="primaryRole" required>
               <option>Victim</option>
               <option>Perpetrator</option>
-              <option>Conniver</option>
               <option>Witness</option>
-              <option>Bystander</option>
-              <option>Reporter</option>
-              <option>Other</option>
+              <option>Conniver</option>
+              <option>Provocator</option>
+              <option>Personal Issue</option>
+              <option>To be determined</option>
+              <option>Learner of Interest</option>
             </select>
           </label>
         </div>
@@ -118,26 +133,49 @@
       <section class="form-section">
         <div class="form-grid two">
           <label>
-            <span>School Intervention *</span>
-            <select id="intervention" required>
-              <option value="">Select intervention</option>
-              <option>Called Parent's Attention as Warning</option>
-              <option>Called Parents / Guardians for a Meeting</option>
-              <option>Learner Counseling and Reflection</option>
-              <option>Restorative Conference / Mediation</option>
-              <option>Safety Plan and Close Monitoring</option>
-              <option>Behavior Contract</option>
-              <option>Referred to School Child Protection Committee</option>
-              <option>Referred to DSWD</option>
-              <option>Referred to PNP / Women and Children Protection Desk</option>
-              <option>Referred to Barangay Council for the Protection of Children</option>
-              <option>Referred to Other Government Agency or NGO</option>
-              <option>Medical / Psychological Referral</option>
-              <option>Other</option>
+            <span>V. Immediate Response Taken *</span>
+            <select id="immediateResponse" required>
+              <option value="">Select immediate response</option>
+              <option>Informed Parent / Guardian</option>
+              <option>Arranged a Parent / Guardian Meeting</option>
+              <option>Isolated Student from Others</option>
+              <option>Administered First Aid</option>
+              <option>Administered Psychological First Aid (PFA)</option>
+              <option>Referred to School Head / Principal</option>
+              <option>Notified Security or Barangay</option>
+              <option>Asked for Police Assistance</option>
+              <option>Confiscated Weapon / Substance</option>
+              <option>Home Visitation</option>
+            </select>
+          </label>
+          <label>
+            <span>Referred To *</span>
+            <select id="referredTo" required>
+              <option value="">Select referral</option>
+              <option>Guidance Office</option>
+              <option>School Head</option>
+              <option>Child Protection Committee</option>
+              <option>External Agency</option>
+              <option>Principal</option>
             </select>
           </label>
           <label class="wide">
-            <span>Intervention Details and Follow-up Plan</span>
+            <span>VI. Action Recommended / Needed Interventions *</span>
+            <select id="intervention" required>
+              <option value="">Select recommended action</option>
+              <option>Counseling / Psychosocial Support</option>
+              <option>Peer Mediation or Conference</option>
+              <option>Behavior Management Plan</option>
+              <option>Referral to Child Protection Committee</option>
+              <option>Suspension / ADM</option>
+              <option>Referral to External Agencies (e.g., DSWD, PNP, DOH)</option>
+              <option>Safety Plan / Crisis Plan</option>
+              <option>SELDA ng KALAYAAN</option>
+              <option>Guidance Designate</option>
+            </select>
+          </label>
+          <label class="wide">
+            <span>Response, Intervention Details, and Follow-up Plan</span>
             <textarea id="interventionDetails" rows="4" placeholder="Record meetings, warnings, referrals, commitments, follow-up dates, and outcomes."></textarea>
           </label>
         </div>
@@ -181,6 +219,6 @@
 
 <script src="/learner-offline.js?v=20260614-guidance-admin"></script>
 <script src="/teacher-session.js?v=20260614-guidance-admin"></script>
-<script src="/guidance.js?v=20260614-guidance-cases"></script>
+<script src="/guidance.js?v=20260614-guidance-options"></script>
 </body>
 </html>

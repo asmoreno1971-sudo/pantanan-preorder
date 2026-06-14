@@ -25,7 +25,16 @@ const profileFields = [
   ["LRN","lrn"],["Address","address"],["Father","father"],["Mother","mother"],
   ["Guardian","guardian"],["Contact Number","contactNumber"]
 ];
-const roles = ["Victim","Perpetrator","Conniver","Witness","Bystander","Reporter","Other"];
+const roles = [
+  "Victim",
+  "Perpetrator",
+  "Witness",
+  "Conniver",
+  "Provocator",
+  "Personal Issue",
+  "To be determined",
+  "Learner of Interest"
+];
 
 function escapeHtml(value){
   return String(value || "").replace(/&/g,"&amp;").replace(/</g,"&lt;")
@@ -108,7 +117,7 @@ function casePayload(){
     reportDate:document.getElementById("reportDate").value,
     incidentDate:document.getElementById("incidentDate").value,
     incidentTime:document.getElementById("incidentTime").value,
-    incidentLocation:document.getElementById("incidentLocation").value.trim(),
+    incidentLocation:document.getElementById("incidentLocation").value,
     primaryStudentId:primaryStudent.value,
     primaryRole:document.getElementById("primaryRole").value,
     involved:[...involvedList.querySelectorAll(".involved-row")].map(row=>({
@@ -118,6 +127,8 @@ function casePayload(){
     })).filter(item=>item.studentId),
     aggressionType:document.getElementById("aggressionType").value,
     aggressionDetails:document.getElementById("aggressionDetails").value.trim(),
+    immediateResponse:document.getElementById("immediateResponse").value,
+    referredTo:document.getElementById("referredTo").value,
     intervention:document.getElementById("intervention").value,
     interventionDetails:document.getElementById("interventionDetails").value.trim(),
     adviserInformed:adviserInformed.checked,
@@ -174,6 +185,8 @@ function editCase(item){
   item.involved?.forEach(addInvolvedRow);
   document.getElementById("aggressionType").value = item.aggressionType;
   document.getElementById("aggressionDetails").value = item.aggressionDetails || "";
+  document.getElementById("immediateResponse").value = item.immediateResponse || "";
+  document.getElementById("referredTo").value = item.referredTo || "";
   document.getElementById("intervention").value = item.intervention;
   document.getElementById("interventionDetails").value = item.interventionDetails || "";
   document.getElementById("caseStatus").value = item.status;

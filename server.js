@@ -701,10 +701,13 @@ async function buildGuidanceCase(body, existingCase = null, session = null){
 
   const reportDate = String(body.reportDate || localOrderDate()).trim();
   const incidentDate = String(body.incidentDate || "").trim();
+  const incidentLocation = String(body.incidentLocation || "").trim();
   const aggressionType = String(body.aggressionType || "").trim();
+  const immediateResponse = String(body.immediateResponse || "").trim();
+  const referredTo = String(body.referredTo || "").trim();
   const intervention = String(body.intervention || "").trim();
-  if(!incidentDate || !aggressionType || !intervention){
-    throw new Error("Incident date, aggression type, and intervention are required.");
+  if(!incidentDate || !incidentLocation || !aggressionType || !immediateResponse || !referredTo || !intervention){
+    throw new Error("Complete the incident location, response, referral, and recommended intervention.");
   }
 
   const now = new Date().toISOString();
@@ -714,7 +717,7 @@ async function buildGuidanceCase(body, existingCase = null, session = null){
     reportDate,
     incidentDate,
     incidentTime:String(body.incidentTime || "").trim(),
-    incidentLocation:String(body.incidentLocation || "").trim(),
+    incidentLocation,
     primaryStudent:guidanceStudentSnapshot(primaryStudent),
     primaryRole:String(body.primaryRole || "Victim").trim(),
     involved:involved.map(item=>({
@@ -724,6 +727,8 @@ async function buildGuidanceCase(body, existingCase = null, session = null){
     })),
     aggressionType,
     aggressionDetails:String(body.aggressionDetails || "").trim(),
+    immediateResponse,
+    referredTo,
     intervention,
     interventionDetails:String(body.interventionDetails || "").trim(),
     advisers,
