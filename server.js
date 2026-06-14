@@ -2034,6 +2034,53 @@ async function handleApi(req, res){
     return true;
   }
 
+  if(pathname === "/api/students/reorder" && req.method === "POST"){
+    let body;
+
+    try{
+      body = JSON.parse(await readBody(req) || "{}");
+    }catch{
+      send(res, 400, JSON.stringify({ ok:false, message:"Reorder request could not be read." }));
+      return true;
+    }
+
+    const id = String(body.id || "").trim();
+    const direction = String(body.direction || "").trim().toLowerCase();
+    if(!id || !["up", "down"].includes(direction)){
+      send(res, 400, JSON.stringify({ ok:false, message:"A learner and move direction are required." }));
+      return true;
+    }
+
+    const students = await readStudents();
+    const index = students.findIndex(student=>student.id === id);
+
+    if(index < 0){
+      send(res, 404, JSON.stringify({ ok:false, message:"Student record not found." }));
+      return true;
+    }
+
+    const section = students[index].gradeSection;
+    const candidateIndexes = students
+      .map((student, studentIndex)=>student.gradeSection === section ? studentIndex : -1)
+      .filter(studentIndex=>studentIndex >= 0);
+    const currentPosition = candidateIndexes.indexOf(index);
+    const targetPosition = direction === "up" ? currentPosition - 1 : currentPosition + 1;
+
+    if(targetPosition < 0 || targetPosition >= candidateIndexes.length){
+      send(res, 409, JSON.stringify({
+        ok:false,
+        message:`This learner is already at the ${direction === "up" ? "top" : "bottom"} of ${section}.`
+      }));
+      return true;
+    }
+
+    const targetIndex = candidateIndexes[targetPosition];
+    [students[index], students[targetIndex]] = [students[targetIndex], students[index]];
+    await writeStudents(students);
+    send(res, 200, JSON.stringify({ ok:true, students }));
+    return true;
+  }
+
   if(pathname === "/api/students" && req.method === "POST"){
     let body;
 

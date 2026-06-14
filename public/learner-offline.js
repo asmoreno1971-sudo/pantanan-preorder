@@ -4,6 +4,7 @@
   const recordsStore = "records";
   const changesStore = "pending-changes";
   const metaStore = "meta";
+  const recordOrderKey = "student-record-order";
 
   function openDatabase(){
     return new Promise((resolve, reject)=>{
@@ -46,25 +47,43 @@
   async function replaceRecords(records){
     const db = await openDatabase();
     return new Promise((resolve, reject)=>{
-      const transaction = db.transaction(recordsStore, "readwrite");
-      const store = transaction.objectStore(recordsStore);
-      store.clear();
-      (Array.isArray(records) ? records : []).forEach(record=>store.put(record));
+      const transaction = db.transaction([recordsStore, metaStore], "readwrite");
+      const recordStore = transaction.objectStore(recordsStore);
+      const cleanRecords = Array.isArray(records) ? records : [];
+      recordStore.clear();
+      cleanRecords.forEach(record=>recordStore.put(record));
+      transaction.objectStore(metaStore).put(cleanRecords.map(record=>record.id), recordOrderKey);
       transaction.oncomplete = ()=>{ db.close(); resolve(); };
       transaction.onerror = ()=>{ db.close(); reject(transaction.error); };
     });
   }
 
   async function loadRecords(){
-    return useStore(recordsStore, "readonly", store=>store.getAll());
+    const [records, order] = await Promise.all([
+      useStore(recordsStore, "readonly", store=>store.getAll()),
+      useStore(metaStore, "readonly", store=>store.get(recordOrderKey))
+    ]);
+    const positions = new Map((Array.isArray(order) ? order : []).map((id, index)=>[id, index]));
+    return records.sort((a, b)=>
+      (positions.get(a.id) ?? Number.MAX_SAFE_INTEGER)
+      - (positions.get(b.id) ?? Number.MAX_SAFE_INTEGER)
+    );
   }
 
   async function saveRecord(record){
-    await useStore(recordsStore, "readwrite", store=>store.put(record));
+    const records = await loadRecords();
+    const index = records.findIndex(item=>item.id === record.id);
+    if(index >= 0){
+      records[index] = record;
+    }else{
+      records.unshift(record);
+    }
+    await replaceRecords(records);
   }
 
   async function removeRecord(id){
-    await useStore(recordsStore, "readwrite", store=>store.delete(id));
+    const records = await loadRecords();
+    await replaceRecords(records.filter(record=>record.id !== id));
   }
 
   async function queueChange(method, record){

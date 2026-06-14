@@ -51,6 +51,7 @@ let currentPage = 1;
 const expandedStudentIds = new Set();
 let syncInFlight = false;
 let sectionRefreshInFlight = false;
+let reorderInFlight = false;
 
 function savedGradeSections(){
   try{
@@ -319,11 +320,7 @@ function downloadSelectedClass(){
   }
 
   const classStudents = students
-    .filter(student=>student.gradeSection === section)
-    .sort((a, b)=>
-      String(a.familyName).localeCompare(String(b.familyName))
-      || String(a.firstName).localeCompare(String(b.firstName))
-    );
+    .filter(student=>student.gradeSection === section);
   if(!classStudents.length){
     recordsStatus.textContent = `No learners are recorded in ${section}.`;
     return;
@@ -356,11 +353,19 @@ function renderStudents(){
     studentRows.innerHTML = `<tr><td class="empty-state" colspan="${TABLE_COLUMN_COUNT}">No learner profiles match the current filters.</td></tr>`;
   }else{
     const hasSearch = Boolean(studentSearch.value.trim());
+    const canReorder = !hasSearch && navigator.onLine && !reorderInFlight;
     studentRows.innerHTML = pageStudents.map(student=>{
       const isExpanded = hasSearch || expandedStudentIds.has(student.id);
+      const classStudents = students.filter(item=>item.gradeSection === student.gradeSection);
+      const classIndex = classStudents.findIndex(item=>item.id === student.id);
       const viewButton = hasSearch
         ? `<button class="row-button view" type="button" disabled>Full Record</button>`
         : `<button class="row-button view" type="button" data-action="view" data-id="${escapeHtml(student.id)}">${isExpanded ? "Hide" : "View"}</button>`;
+      const moveButtons = `
+        <button class="row-button move" type="button" data-action="move-up" data-id="${escapeHtml(student.id)}"
+          ${canReorder && classIndex > 0 ? "" : "disabled"} aria-label="Move ${escapeHtml(formatStudentName(student))} up">Up</button>
+        <button class="row-button move" type="button" data-action="move-down" data-id="${escapeHtml(student.id)}"
+          ${canReorder && classIndex < classStudents.length - 1 ? "" : "disabled"} aria-label="Move ${escapeHtml(formatStudentName(student))} down">Down</button>`;
 
       return `
       <tr class="${isExpanded ? "record-row record-row-open" : "record-row"}">
@@ -383,6 +388,7 @@ function renderStudents(){
         <td>${escapeHtml(student.contactNumber)}</td>
         <td>
           <div class="row-actions">
+            ${moveButtons}
             ${viewButton}
             <button class="row-button" type="button" data-action="edit" data-id="${escapeHtml(student.id)}">Edit</button>
             <button class="row-button delete" type="button" data-action="delete" data-id="${escapeHtml(student.id)}">Delete</button>
@@ -397,6 +403,40 @@ function renderStudents(){
   pageSummary.textContent = `Page ${currentPage} of ${totalPages}`;
   previousPageButton.disabled = currentPage <= 1;
   nextPageButton.disabled = currentPage >= totalPages;
+}
+
+async function moveStudent(student, direction){
+  if(reorderInFlight || studentSearch.value.trim() || !navigator.onLine){
+    return;
+  }
+
+  reorderInFlight = true;
+  recordsStatus.textContent = `Moving ${formatStudentName(student)} ${direction}...`;
+  renderStudents();
+
+  try{
+    const response = await fetch("/api/students/reorder", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ id:student.id, direction })
+    });
+    const data = await response.json();
+
+    if(!response.ok || !data.ok){
+      throw new Error(data.message || "Unable to reorder this learner.");
+    }
+
+    students = Array.isArray(data.students) ? data.students : students;
+    await LearnerOffline.replaceRecords(students);
+    applyFilters();
+    recordsStatus.textContent = `${formatStudentName(student)} moved ${direction}.`;
+    window.setTimeout(()=>applyFilters(), 1800);
+  }catch(error){
+    recordsStatus.textContent = error.message;
+  }finally{
+    reorderInFlight = false;
+    renderStudents();
+  }
 }
 
 function renderFullRecord(student){
@@ -655,6 +695,10 @@ studentRows.addEventListener("click", event=>{
 
   if(button.dataset.action === "edit"){
     openStudentDialog(student);
+  }else if(button.dataset.action === "move-up"){
+    moveStudent(student, "up");
+  }else if(button.dataset.action === "move-down"){
+    moveStudent(student, "down");
   }else if(button.dataset.action === "view"){
     if(expandedStudentIds.has(student.id)){
       expandedStudentIds.delete(student.id);

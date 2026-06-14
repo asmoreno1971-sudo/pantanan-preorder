@@ -397,6 +397,17 @@ tbody tr:hover{ background:#f8fbf9; }
   font-weight:750;
 }
 
+.row-button.move{
+  border-color:#c5d7cb;
+  background:#f4faf6;
+  color:#176443;
+}
+
+.row-button:disabled{
+  cursor:not-allowed;
+  opacity:.4;
+}
+
 .row-button.delete{
   border-color:#ebcecb;
   color:var(--danger);
