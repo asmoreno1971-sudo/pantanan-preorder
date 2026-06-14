@@ -137,6 +137,7 @@ function renderCaseReport(item){
     .map(adviser=>`${adviser.gradeSection}: ${adviser.teacher}`)
     .join("; ") || "Adviser not assigned";
 
+  caseReportSheet.classList.toggle("compact-report",participants.length <= 3);
   caseReportSheet.innerHTML = `
     <header class="report-school-header">
       <img src="/bakhaw-school-logo.png" alt="">

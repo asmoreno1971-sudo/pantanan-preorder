@@ -138,38 +138,49 @@ input:focus,select:focus,textarea:focus{ border-color:#3f946a; outline:3px solid
 .report-toolbar button{ min-height:38px; padding:7px 12px; border:1px solid rgba(255,255,255,.5); border-radius:8px; background:#fff; color:#145239; cursor:pointer; font-weight:800; }
 .report-toolbar .primary{ background:#f8d878; border-color:#f8d878; color:#3f3311; }
 .report-sheet{
-  width:210mm; min-height:297mm; margin:18px auto; padding:12mm 14mm;
-  background:#fff; color:#111; font-family:Arial, sans-serif; font-size:10pt; line-height:1.28;
+  width:210mm; min-height:297mm; margin:12px auto; padding:7mm 9mm;
+  background:#fff; color:#111; font-family:Arial, sans-serif; font-size:8.3pt; line-height:1.14;
   box-shadow:0 5px 24px rgba(0,0,0,.18);
 }
-.report-school-header{ display:grid; grid-template-columns:24mm 1fr 24mm; align-items:center; text-align:center; border-bottom:2px solid #111; padding-bottom:4mm; }
-.report-school-header img{ width:21mm; height:21mm; object-fit:contain; }
+.report-school-header{ display:grid; grid-template-columns:18mm 1fr 18mm; align-items:center; text-align:center; border-bottom:1.5px solid #111; padding-bottom:2mm; }
+.report-school-header img{ width:16mm; height:16mm; object-fit:contain; }
 .report-school-header p{ margin:1px 0; }
-.report-school-header .republic{ font-family:"Times New Roman", serif; font-size:9pt; }
-.report-school-header h1{ margin:2px 0; font-size:14pt; text-transform:uppercase; }
-.report-school-header h2{ margin:1px 0; font-size:10pt; font-weight:normal; text-transform:uppercase; }
-.report-title{ margin:4mm 0 3mm; text-align:center; }
-.report-title h2{ margin:0; font-size:14pt; text-transform:uppercase; }
-.report-title p{ margin:1mm 0 0; font-size:8.5pt; font-weight:bold; letter-spacing:.08em; }
+.report-school-header .republic{ font-family:"Times New Roman", serif; font-size:7.5pt; }
+.report-school-header h1{ margin:1px 0; font-size:11.5pt; text-transform:uppercase; }
+.report-school-header h2{ margin:0; font-size:8pt; font-weight:normal; text-transform:uppercase; }
+.report-title{ margin:2mm 0 1.5mm; text-align:center; }
+.report-title h2{ margin:0; font-size:11pt; text-transform:uppercase; }
+.report-title p{ margin:.5mm 0 0; font-size:6.8pt; font-weight:bold; letter-spacing:.06em; }
 .report-meta,.report-detail-grid,.report-profile-grid{ display:grid; border-top:1px solid #333; border-left:1px solid #333; }
-.report-meta{ grid-template-columns:repeat(4,1fr); margin-bottom:3mm; }
+.report-meta{ grid-template-columns:repeat(4,1fr); margin-bottom:1.5mm; }
 .report-detail-grid{ grid-template-columns:repeat(4,1fr); }
 .report-profile-grid{ grid-template-columns:repeat(3,1fr); }
-.report-cell{ min-height:12mm; padding:2mm; border-right:1px solid #333; border-bottom:1px solid #333; overflow-wrap:anywhere; }
+.report-cell{ min-height:8mm; padding:1.1mm 1.4mm; border-right:1px solid #333; border-bottom:1px solid #333; overflow-wrap:anywhere; }
 .report-cell.wide-2{ grid-column:span 2; }
 .report-cell.wide-3{ grid-column:span 3; }
 .report-cell.wide-4{ grid-column:1 / -1; }
-.report-label{ display:block; margin-bottom:1mm; color:#333; font-size:7.5pt; font-weight:bold; text-transform:uppercase; }
-.report-section{ margin-top:3mm; break-inside:avoid; }
-.report-section h3{ margin:0; padding:1.5mm 2mm; border:1px solid #333; background:#e5eee8; font-size:9.5pt; text-transform:uppercase; }
-.report-narrative{ min-height:23mm; padding:2.5mm; border:1px solid #333; border-top:0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.report-label{ display:block; margin-bottom:.4mm; color:#333; font-size:6.3pt; font-weight:bold; text-transform:uppercase; }
+.report-section{ margin-top:1.4mm; break-inside:auto; }
+.report-section h3{ margin:0; padding:.8mm 1.3mm; border:1px solid #333; background:#e5eee8; font-size:7.7pt; text-transform:uppercase; break-after:avoid; }
+.report-narrative{ min-height:11mm; padding:1.3mm; border:1px solid #333; border-top:0; white-space:pre-wrap; overflow-wrap:anywhere; }
 .report-table{ width:100%; border-collapse:collapse; }
-.report-table th,.report-table td{ padding:2mm; border:1px solid #333; text-align:left; vertical-align:top; }
-.report-table th{ background:#f0f3f1; font-size:8pt; text-transform:uppercase; }
-.report-signatures{ display:grid; grid-template-columns:1fr 1fr; gap:18mm; margin-top:14mm; text-align:center; break-inside:avoid; }
-.report-signature-line{ padding-top:1.5mm; border-top:1px solid #111; font-weight:bold; text-transform:uppercase; }
-.report-signatures small{ display:block; margin-top:1mm; }
-.report-footer{ margin-top:8mm; padding-top:2mm; border-top:1px solid #777; color:#444; font-size:7.5pt; text-align:center; }
+.report-table th,.report-table td{ padding:1mm 1.3mm; border:1px solid #333; text-align:left; vertical-align:top; }
+.report-table th{ background:#f0f3f1; font-size:6.5pt; text-transform:uppercase; }
+.report-signatures{ display:grid; grid-template-columns:1fr 1fr; gap:14mm; margin-top:7mm; text-align:center; break-inside:avoid; }
+.report-signature-line{ padding-top:.8mm; border-top:1px solid #111; font-weight:bold; text-transform:uppercase; }
+.report-signatures small{ display:block; margin-top:.5mm; font-size:6.8pt; }
+.report-footer{ margin-top:3mm; padding-top:1mm; border-top:1px solid #777; color:#444; font-size:6.2pt; text-align:center; }
+.report-sheet.compact-report{ padding:5mm 8mm; font-size:7.7pt; line-height:1.08; }
+.compact-report .report-school-header{ grid-template-columns:15mm 1fr 15mm; padding-bottom:1mm; }
+.compact-report .report-school-header img{ width:13mm; height:13mm; }
+.compact-report .report-title{ margin:1mm 0; }
+.compact-report .report-cell{ min-height:6.5mm; padding:.7mm 1mm; }
+.compact-report .report-section{ margin-top:.8mm; }
+.compact-report .report-section h3{ padding:.55mm 1mm; font-size:7.2pt; }
+.compact-report .report-narrative{ min-height:7mm; padding:.8mm 1mm; }
+.compact-report .report-table th,.compact-report .report-table td{ padding:.65mm 1mm; }
+.compact-report .report-signatures{ margin-top:5mm; }
+.compact-report .report-footer{ margin-top:2mm; }
 
 @media(max-width:1000px){
   .guidance-grid{ grid-template-columns:1fr; }
@@ -200,6 +211,6 @@ input:focus,select:focus,textarea:focus{ border-color:#3f946a; outline:3px solid
   }
   body.report-printing .report-dialog::backdrop,.report-toolbar{ display:none !important; }
   body.report-printing .report-sheet{
-    width:210mm; min-height:297mm; margin:0; padding:12mm 14mm; box-shadow:none;
+    width:210mm; min-height:297mm; margin:0; box-shadow:none;
   }
 }
