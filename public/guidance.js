@@ -16,6 +16,7 @@ const caseStatusMessage = document.getElementById("caseStatusMessage");
 const caseId = document.getElementById("guidanceCaseId");
 const caseNumberPreview = document.getElementById("caseNumberPreview");
 const formTitle = document.getElementById("formTitle");
+const incidentTime = document.getElementById("incidentTime");
 
 let students = [];
 let cases = [];
@@ -72,6 +73,31 @@ function isoDate(displayValue, label, required = true){
 function formatDateTyping(input){
   const digits = input.value.replace(/\D/g,"").slice(0,6);
   input.value = [digits.slice(0,2),digits.slice(2,4),digits.slice(4,6)].filter(Boolean).join("/");
+}
+
+function populateIncidentTimes(){
+  const options = [];
+  for(let minutes = 0; minutes < 24 * 60; minutes += 30){
+    const hour24 = Math.floor(minutes / 60);
+    const minute = minutes % 60;
+    const hour12 = hour24 % 12 || 12;
+    const period = hour24 < 12 ? "AM" : "PM";
+    const value = `${String(hour24).padStart(2,"0")}:${String(minute).padStart(2,"0")}`;
+    options.push(`<option value="${value}">${hour12}:${String(minute).padStart(2,"0")} ${period}</option>`);
+  }
+  incidentTime.insertAdjacentHTML("beforeend",options.join(""));
+}
+
+function setIncidentTime(value){
+  const savedTime = String(value || "");
+  if(savedTime && ![...incidentTime.options].some(option=>option.value === savedTime)){
+    const [hourText,minute = "00"] = savedTime.split(":");
+    const hour24 = Number(hourText);
+    const hour12 = hour24 % 12 || 12;
+    const period = hour24 < 12 ? "AM" : "PM";
+    incidentTime.add(new Option(`${hour12}:${minute} ${period} (saved)`,savedTime));
+  }
+  incidentTime.value = savedTime;
 }
 
 function bindDatePicker(textInputId, pickerId){
@@ -182,7 +208,7 @@ function casePayload(){
   return {
     reportDate:isoDate(document.getElementById("reportDate").value,"Report Date"),
     incidentDate:isoDate(document.getElementById("incidentDate").value,"Incident Date"),
-    incidentTime:document.getElementById("incidentTime").value,
+    incidentTime:incidentTime.value,
     incidentLocation:document.getElementById("incidentLocation").value,
     primaryStudentId:primaryStudent.value,
     primaryRole:document.getElementById("primaryRole").value,
@@ -245,7 +271,7 @@ function editCase(item){
   caseNumberPreview.textContent = item.caseNumber;
   document.getElementById("reportDate").value = displayDate(item.reportDate);
   document.getElementById("incidentDate").value = displayDate(item.incidentDate);
-  document.getElementById("incidentTime").value = item.incidentTime || "";
+  setIncidentTime(item.incidentTime);
   document.getElementById("incidentLocation").value = item.incidentLocation || "";
   primaryStudent.value = item.primaryStudent?.id || "";
   document.getElementById("primaryRole").value = item.primaryRole || "Victim";
@@ -338,6 +364,7 @@ adviserInformed.addEventListener("change",()=>{
 bindDatePicker("reportDate","reportDatePicker");
 bindDatePicker("incidentDate","incidentDatePicker");
 bindDatePicker("adviserInformedAt","adviserInformedAtPicker");
+populateIncidentTimes();
 caseSearch.addEventListener("input",renderCases);
 caseList.addEventListener("click",async event=>{
   const button = event.target.closest("[data-action]");

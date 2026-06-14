@@ -58,7 +58,12 @@
             <input id="incidentDatePicker" class="native-date-picker" type="date" tabindex="-1" aria-hidden="true">
           </span>
         </label>
-        <label><span>Incident Time</span><input id="incidentTime" type="time"></label>
+        <label>
+          <span>Incident Time</span>
+          <select id="incidentTime">
+            <option value="">Select time</option>
+          </select>
+        </label>
         <label>
           <span>Incident Location *</span>
           <select id="incidentLocation" required>
@@ -240,6 +245,6 @@
 
 <script src="/learner-offline.js?v=20260614-guidance-admin"></script>
 <script src="/teacher-session.js?v=20260614-guidance-admin"></script>
-<script src="/guidance.js?v=20260614-date-picker"></script>
+<script src="/guidance.js?v=20260614-time-picker"></script>
 </body>
 </html>

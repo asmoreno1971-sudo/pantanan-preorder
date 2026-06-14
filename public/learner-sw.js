@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260614-date-picker";
+const shellCache = "bakhaw-learner-shell-20260614-time-picker";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -19,7 +19,7 @@ const shellFiles = [
   "/guidance",
   "/guidance.html",
   "/guidance.css?v=20260614-date-picker",
-  "/guidance.js?v=20260614-date-picker",
+  "/guidance.js?v=20260614-time-picker",
   "/bakhaw-school-logo.png"
 ];
 
