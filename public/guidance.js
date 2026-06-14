@@ -120,6 +120,13 @@ function reportCell(label,value,className = ""){
   return `<div class="report-cell ${className}"><span class="report-label">${escapeHtml(label)}</span>${reportValue(value)}</div>`;
 }
 
+function guidanceSignatory(item){
+  if(item?.guidanceLevel === "JHS"){
+    return "Alexander S. Moreno";
+  }
+  return "Monalisa G. Lebuna";
+}
+
 function renderCaseReport(item){
   const primary = item.primaryStudent || {};
   const participants = [
@@ -226,8 +233,8 @@ function renderCaseReport(item){
 
     <div class="report-signatures">
       <div>
-        <div class="report-signature-line">${reportValue(item.createdBy)}</div>
-        <small>${reportValue(item.signatory)} / Prepared by</small>
+        <div class="report-signature-line">${reportValue(guidanceSignatory(item))}</div>
+        <small>${reportValue(item.guidanceLevel)} Guidance Designate / Prepared by</small>
       </div>
       <div>
         <div class="report-signature-line">School Head / Principal</div>
@@ -343,10 +350,10 @@ function updateAutomaticDetails(){
   });
   adviserSummary.textContent = adviserLines.length ? adviserLines.join(" | ") : "Select learners to identify their class adviser(s).";
   const hasJhs = selected.some(isJhs);
-  signatoryPreview.textContent = hasJhs ? "JHS Guidance Designate" : "Elementary Guidance Designate";
+  signatoryPreview.textContent = hasJhs ? "Alexander S. Moreno" : "Monalisa G. Lebuna";
   signatoryReason.textContent = hasJhs
-    ? "JHS signatory selected because at least one involved learner is in Junior High School."
-    : "Elementary signatory selected because all involved learners are Elementary / SPD.";
+    ? "JHS Guidance Designate selected because at least one involved learner is in Junior High School."
+    : "Elementary Guidance Designate selected because all involved learners are Elementary / SPD.";
 }
 
 function casePayload(){
@@ -401,7 +408,7 @@ function renderCases(){
       <div class="case-card-head"><h3>${escapeHtml(item.caseNumber)}</h3><span class="case-badge">${escapeHtml(item.status)}</span></div>
       <p><strong>${escapeHtml(item.primaryStudent?.name)}</strong><br>${escapeHtml(item.primaryStudent?.gradeSection)} - ${escapeHtml(item.primaryRole)}</p>
       <p>${escapeHtml(item.aggressionType)} | Incident: ${escapeHtml(displayDate(item.incidentDate) || item.incidentDate)}</p>
-      <p>Signed by: ${escapeHtml(item.signatory)}</p>
+      <p>Signed by: ${escapeHtml(guidanceSignatory(item))}</p>
       <div class="case-card-actions">
         <button class="report" type="button" data-action="report" data-id="${escapeHtml(item.id)}">Report</button>
         <button type="button" data-action="edit" data-id="${escapeHtml(item.id)}">Edit</button>

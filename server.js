@@ -740,7 +740,7 @@ async function buildGuidanceCase(body, existingCase = null, session = null){
       ? body.status
       : "Open",
     guidanceLevel:hasJhsLearner ? "JHS" : "Elementary",
-    signatory:hasJhsLearner ? "JHS Guidance Designate" : "Elementary Guidance Designate",
+    signatory:hasJhsLearner ? "Alexander S. Moreno" : "Monalisa G. Lebuna",
     createdBy:existingCase?.createdBy || session?.displayName || session?.username || "",
     createdAt:existingCase?.createdAt || now,
     updatedAt:now
