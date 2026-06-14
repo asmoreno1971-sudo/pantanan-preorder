@@ -239,7 +239,20 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      await navigator.serviceWorker.register("/learner-sw.js?v=20260614-guidance-offline", { scope:"/" });
+      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=20260614-instant-offline-all", { scope:"/" });
+      await registration.update();
+      const worker = registration.installing || registration.waiting || registration.active;
+      if(worker && worker.state !== "activated"){
+        await new Promise(resolve=>{
+          const timeout = window.setTimeout(resolve, 15000);
+          worker.addEventListener("statechange", ()=>{
+            if(worker.state === "activated" || worker.state === "redundant"){
+              window.clearTimeout(timeout);
+              resolve();
+            }
+          });
+        });
+      }
       await navigator.serviceWorker.ready;
     }
   }

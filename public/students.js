@@ -92,7 +92,24 @@ async function refreshSpreadsheetSections(rebuildDropdowns = false){
 }
 
 async function loadStudents(){
-  recordsStatus.textContent = "Loading records...";
+  const cachedStudents = await LearnerOffline.loadRecords();
+  students = cachedStudents;
+  spreadsheetSections = savedGradeSections();
+  if(students.length){
+    buildSectionFilter();
+    buildRecordDropdowns();
+    applySectionFromUrl();
+    applyFilters();
+    await updateSyncStatus(navigator.onLine
+      ? `${students.length.toLocaleString()} saved records shown. Refreshing quietly.`
+      : "Offline mode: showing records saved on this device.");
+  }else{
+    recordsStatus.textContent = navigator.onLine ? "Loading records..." : "No offline learner records are saved on this device yet.";
+  }
+
+  if(!navigator.onLine){
+    return;
+  }
 
   try{
     await Promise.all([
@@ -117,16 +134,10 @@ async function loadStudents(){
     applyFilters();
     await updateSyncStatus();
   }catch(error){
-    students = await LearnerOffline.loadRecords();
-    spreadsheetSections = savedGradeSections();
     if(students.length){
-      buildSectionFilter();
-      buildRecordDropdowns();
-      applySectionFromUrl();
-      applyFilters();
-      await updateSyncStatus("Offline mode: showing records saved on this device.");
+      await updateSyncStatus("Saved records remain available while the server reconnects.");
     }else{
-      const message = navigator.onLine ? error.message : "No offline learner records are saved on this device yet.";
+      const message = error.message;
       recordsStatus.textContent = message;
       studentRows.innerHTML = `<tr><td class="empty-state" colspan="${TABLE_COLUMN_COUNT}">${escapeHtml(message)}</td></tr>`;
     }

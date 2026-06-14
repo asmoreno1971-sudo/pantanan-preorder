@@ -1,17 +1,17 @@
-const shellCache = "bakhaw-learner-shell-20260614-hide-guidance-name";
+const shellCache = "bakhaw-learner-shell-20260614-instant-offline-all";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260614-hide-guidance-name",
-  "/teacher-login.js?v=20260614-offline-login",
-  "/learner-offline.js?v=20260614-guidance-offline",
+  "/teacher-login.js?v=20260614-instant-offline-all",
+  "/learner-offline.js?v=20260614-instant-offline-all",
   "/learner-manifest.webmanifest",
   "/teacher-session.css?v=20260613-self-pin",
   "/teacher-session.js?v=20260614-guidance-admin",
   "/students",
   "/students.html",
   "/students.css?v=20260614-manual-order",
-  "/students.js?v=20260614-manual-order",
+  "/students.js?v=20260614-instant-offline-all",
   "/student-dashboard",
   "/student-dashboard.html",
   "/student-dashboard.css?v=20260614-half-summary",
@@ -19,12 +19,20 @@ const shellFiles = [
   "/guidance",
   "/guidance.html",
   "/guidance.css?v=20260614-hover-actions",
-  "/guidance.js?v=20260614-guidance-offline",
+  "/guidance.js?v=20260614-instant-offline-all",
+  "/teacher-accounts",
+  "/teacher-accounts.html",
+  "/teacher-accounts.css?v=20260614-page-password",
+  "/teacher-accounts.js?v=20260614-offline-shell",
   "/bakhaw-school-logo.png"
 ];
 
 self.addEventListener("install", event=>{
-  event.waitUntil(caches.open(shellCache).then(cache=>cache.addAll(shellFiles)).then(()=>self.skipWaiting()));
+  event.waitUntil(
+    caches.open(shellCache)
+      .then(cache=>Promise.allSettled(shellFiles.map(file=>cache.add(file))))
+      .then(()=>self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", event=>{
@@ -34,24 +42,6 @@ self.addEventListener("activate", event=>{
       .then(()=>self.clients.claim())
   );
 });
-
-async function cachedShell(request, fallback){
-  const cache = await caches.open(shellCache);
-  try{
-    const response = await fetch(request);
-    if(response.ok){
-      cache.put(request, response.clone());
-    }
-    return response;
-  }catch{
-    return await cache.match(request, { ignoreSearch:true })
-      || await cache.match(fallback, { ignoreSearch:true })
-      || new Response("This page has not been prepared for offline use yet.", {
-        status:503,
-        headers:{ "Content-Type":"text/plain; charset=utf-8" }
-      });
-  }
-}
 
 self.addEventListener("fetch", event=>{
   if(event.request.method !== "GET"){
@@ -63,12 +53,36 @@ self.addEventListener("fetch", event=>{
     return;
   }
 
-  if(url.pathname === "/teacher-login" || url.pathname === "/students" || url.pathname === "/student-dashboard" || url.pathname === "/guidance"){
-    event.respondWith(cachedShell(event.request, url.pathname));
+  const pagePaths = ["/teacher-login", "/students", "/student-dashboard", "/guidance", "/teacher-accounts"];
+  if(pagePaths.includes(url.pathname)){
+    event.respondWith((async ()=>{
+      const cache = await caches.open(shellCache);
+      const cached = await cache.match(event.request, { ignoreSearch:true })
+        || await cache.match(url.pathname, { ignoreSearch:true });
+      if(cached){
+        return cached;
+      }
+      try{
+        return await fetch(event.request);
+      }catch{
+        return new Response("This page has not been prepared for offline use yet.", {
+          status:503,
+          headers:{ "Content-Type":"text/plain; charset=utf-8" }
+        });
+      }
+    })());
     return;
   }
 
   if(shellFiles.some(file=>new URL(file, self.location.origin).pathname === url.pathname)){
-    event.respondWith(cachedShell(event.request, url.pathname));
+    event.respondWith((async ()=>{
+      const cache = await caches.open(shellCache);
+      const cached = await cache.match(event.request, { ignoreSearch:true })
+        || await cache.match(url.pathname, { ignoreSearch:true });
+      if(cached){
+        return cached;
+      }
+      return fetch(event.request);
+    })());
   }
 });

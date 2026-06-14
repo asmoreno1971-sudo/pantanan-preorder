@@ -246,6 +246,12 @@ adminUnlockForm.addEventListener("submit", async event=>{
 });
 
 async function initializeTeacherAccounts(){
+  if(!navigator.onLine){
+    accountStatus.textContent = "Teacher account administration requires internet. The rest of the learner app remains available offline.";
+    accountRows.innerHTML = `<tr><td colspan="5">Reconnect to manage teacher logins and PINs.</td></tr>`;
+    document.getElementById("addTeacherButton").disabled = true;
+    return;
+  }
   try{
     const session = await apiRequest("/api/teacher-session", { cache:"no-store" });
     if(session.adminUnlocked){

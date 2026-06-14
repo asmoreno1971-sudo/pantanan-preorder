@@ -662,7 +662,24 @@ function editCase(item){
 }
 
 async function loadData(){
-  let loadedOnline = false;
+  students = await LearnerOffline.loadRecords();
+  cases = await LearnerOffline.loadGuidanceCases();
+  try{
+    advisories = JSON.parse(localStorage.getItem(advisoryCacheKey) || "[]");
+  }catch{
+    advisories = [];
+  }
+  primaryStudent.innerHTML = studentOptions();
+  resetForm();
+  renderCases();
+  await updateGuidanceSyncStatus(cases.length
+    ? (navigator.onLine ? "Saved guidance cases shown. Refreshing quietly." : "Offline mode: showing guidance cases saved on this device.")
+    : (navigator.onLine ? "Loading guidance cases..." : "No offline guidance cases are saved on this device yet."));
+
+  if(!navigator.onLine){
+    return;
+  }
+
   if(navigator.onLine){
     try{
       await syncPendingGuidanceChanges();
@@ -692,29 +709,14 @@ async function loadData(){
       }
       await LearnerOffline.replaceGuidanceCases(cases);
       localStorage.setItem(advisoryCacheKey,JSON.stringify(advisories));
-      loadedOnline = true;
+      primaryStudent.innerHTML = studentOptions();
+      resetForm();
+      renderCases();
     }catch(error){
       if(!(error instanceof TypeError)){
         caseStatusMessage.textContent = error.message;
       }
     }
-  }
-  if(!loadedOnline){
-    students = await LearnerOffline.loadRecords();
-    cases = await LearnerOffline.loadGuidanceCases();
-    try{
-      advisories = JSON.parse(localStorage.getItem(advisoryCacheKey) || "[]");
-    }catch{
-      advisories = [];
-    }
-  }
-  primaryStudent.innerHTML = studentOptions();
-  resetForm();
-  renderCases();
-  if(!loadedOnline){
-    await updateGuidanceSyncStatus(cases.length
-      ? "Offline mode: showing guidance cases saved on this device."
-      : "No offline guidance cases are saved on this device yet.");
   }
 }
 
