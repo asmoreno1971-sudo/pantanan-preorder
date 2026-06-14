@@ -108,6 +108,7 @@ loginForm.addEventListener("submit", async event=>{
           throw new Error(data.message || "Login failed.");
         }
         await LearnerOffline.rememberCredentials(usernameInput.value, pinInput.value);
+        await LearnerOffline.registerServiceWorker();
         onlineLoginComplete = true;
       }catch(error){
         if(!(error instanceof TypeError)){
@@ -124,9 +125,6 @@ loginForm.addEventListener("submit", async event=>{
     if(guidanceLogin){
       LearnerOffline.setOfflineSession(true);
       LearnerOffline.setGuidanceSession(true);
-      if(navigator.onLine){
-        await LearnerOffline.registerServiceWorker();
-      }
       window.location.replace("/guidance");
       return;
     }
@@ -162,9 +160,6 @@ agreeButton.addEventListener("click", async ()=>{
     }
 
     LearnerOffline.setOfflineSession(true);
-    if(navigator.onLine){
-      await LearnerOffline.registerServiceWorker();
-    }
     window.location.replace(nextPage());
   }catch(error){
     privacyDialog.close();
