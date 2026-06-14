@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260614-offline-login";
+const shellCache = "bakhaw-learner-shell-20260614-instant-dashboard";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -15,7 +15,7 @@ const shellFiles = [
   "/student-dashboard",
   "/student-dashboard.html",
   "/student-dashboard.css?v=20260614-half-summary",
-  "/student-dashboard.js?v=20260613-live-advisers",
+  "/student-dashboard.js?v=20260614-instant-cache",
   "/guidance",
   "/guidance.html",
   "/guidance.css?v=20260614-hover-actions",

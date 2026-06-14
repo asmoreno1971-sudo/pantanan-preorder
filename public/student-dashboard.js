@@ -3,6 +3,22 @@ const dashboardStatus = document.getElementById("dashboardStatus");
 const dashboardDateTime = document.getElementById("dashboardDateTime");
 let sectionSummaries = [];
 let advisoryDirectory = {};
+let dashboardRefreshInFlight = false;
+
+async function fetchJson(url, timeoutMs = 8000){
+  const controller = new AbortController();
+  const timeout = window.setTimeout(()=>controller.abort(), timeoutMs);
+  try{
+    const response = await fetch(url, { cache:"no-store", signal:controller.signal });
+    const data = await response.json();
+    if(!response.ok || !data.ok){
+      throw new Error(data.message || "Dashboard information could not be loaded.");
+    }
+    return data;
+  }finally{
+    window.clearTimeout(timeout);
+  }
+}
 
 function savedAdvisoryDirectory(){
   try{
@@ -15,11 +31,7 @@ function savedAdvisoryDirectory(){
 
 async function loadAdvisoryDirectory(){
   try{
-    const response = await fetch("/api/advisory-directory", { cache:"no-store" });
-    const data = await response.json();
-    if(!response.ok || !data.ok){
-      throw new Error(data.message || "Advisory assignments could not be loaded.");
-    }
+    const data = await fetchJson("/api/advisory-directory");
     advisoryDirectory = Object.fromEntries((data.advisories || []).map(entry=>[
       entry.gradeSection,
       { name:entry.teacher, department:entry.department || "Not assigned" }
@@ -30,28 +42,46 @@ async function loadAdvisoryDirectory(){
   }
 }
 
-async function loadDashboard(){
+async function showCachedDashboard(){
+  advisoryDirectory = savedAdvisoryDirectory();
+  const students = await LearnerOffline.loadRecords();
+  if(!students.length){
+    return false;
+  }
+  sectionSummaries = buildSectionSummaries(students);
+  renderOverall(students, sectionSummaries.length);
+  renderSections();
+  const pending = await LearnerOffline.pendingCount();
+  dashboardStatus.textContent = `${students.length.toLocaleString()} saved learner records${pending ? `, ${pending} change${pending === 1 ? "" : "s"} waiting to sync` : ""}`;
+  return true;
+}
+
+async function refreshDashboard(){
+  if(dashboardRefreshInFlight || !navigator.onLine){
+    return;
+  }
+  dashboardRefreshInFlight = true;
   try{
-    await loadAdvisoryDirectory();
-    const response = await fetch("/api/students", { cache:"no-store" });
-    const data = await response.json();
-
-    if(!response.ok || !data.ok){
-      throw new Error(data.message || "Unable to load learner dashboard.");
+    const [data] = await Promise.all([
+      fetchJson("/api/students"),
+      loadAdvisoryDirectory()
+    ]);
+    const serverStudents = Array.isArray(data.students) ? data.students : [];
+    const pending = await LearnerOffline.pendingCount();
+    if(!pending){
+      await LearnerOffline.replaceRecords(serverStudents);
     }
-
-    const students = Array.isArray(data.students) ? data.students : [];
-    await LearnerOffline.replaceRecords(students);
+    const students = pending ? await LearnerOffline.loadRecords() : serverStudents;
     sectionSummaries = buildSectionSummaries(students);
     renderOverall(students, sectionSummaries.length);
     renderSections();
-    dashboardStatus.textContent = `${students.length.toLocaleString()} learner records loaded`;
+    dashboardStatus.textContent = pending
+      ? `${students.length.toLocaleString()} learner records, ${pending} change${pending === 1 ? "" : "s"} waiting to sync`
+      : `${students.length.toLocaleString()} learner records loaded`;
   }catch(error){
-    if(!Object.keys(advisoryDirectory).length){
-      advisoryDirectory = savedAdvisoryDirectory();
-    }
     const students = await LearnerOffline.loadRecords();
     if(students.length){
+      advisoryDirectory = savedAdvisoryDirectory();
       sectionSummaries = buildSectionSummaries(students);
       renderOverall(students, sectionSummaries.length);
       renderSections();
@@ -61,7 +91,17 @@ async function loadDashboard(){
       dashboardStatus.textContent = error.message;
       dashboardRows.innerHTML = `<tr><td colspan="12" class="empty-dashboard">${escapeHtml(error.message)}</td></tr>`;
     }
+  }finally{
+    dashboardRefreshInFlight = false;
   }
+}
+
+async function loadDashboard(){
+  const cached = await showCachedDashboard();
+  if(!cached){
+    dashboardStatus.textContent = navigator.onLine ? "Loading learner records..." : "No saved learner records are available offline yet.";
+  }
+  await refreshDashboard();
 }
 
 function buildSectionSummaries(students){
@@ -169,4 +209,4 @@ if(window.teacherEntryAllowed === false){
 }else{
   loadDashboard();
 }
-window.addEventListener("online", loadDashboard);
+window.addEventListener("online", refreshDashboard);
