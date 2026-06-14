@@ -1,9 +1,9 @@
-const shellCache = "bakhaw-learner-shell-20260614-consolidation";
+const shellCache = "bakhaw-learner-shell-20260614-hide-admin-pin";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260614-guidance-admin",
-  "/teacher-login.js?v=20260614-guidance-admin",
+  "/teacher-login.js?v=20260614-hide-admin-pin",
   "/learner-offline.js?v=20260614-guidance-admin",
   "/learner-manifest.webmanifest",
   "/teacher-session.css?v=20260613-self-pin",

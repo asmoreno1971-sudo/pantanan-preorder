@@ -161,7 +161,7 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      await navigator.serviceWorker.register("/learner-sw.js?v=20260614-consolidation", { scope:"/" });
+      await navigator.serviceWorker.register("/learner-sw.js?v=20260614-hide-admin-pin", { scope:"/" });
       await navigator.serviceWorker.ready;
     }
   }

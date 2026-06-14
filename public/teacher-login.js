@@ -43,7 +43,7 @@ async function loadTeacherDirectory(){
     document.body.classList.add("guidance-login");
     document.querySelector(".login-brand h1").textContent = "Guidance Admin Login";
     document.querySelector(".login-intro").textContent = "Restricted access for Alexander Moreno.";
-    document.querySelector(".default-pin-note").innerHTML = "Administrator password: <strong>1111</strong>";
+    document.querySelector(".default-pin-note").hidden = true;
     return;
   }
 
