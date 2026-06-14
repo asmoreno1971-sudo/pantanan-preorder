@@ -177,7 +177,7 @@ function casePayload(){
 function resetForm(){
   guidanceForm.reset();
   caseId.value = "";
-  formTitle.textContent = "New Guidance Case";
+  formTitle.textContent = "Guidance Case";
   caseNumberPreview.textContent = "Auto-generated when saved";
   document.getElementById("reportDate").value = displayDate(localIsoDate());
   primaryProfile.className = "profile-card empty";
