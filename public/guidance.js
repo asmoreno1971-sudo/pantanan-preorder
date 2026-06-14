@@ -147,10 +147,9 @@ function renderCaseReport(item){
         <h1>Bakhaw Integrated School</h1>
         <h2>Guidance Office</h2>
       </div>
-      <div></div>
     </header>
     <div class="report-title">
-      <h2>Confidential Guidance Incident Case Report</h2>
+      <h2>Guidance Intake Sheet Report</h2>
       <p>FOR OFFICIAL SCHOOL USE ONLY</p>
     </div>
     <div class="report-meta">

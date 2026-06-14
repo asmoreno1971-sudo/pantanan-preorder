@@ -161,7 +161,7 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      await navigator.serviceWorker.register("/learner-sw.js?v=20260614-compact-report", { scope:"/" });
+      await navigator.serviceWorker.register("/learner-sw.js?v=20260614-intake-report", { scope:"/" });
       await navigator.serviceWorker.ready;
     }
   }
