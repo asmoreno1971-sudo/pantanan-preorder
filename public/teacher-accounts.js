@@ -28,15 +28,32 @@ function escapeHtml(value){
 }
 
 async function apiRequest(url, options = {}){
-  const response = await fetch(url, {
-    ...options,
-    headers:{ "Content-Type":"application/json", ...(options.headers || {}) }
-  });
-  const data = await response.json();
-  if(!response.ok || !data.ok){
-    throw new Error(data.message || "Teacher account request failed.");
+  const controller = new AbortController();
+  const timeout = window.setTimeout(()=>controller.abort(),5000);
+  try{
+    const response = await fetch(url, {
+      ...options,
+      headers:{ "Content-Type":"application/json", ...(options.headers || {}) },
+      signal:controller.signal
+    });
+    const data = await response.json();
+    if(!response.ok || !data.ok){
+      throw new Error(data.message || "Teacher account request failed.");
+    }
+    return data;
+  }finally{
+    window.clearTimeout(timeout);
   }
-  return data;
+}
+
+function isConnectionFailure(error){
+  return !navigator.onLine || error instanceof TypeError || error?.name === "AbortError";
+}
+
+function showOfflineAccountMessage(){
+  accountStatus.textContent = "Teacher account administration requires internet. The rest of the learner app remains available offline.";
+  accountRows.innerHTML = `<tr><td colspan="5">Reconnect to manage teacher logins and PINs.</td></tr>`;
+  document.getElementById("addTeacherButton").disabled = true;
 }
 
 async function loadAccounts(){
@@ -247,9 +264,7 @@ adminUnlockForm.addEventListener("submit", async event=>{
 
 async function initializeTeacherAccounts(){
   if(!navigator.onLine){
-    accountStatus.textContent = "Teacher account administration requires internet. The rest of the learner app remains available offline.";
-    accountRows.innerHTML = `<tr><td colspan="5">Reconnect to manage teacher logins and PINs.</td></tr>`;
-    document.getElementById("addTeacherButton").disabled = true;
+    showOfflineAccountMessage();
     return;
   }
   try{
@@ -258,7 +273,11 @@ async function initializeTeacherAccounts(){
       await Promise.all([loadTeacherDirectory(), loadAccounts()]);
       return;
     }
-  }catch{
+  }catch(error){
+    if(isConnectionFailure(error)){
+      showOfflineAccountMessage();
+      return;
+    }
     window.location.replace("/teacher-login?next=/teacher-accounts");
     return;
   }

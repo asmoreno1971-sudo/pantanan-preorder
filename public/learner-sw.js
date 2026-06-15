@@ -1,19 +1,21 @@
-const shellCache = "bakhaw-learner-shell-20260615-guidance-offline-complete";
+const shellCache = "bakhaw-learner-shell-20260615-all-pages-offline";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260614-hide-guidance-name",
-  "/teacher-login.js?v=20260615-guidance-offline-complete",
-  "/learner-offline.js?v=20260615-guidance-offline-complete",
+  "/teacher-login.js?v=20260615-all-pages-offline",
+  "/learner-offline.js?v=20260615-all-pages-offline",
   "/learner-manifest.webmanifest",
   "/teacher-session.css?v=20260613-self-pin",
-  "/teacher-session.js?v=20260615-guidance-offline-complete",
+  "/teacher-session.js?v=20260615-all-pages-offline",
   "/students",
   "/students.html",
+  "/students-offline-shell",
   "/students.css?v=20260614-sticky-table",
-  "/students.js?v=20260614-instant-offline-all",
+  "/students.js?v=20260615-all-pages-offline",
   "/student-dashboard",
   "/student-dashboard.html",
+  "/student-dashboard-offline-shell",
   "/student-dashboard.css?v=20260615-larger-centered-fonts",
   "/student-dashboard.js?v=20260614-instant-cache",
   "/guidance",
@@ -23,8 +25,9 @@ const shellFiles = [
   "/guidance.js?v=20260615-guidance-offline-complete",
   "/teacher-accounts",
   "/teacher-accounts.html",
+  "/teacher-accounts-offline-shell",
   "/teacher-accounts.css?v=20260614-page-password",
-  "/teacher-accounts.js?v=20260614-offline-shell",
+  "/teacher-accounts.js?v=20260615-all-pages-offline",
   "/bakhaw-school-logo.png"
 ];
 
@@ -54,30 +57,40 @@ self.addEventListener("fetch", event=>{
     return;
   }
 
-  if(["/guidance", "/guidance.html"].includes(url.pathname)){
+  const protectedShells = {
+    "/students":"/students-offline-shell",
+    "/students.html":"/students-offline-shell",
+    "/student-dashboard":"/student-dashboard-offline-shell",
+    "/student-dashboard.html":"/student-dashboard-offline-shell",
+    "/guidance":"/guidance-offline-shell",
+    "/guidance.html":"/guidance-offline-shell",
+    "/teacher-accounts":"/teacher-accounts-offline-shell",
+    "/teacher-accounts.html":"/teacher-accounts-offline-shell"
+  };
+  const offlineShell = protectedShells[url.pathname];
+  if(offlineShell){
     event.respondWith((async ()=>{
       const cache = await caches.open(shellCache);
-      const cached = await cache.match(event.request, { ignoreSearch:true })
-        || await cache.match("/guidance", { ignoreSearch:true })
-        || await cache.match("/guidance-offline-shell", { ignoreSearch:true });
-      const cachedPath = cached?.url ? new URL(cached.url).pathname : "";
-      const validCachedGuidance = cached
-        && !cached.redirected
-        && !["/teacher-login", "/teacher-login.html"].includes(cachedPath);
-      if(validCachedGuidance){
-        return cached;
+      const candidates = [
+        await cache.match(event.request,{ignoreSearch:true}),
+        await cache.match(url.pathname,{ignoreSearch:true}),
+        await cache.match(offlineShell,{ignoreSearch:true})
+      ].filter(Boolean);
+      const validCachedPage = candidates.find(response=>{
+        const cachedPath = response.url ? new URL(response.url).pathname : "";
+        return !response.redirected && !["/teacher-login","/teacher-login.html"].includes(cachedPath);
+      });
+      if(validCachedPage){
+        return validCachedPage;
       }
       try{
         const response = await fetch(event.request);
         if(response.ok && !response.redirected){
-          await Promise.all([
-            cache.put("/guidance", response.clone()),
-            cache.put("/guidance.html", response.clone())
-          ]);
+          await cache.put(url.pathname,response.clone());
         }
         return response;
       }catch{
-        return new Response("Guidance must be opened online once after a successful Guidance Admin login.", {
+        return new Response("Open and sign in to this app once with internet before using this page offline.", {
           status:503,
           headers:{ "Content-Type":"text/plain; charset=utf-8" }
         });
@@ -86,7 +99,7 @@ self.addEventListener("fetch", event=>{
     return;
   }
 
-  const pagePaths = ["/teacher-login", "/students", "/student-dashboard", "/guidance", "/teacher-accounts"];
+  const pagePaths = ["/teacher-login"];
   if(pagePaths.includes(url.pathname)){
     event.respondWith((async ()=>{
       const cache = await caches.open(shellCache);

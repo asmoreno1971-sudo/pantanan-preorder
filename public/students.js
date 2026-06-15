@@ -53,6 +53,20 @@ let syncInFlight = false;
 let sectionRefreshInFlight = false;
 let reorderInFlight = false;
 
+async function studentFetch(url, options = {}, timeoutMs = 5000){
+  const controller = new AbortController();
+  const timeout = window.setTimeout(()=>controller.abort(),timeoutMs);
+  try{
+    return await fetch(url,{...options,signal:controller.signal});
+  }finally{
+    window.clearTimeout(timeout);
+  }
+}
+
+function isStudentConnectionFailure(error){
+  return !navigator.onLine || error instanceof TypeError || error?.name === "AbortError";
+}
+
 function savedGradeSections(){
   try{
     const saved = JSON.parse(localStorage.getItem("bakhawGradeSections") || "[]");
@@ -69,7 +83,7 @@ async function refreshSpreadsheetSections(rebuildDropdowns = false){
 
   sectionRefreshInFlight = true;
   try{
-    const response = await fetch("/api/grade-sections", { cache:"no-store" });
+    const response = await studentFetch("/api/grade-sections", { cache:"no-store" });
     const data = await response.json();
     if(!response.ok || !data.ok){
       throw new Error(data.message || "Grade and section list could not be loaded.");
@@ -116,7 +130,7 @@ async function loadStudents(){
       syncPendingChanges(),
       refreshSpreadsheetSections()
     ]);
-    const studentResponse = await fetch("/api/students", { cache:"no-store" });
+    const studentResponse = await studentFetch("/api/students", { cache:"no-store" });
     const data = await studentResponse.json();
 
     if(!studentResponse.ok || !data.ok){
@@ -173,7 +187,7 @@ async function syncPendingChanges(){
         options.body = JSON.stringify(change.record);
       }
 
-      const response = await fetch(endpoint, options);
+      const response = await studentFetch(endpoint, options);
       const data = await response.json();
       if(response.status === 401){
         window.location.replace(`/teacher-login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
@@ -426,7 +440,7 @@ async function moveStudent(student, direction){
   renderStudents();
 
   try{
-    const response = await fetch("/api/students/reorder", {
+    const response = await studentFetch("/api/students/reorder", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body:JSON.stringify({ id:student.id, direction })
@@ -577,7 +591,7 @@ async function saveStudent(event){
   };
 
   try{
-    const response = await fetch(endpoint, {
+    const response = await studentFetch(endpoint, {
       method:id ? "PUT" : "POST",
       headers:{ "Content-Type":"application/json" },
       body:JSON.stringify(localRecord)
@@ -607,7 +621,7 @@ async function saveStudent(event){
       : (id ? "Record updated in the app. Google Sheet sync needs setup." : "Record added to the app. Google Sheet sync needs setup.");
     window.setTimeout(()=>{ recordsStatus.textContent = ""; }, 2500);
   }catch(error){
-    if(navigator.onLine && !(error instanceof TypeError)){
+    if(!isStudentConnectionFailure(error)){
       formStatus.textContent = error.message;
     }else{
       await LearnerOffline.saveRecord(localRecord);
@@ -641,7 +655,7 @@ async function deleteStudent(student){
   recordsStatus.textContent = "Deleting record...";
 
   try{
-    const response = await fetch(`/api/students/${encodeURIComponent(student.id)}`, { method:"DELETE" });
+    const response = await studentFetch(`/api/students/${encodeURIComponent(student.id)}`, { method:"DELETE" });
     const data = await response.json();
 
     if(!response.ok || !data.ok){
@@ -656,7 +670,7 @@ async function deleteStudent(student){
       : "Record deleted from the app. Google Sheet sync needs setup.";
     window.setTimeout(()=>{ recordsStatus.textContent = ""; }, 2500);
   }catch(error){
-    if(navigator.onLine && !(error instanceof TypeError)){
+    if(!isStudentConnectionFailure(error)){
       recordsStatus.textContent = error.message;
     }else{
       await LearnerOffline.removeRecord(student.id);

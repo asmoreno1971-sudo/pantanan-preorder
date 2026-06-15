@@ -181,11 +181,17 @@ agreeButton.addEventListener("click", async ()=>{
 
   try{
     if(navigator.onLine){
-      const response = await fetch("/api/teacher-consent", { method:"POST" });
-      const data = await response.json();
+      try{
+        const response = await fetchWithTimeout("/api/teacher-consent", { method:"POST" });
+        const data = await response.json();
 
-      if(!response.ok || !data.ok){
-        throw new Error(data.message || "Your agreement could not be recorded.");
+        if(!response.ok || !data.ok){
+          throw new Error(data.message || "Your agreement could not be recorded.");
+        }
+      }catch(error){
+        if(!(error instanceof TypeError) && error.name !== "AbortError"){
+          throw error;
+        }
       }
     }
 

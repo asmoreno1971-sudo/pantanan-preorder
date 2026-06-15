@@ -1,7 +1,13 @@
 (function(){
   const guidancePage = ["/guidance", "/guidance.html", "/guidance-offline-shell"].includes(window.location.pathname);
+  const canonicalPage = {
+    "/students-offline-shell":"/students",
+    "/student-dashboard-offline-shell":"/student-dashboard",
+    "/guidance-offline-shell":"/guidance",
+    "/teacher-accounts-offline-shell":"/teacher-accounts"
+  }[window.location.pathname] || window.location.pathname;
   const protectedPage = document.body.matches(".teacher-accounts-page")
-    || ["/students", "/students.html", "/student-dashboard", "/student-dashboard.html", "/guidance", "/guidance.html", "/guidance-offline-shell", "/teacher-accounts", "/teacher-accounts.html"]
+    || ["/students", "/students.html", "/students-offline-shell", "/student-dashboard", "/student-dashboard.html", "/student-dashboard-offline-shell", "/guidance", "/guidance.html", "/guidance-offline-shell", "/teacher-accounts", "/teacher-accounts.html", "/teacher-accounts-offline-shell"]
       .includes(window.location.pathname);
   window.teacherEntryAllowed = !protectedPage || (
     Boolean(window.LearnerOffline?.hasOfflineSession())
@@ -10,7 +16,7 @@
 
   if(!window.teacherEntryAllowed){
     window.LearnerOffline?.clearOfflineSession();
-    const nextPage = guidancePage ? "/guidance" : window.location.pathname + window.location.search;
+    const nextPage = guidancePage ? "/guidance" : canonicalPage + window.location.search;
     window.location.replace(`/teacher-login?next=${encodeURIComponent(nextPage)}`);
     window.stop();
     return;
