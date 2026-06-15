@@ -666,7 +666,10 @@ function editCase(item){
   primaryStudent.value = item.primaryStudent?.id || "";
   document.getElementById("primaryRole").value = item.primaryRole || "Victim";
   item.involved?.forEach(addInvolvedRow);
-  document.getElementById("aggressionType").value = item.aggressionType;
+  const legacyIncidentTypes = {
+    "Psychological Bullying":"Psychological or Emotional Bullying"
+  };
+  document.getElementById("aggressionType").value = legacyIncidentTypes[item.aggressionType] || item.aggressionType;
   document.getElementById("aggressionDetails").value = item.aggressionDetails || "";
   document.getElementById("immediateResponse").value = item.immediateResponse || "";
   document.getElementById("referredTo").value = item.referredTo || "";

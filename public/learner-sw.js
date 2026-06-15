@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260615-all-pages-offline";
+const shellCache = "bakhaw-learner-shell-20260615-guidance-incident-types";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -22,7 +22,7 @@ const shellFiles = [
   "/guidance.html",
   "/guidance-offline-shell",
   "/guidance.css?v=20260614-hover-actions",
-  "/guidance.js?v=20260615-guidance-offline-complete",
+  "/guidance.js?v=20260615-guidance-incident-types",
   "/teacher-accounts",
   "/teacher-accounts.html",
   "/teacher-accounts-offline-shell",
