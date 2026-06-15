@@ -146,8 +146,9 @@ function renderCaseReport(item){
       <td>${reportValue(entry.role)}</td>
       <td>${reportValue(entry.notes)}</td>
     </tr>`).join("");
-  const adviserText = (item.advisers || [])
-    .map(adviser=>`${adviser.gradeSection}: ${adviser.teacher}`)
+  const adviserText = [...new Set((item.advisers || [])
+    .map(adviser=>adviser.teacher)
+    .filter(Boolean))]
     .join("; ") || "Adviser not assigned";
 
   caseReportSheet.classList.toggle("compact-report",participants.length <= 3);
