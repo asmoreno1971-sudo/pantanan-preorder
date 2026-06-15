@@ -3011,6 +3011,7 @@ async function serveStatic(req, res){
     "/student-dashboard": "student-dashboard.html",
     "/students": "students.html",
     "/guidance": "guidance.html",
+    "/guidance-offline-shell": "guidance.html",
     "/teacher-profile": "teacher-profile.html",
     "/mineralex": "mineralex/index.html",
     "/qr": "qr.html"

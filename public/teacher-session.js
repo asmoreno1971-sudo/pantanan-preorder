@@ -1,7 +1,7 @@
 (function(){
-  const guidancePage = ["/guidance", "/guidance.html"].includes(window.location.pathname);
+  const guidancePage = ["/guidance", "/guidance.html", "/guidance-offline-shell"].includes(window.location.pathname);
   const protectedPage = document.body.matches(".teacher-accounts-page")
-    || ["/students", "/students.html", "/student-dashboard", "/student-dashboard.html", "/guidance", "/guidance.html", "/teacher-accounts", "/teacher-accounts.html"]
+    || ["/students", "/students.html", "/student-dashboard", "/student-dashboard.html", "/guidance", "/guidance.html", "/guidance-offline-shell", "/teacher-accounts", "/teacher-accounts.html"]
       .includes(window.location.pathname);
   window.teacherEntryAllowed = !protectedPage || (
     Boolean(window.LearnerOffline?.hasOfflineSession())
@@ -10,7 +10,8 @@
 
   if(!window.teacherEntryAllowed){
     window.LearnerOffline?.clearOfflineSession();
-    window.location.replace(`/teacher-login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+    const nextPage = guidancePage ? "/guidance" : window.location.pathname + window.location.search;
+    window.location.replace(`/teacher-login?next=${encodeURIComponent(nextPage)}`);
     window.stop();
     return;
   }

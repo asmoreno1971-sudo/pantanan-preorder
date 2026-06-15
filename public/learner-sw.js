@@ -1,13 +1,13 @@
-const shellCache = "bakhaw-learner-shell-20260615-larger-centered-fonts";
+const shellCache = "bakhaw-learner-shell-20260615-guidance-offline-complete";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260614-hide-guidance-name",
-  "/teacher-login.js?v=20260615-offline-login-fast",
-  "/learner-offline.js?v=20260615-offline-login-fast",
+  "/teacher-login.js?v=20260615-guidance-offline-complete",
+  "/learner-offline.js?v=20260615-guidance-offline-complete",
   "/learner-manifest.webmanifest",
   "/teacher-session.css?v=20260613-self-pin",
-  "/teacher-session.js?v=20260614-guidance-admin",
+  "/teacher-session.js?v=20260615-guidance-offline-complete",
   "/students",
   "/students.html",
   "/students.css?v=20260614-sticky-table",
@@ -18,8 +18,9 @@ const shellFiles = [
   "/student-dashboard.js?v=20260614-instant-cache",
   "/guidance",
   "/guidance.html",
+  "/guidance-offline-shell",
   "/guidance.css?v=20260614-hover-actions",
-  "/guidance.js?v=20260615-four-digit-year",
+  "/guidance.js?v=20260615-guidance-offline-complete",
   "/teacher-accounts",
   "/teacher-accounts.html",
   "/teacher-accounts.css?v=20260614-page-password",
@@ -57,7 +58,8 @@ self.addEventListener("fetch", event=>{
     event.respondWith((async ()=>{
       const cache = await caches.open(shellCache);
       const cached = await cache.match(event.request, { ignoreSearch:true })
-        || await cache.match("/guidance", { ignoreSearch:true });
+        || await cache.match("/guidance", { ignoreSearch:true })
+        || await cache.match("/guidance-offline-shell", { ignoreSearch:true });
       const cachedPath = cached?.url ? new URL(cached.url).pathname : "";
       const validCachedGuidance = cached
         && !cached.redirected

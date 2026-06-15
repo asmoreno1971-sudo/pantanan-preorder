@@ -30,6 +30,20 @@ let advisories = [];
 let guidanceSyncInFlight = false;
 const advisoryCacheKey = "bakhaw-guidance-advisories";
 
+async function guidanceFetch(url, options = {}, timeoutMs = 5000){
+  const controller = new AbortController();
+  const timeout = window.setTimeout(()=>controller.abort(),timeoutMs);
+  try{
+    return await fetch(url,{...options,signal:controller.signal});
+  }finally{
+    window.clearTimeout(timeout);
+  }
+}
+
+function isConnectionFailure(error){
+  return !navigator.onLine || error instanceof TypeError || error?.name === "AbortError";
+}
+
 const profileFields = [
   ["Grade / Section","gradeSection"],["Sex","sex"],["Age","age"],["Birthday","birthday"],
   ["LRN","lrn"],["Address","address"],["Father","father"],["Mother","mother"],
@@ -582,7 +596,7 @@ async function syncPendingGuidanceChanges(){
       if(change.method !== "DELETE"){
         options.body = JSON.stringify(guidanceApiPayload(change.record));
       }
-      const response = await fetch(endpoint,options);
+      const response = await guidanceFetch(endpoint,options);
       const data = await response.json();
       if(response.status === 401 || response.status === 403){
         window.location.replace(`/teacher-login?next=${encodeURIComponent("/guidance")}`);
@@ -690,9 +704,9 @@ async function loadData(){
     try{
       await syncPendingGuidanceChanges();
       const [studentResponse,caseResponse,adviserResponse] = await Promise.all([
-        fetch("/api/students",{cache:"no-store"}),
-        fetch("/api/guidance-cases",{cache:"no-store"}),
-        fetch("/api/advisory-directory",{cache:"no-store"})
+        guidanceFetch("/api/students",{cache:"no-store"}),
+        guidanceFetch("/api/guidance-cases",{cache:"no-store"}),
+        guidanceFetch("/api/advisory-directory",{cache:"no-store"})
       ]);
       if(caseResponse.status === 401 || caseResponse.status === 403){
         window.location.replace(`/teacher-login?next=${encodeURIComponent("/guidance")}`);
@@ -719,8 +733,10 @@ async function loadData(){
       resetForm();
       renderCases();
     }catch(error){
-      if(!(error instanceof TypeError)){
+      if(!isConnectionFailure(error)){
         caseStatusMessage.textContent = error.message;
+      }else{
+        await updateGuidanceSyncStatus("Offline mode: saved Guidance data remains available.");
       }
     }
   }
@@ -745,7 +761,7 @@ guidanceForm.addEventListener("submit",async event=>{
       await updateGuidanceSyncStatus("Guidance case updated locally.");
       return;
     }
-    const response = await fetch(editing ? `/api/guidance-cases/${encodeURIComponent(caseId.value)}` : "/api/guidance-cases",{
+    const response = await guidanceFetch(editing ? `/api/guidance-cases/${encodeURIComponent(caseId.value)}` : "/api/guidance-cases",{
       method:editing ? "PUT" : "POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify(payload)
@@ -764,7 +780,7 @@ guidanceForm.addEventListener("submit",async event=>{
     renderCases();
     formMessage.textContent = `${data.guidanceCase.caseNumber} saved.`;
   }catch(error){
-    if(navigator.onLine && !(error instanceof TypeError)){
+    if(!isConnectionFailure(error)){
       formMessage.textContent = error.message;
     }else{
       try{
@@ -843,7 +859,7 @@ caseList.addEventListener("click",async event=>{
       return;
     }
     try{
-      const response = await fetch(`/api/guidance-cases/${encodeURIComponent(item.id)}`,{method:"DELETE"});
+      const response = await guidanceFetch(`/api/guidance-cases/${encodeURIComponent(item.id)}`,{method:"DELETE"});
       const data = await response.json();
       if(!response.ok || !data.ok){
         throw new Error(data.message || "Case could not be deleted.");
@@ -852,7 +868,7 @@ caseList.addEventListener("click",async event=>{
       cases = cases.filter(entry=>entry.id !== item.id);
       renderCases();
     }catch(error){
-      if(navigator.onLine && !(error instanceof TypeError)){
+      if(!isConnectionFailure(error)){
         caseStatusMessage.textContent = error.message;
       }else{
         await LearnerOffline.removeGuidanceCase(item.id);

@@ -239,7 +239,7 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=20260615-offline-login-fast", { scope:"/" });
+      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=20260615-guidance-offline-complete", { scope:"/" });
       await registration.update();
       const worker = registration.installing || registration.waiting || registration.active;
       if(worker && worker.state !== "activated"){
