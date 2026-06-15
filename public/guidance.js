@@ -696,8 +696,23 @@ async function loadData(){
   guidanceLoadInFlight = true;
   lastGuidanceRefresh = Date.now();
   try{
-  students = await LearnerOffline.loadRecords();
-  cases = await LearnerOffline.loadGuidanceCases();
+  let savedCaseError = null;
+  try{
+    cases = await LearnerOffline.loadGuidanceCases();
+  }catch(error){
+    cases = [];
+    savedCaseError = error;
+  }
+  renderCases();
+  caseStatusMessage.textContent = savedCaseError
+    ? "Saved cases could not be read on this device. Reconnecting to retrieve them."
+    : `${cases.length} saved guidance case${cases.length === 1 ? "" : "s"} shown.`;
+
+  try{
+    students = await LearnerOffline.loadRecords();
+  }catch{
+    students = [];
+  }
   try{
     advisories = JSON.parse(localStorage.getItem(advisoryCacheKey) || "[]");
   }catch{
@@ -706,9 +721,11 @@ async function loadData(){
   primaryStudent.innerHTML = studentOptions();
   resetForm();
   renderCases();
-  await updateGuidanceSyncStatus(cases.length
-    ? (navigator.onLine ? "Saved guidance cases shown. Checking for updates in the background." : "Offline mode: showing guidance cases saved on this device.")
-    : (navigator.onLine ? "No saved guidance cases on this device yet. Checking for updates in the background." : "No offline guidance cases are saved on this device yet."));
+  if(!savedCaseError){
+    await updateGuidanceSyncStatus(cases.length
+      ? (navigator.onLine ? "Saved guidance cases shown. Checking for updates in the background." : "Offline mode: showing guidance cases saved on this device.")
+      : (navigator.onLine ? "No saved guidance cases on this device yet. Checking for updates in the background." : "No offline guidance cases are saved on this device yet."));
+  }
 
   if(!navigator.onLine){
     return;
@@ -736,16 +753,25 @@ async function loadData(){
       students = pendingLearnerChanges
         ? await LearnerOffline.loadRecords()
         : (studentData.students || []);
-      cases = caseData.cases || [];
+      const serverCases = caseData.cases || [];
       advisories = adviserData.advisories || [];
       if(!pendingLearnerChanges){
         await LearnerOffline.replaceRecords(students);
       }
-      await LearnerOffline.replaceGuidanceCases(cases);
+      const pendingGuidanceChanges = await LearnerOffline.pendingGuidanceCount();
+      if(!pendingGuidanceChanges){
+        cases = serverCases;
+        await LearnerOffline.replaceGuidanceCases(cases);
+      }else{
+        cases = await LearnerOffline.loadGuidanceCases();
+      }
       localStorage.setItem(advisoryCacheKey,JSON.stringify(advisories));
       primaryStudent.innerHTML = studentOptions();
       resetForm();
       renderCases();
+      if(pendingGuidanceChanges){
+        await updateGuidanceSyncStatus("Saved cases shown with local changes waiting to sync.");
+      }
     }catch(error){
       if(!isConnectionFailure(error)){
         caseStatusMessage.textContent = error.message;

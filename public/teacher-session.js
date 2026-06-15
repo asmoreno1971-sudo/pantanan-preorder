@@ -25,13 +25,17 @@
     return;
   }
 
-  async function logout(){
+  function logout(){
+    if(window.LearnerOffline){
+      LearnerOffline.clearOfflineSession();
+    }
     try{
-      if(window.LearnerOffline){
-        LearnerOffline.clearOfflineSession();
-      }
       if(navigator.onLine){
-        await fetch("/api/teacher-logout", { method:"POST" });
+        if(navigator.sendBeacon){
+          navigator.sendBeacon("/api/teacher-logout");
+        }else{
+          fetch("/api/teacher-logout", { method:"POST", keepalive:true }).catch(()=>{});
+        }
       }
     }finally{
       window.location.replace("/teacher-login");
@@ -152,7 +156,12 @@
     });
 
     document.querySelectorAll("[data-teacher-logout]").forEach(button=>{
-      button.addEventListener("click", logout);
+      button.addEventListener("click", event=>{
+        event.preventDefault();
+        button.disabled = true;
+        button.textContent = "Logging out...";
+        logout();
+      });
     });
 
     fetch("/api/teacher-session", { cache:"no-store" })

@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260615-report-level-colors";
+const shellCache = "bakhaw-learner-shell-20260615-guidance-cases-logout-fix";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -7,7 +7,7 @@ const shellFiles = [
   "/learner-offline.js?v=20260615-live-fresh-offline",
   "/learner-manifest.webmanifest",
   "/teacher-session.css?v=20260613-self-pin",
-  "/teacher-session.js?v=20260615-all-pages-offline",
+  "/teacher-session.js?v=20260615-guidance-cases-logout-fix",
   "/students",
   "/students.html",
   "/students-offline-shell",
@@ -22,7 +22,7 @@ const shellFiles = [
   "/guidance.html",
   "/guidance-offline-shell",
   "/guidance.css?v=20260614-hover-actions",
-  "/guidance.js?v=20260615-live-fresh-offline",
+  "/guidance.js?v=20260615-guidance-cases-logout-fix",
   "/guidance-report",
   "/guidance-report.html",
   "/guidance-report-offline-shell",
