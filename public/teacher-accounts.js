@@ -29,7 +29,7 @@ function escapeHtml(value){
 
 async function apiRequest(url, options = {}){
   const controller = new AbortController();
-  const timeout = window.setTimeout(()=>controller.abort(),5000);
+  const timeout = window.setTimeout(()=>controller.abort(),3000);
   try{
     const response = await fetch(url, {
       ...options,

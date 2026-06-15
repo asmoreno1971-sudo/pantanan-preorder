@@ -24,7 +24,7 @@
     </div>
     <div class="live-clock" aria-label="Current date and time">
       <span>Current date and time</span>
-      <strong id="liveDateTime">Loading...</strong>
+      <strong id="liveDateTime"></strong>
     </div>
     <div class="header-actions">
       <a class="button button-secondary" href="/teacher-accounts" data-admin-only hidden>Teacher Accounts</a>
@@ -77,7 +77,7 @@
           </tr>
         </thead>
         <tbody id="studentRows">
-          <tr><td class="empty-state" colspan="18">Loading learner profiles...</td></tr>
+          <tr><td class="empty-state" colspan="18">No saved learner profiles on this device yet.</td></tr>
         </tbody>
       </table>
     </div>
@@ -131,6 +131,6 @@
 
 <script src="/learner-offline.js?v=20260615-all-pages-offline"></script>
 <script src="/teacher-session.js?v=20260615-all-pages-offline"></script>
-<script src="/students.js?v=20260615-all-pages-offline"></script>
+<script src="/students.js?v=20260615-no-loading-waits"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260615-monthly-guidance-report";
+const shellCache = "bakhaw-learner-shell-20260615-no-loading-waits";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -12,27 +12,27 @@ const shellFiles = [
   "/students.html",
   "/students-offline-shell",
   "/students.css?v=20260614-sticky-table",
-  "/students.js?v=20260615-all-pages-offline",
+  "/students.js?v=20260615-no-loading-waits",
   "/student-dashboard",
   "/student-dashboard.html",
   "/student-dashboard-offline-shell",
   "/student-dashboard.css?v=20260615-larger-centered-fonts",
-  "/student-dashboard.js?v=20260614-instant-cache",
+  "/student-dashboard.js?v=20260615-no-loading-waits",
   "/guidance",
   "/guidance.html",
   "/guidance-offline-shell",
   "/guidance.css?v=20260614-hover-actions",
-  "/guidance.js?v=20260615-guidance-incident-types",
+  "/guidance.js?v=20260615-no-loading-waits",
   "/guidance-report",
   "/guidance-report.html",
   "/guidance-report-offline-shell",
   "/guidance-report.css?v=20260615-monthly-guidance-report",
-  "/guidance-report.js?v=20260615-monthly-guidance-report",
+  "/guidance-report.js?v=20260615-no-loading-waits",
   "/teacher-accounts",
   "/teacher-accounts.html",
   "/teacher-accounts-offline-shell",
   "/teacher-accounts.css?v=20260614-page-password",
-  "/teacher-accounts.js?v=20260615-all-pages-offline",
+  "/teacher-accounts.js?v=20260615-no-loading-waits",
   "/bakhaw-school-logo.png"
 ];
 

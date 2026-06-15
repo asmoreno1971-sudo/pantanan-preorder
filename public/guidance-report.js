@@ -203,7 +203,7 @@ async function loadReport(){
 
   try{
     const controller = new AbortController();
-    const timeout = window.setTimeout(()=>controller.abort(),5000);
+    const timeout = window.setTimeout(()=>controller.abort(),3000);
     let response;
     try{
       response = await fetch("/api/guidance-cases",{cache:"no-store",signal:controller.signal});

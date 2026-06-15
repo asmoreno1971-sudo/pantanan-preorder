@@ -53,7 +53,7 @@ let syncInFlight = false;
 let sectionRefreshInFlight = false;
 let reorderInFlight = false;
 
-async function studentFetch(url, options = {}, timeoutMs = 5000){
+async function studentFetch(url, options = {}, timeoutMs = 3000){
   const controller = new AbortController();
   const timeout = window.setTimeout(()=>controller.abort(),timeoutMs);
   try{
@@ -115,10 +115,16 @@ async function loadStudents(){
     applySectionFromUrl();
     applyFilters();
     await updateSyncStatus(navigator.onLine
-      ? `${students.length.toLocaleString()} saved records shown. Refreshing quietly.`
+      ? `${students.length.toLocaleString()} saved records shown. Checking for updates in the background.`
       : "Offline mode: showing records saved on this device.");
   }else{
-    recordsStatus.textContent = navigator.onLine ? "Loading records..." : "No offline learner records are saved on this device yet.";
+    buildSectionFilter();
+    buildRecordDropdowns();
+    applySectionFromUrl();
+    applyFilters();
+    recordsStatus.textContent = navigator.onLine
+      ? "No saved learner records on this device yet. Checking for updates in the background."
+      : "No offline learner records are saved on this device yet.";
   }
 
   if(!navigator.onLine){

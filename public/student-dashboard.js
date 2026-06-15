@@ -5,7 +5,7 @@ let sectionSummaries = [];
 let advisoryDirectory = {};
 let dashboardRefreshInFlight = false;
 
-async function fetchJson(url, timeoutMs = 8000){
+async function fetchJson(url, timeoutMs = 3000){
   const controller = new AbortController();
   const timeout = window.setTimeout(()=>controller.abort(), timeoutMs);
   try{
@@ -99,9 +99,14 @@ async function refreshDashboard(){
 async function loadDashboard(){
   const cached = await showCachedDashboard();
   if(!cached){
-    dashboardStatus.textContent = navigator.onLine ? "Loading learner records..." : "No saved learner records are available offline yet.";
+    sectionSummaries = [];
+    renderOverall([],0);
+    renderSections();
+    dashboardStatus.textContent = navigator.onLine
+      ? "No saved learner records on this device yet. Checking for updates in the background."
+      : "No saved learner records are available offline yet.";
   }
-  await refreshDashboard();
+  refreshDashboard();
 }
 
 function buildSectionSummaries(students){

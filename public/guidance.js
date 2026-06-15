@@ -30,7 +30,7 @@ let advisories = [];
 let guidanceSyncInFlight = false;
 const advisoryCacheKey = "bakhaw-guidance-advisories";
 
-async function guidanceFetch(url, options = {}, timeoutMs = 5000){
+async function guidanceFetch(url, options = {}, timeoutMs = 3000){
   const controller = new AbortController();
   const timeout = window.setTimeout(()=>controller.abort(),timeoutMs);
   try{
@@ -696,8 +696,8 @@ async function loadData(){
   resetForm();
   renderCases();
   await updateGuidanceSyncStatus(cases.length
-    ? (navigator.onLine ? "Saved guidance cases shown. Refreshing quietly." : "Offline mode: showing guidance cases saved on this device.")
-    : (navigator.onLine ? "Loading guidance cases..." : "No offline guidance cases are saved on this device yet."));
+    ? (navigator.onLine ? "Saved guidance cases shown. Checking for updates in the background." : "Offline mode: showing guidance cases saved on this device.")
+    : (navigator.onLine ? "No saved guidance cases on this device yet. Checking for updates in the background." : "No offline guidance cases are saved on this device yet."));
 
   if(!navigator.onLine){
     return;

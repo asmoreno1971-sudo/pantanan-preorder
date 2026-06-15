@@ -24,7 +24,7 @@
     </div>
     <div class="dashboard-clock">
       <span>Current date and time</span>
-      <strong id="dashboardDateTime">Loading...</strong>
+      <strong id="dashboardDateTime"></strong>
     </div>
     <div class="dashboard-actions">
       <div class="dashboard-action-column">
@@ -53,7 +53,7 @@
         <p class="eyebrow dark">Learner movement</p>
         <h2>Overall Status Codes</h2>
       </div>
-      <p id="dashboardStatus" role="status">Loading dashboard...</p>
+      <p id="dashboardStatus" role="status">Saved dashboard data will appear immediately.</p>
     </div>
     <div class="status-grid">
       <article><span>1 (In School)</span><strong id="status1Total">0</strong></article>
@@ -87,7 +87,7 @@
           </tr>
         </thead>
         <tbody id="dashboardRows">
-          <tr><td colspan="7" class="empty-dashboard">Loading grade and section totals...</td></tr>
+          <tr><td colspan="7" class="empty-dashboard">No saved grade and section totals on this device yet.</td></tr>
         </tbody>
       </table>
     </div>
@@ -96,6 +96,6 @@
 
 <script src="/learner-offline.js?v=20260615-all-pages-offline"></script>
 <script src="/teacher-session.js?v=20260615-all-pages-offline"></script>
-<script src="/student-dashboard.js?v=20260614-instant-cache"></script>
+<script src="/student-dashboard.js?v=20260615-no-loading-waits"></script>
 </body>
 </html>
