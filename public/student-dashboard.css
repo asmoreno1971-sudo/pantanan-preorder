@@ -173,22 +173,26 @@ h1{
 }
 
 .summary-card{
+  display:grid;
+  justify-items:center;
   padding:4px 7px;
   border-radius:8px;
+  text-align:center;
 }
 
 .summary-card span{
   display:block;
   color:var(--muted);
-  font-size:9px;
+  font-size:13.5px;
   font-weight:750;
+  text-align:center;
 }
 
 .summary-card strong{
   display:block;
   margin-top:0;
   color:var(--green);
-  font-size:16px;
+  font-size:24px;
   text-align:center;
 }
 
@@ -247,7 +251,7 @@ h1{
 .status-grid span{
   text-align:center;
   color:var(--muted);
-  font-size:8px;
+  font-size:12px;
   font-weight:750;
 }
 
@@ -255,7 +259,7 @@ h1{
   display:block;
   margin-top:0;
   color:var(--green);
-  font-size:14px;
+  font-size:21px;
   text-align:center;
 }
 

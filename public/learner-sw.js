@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260615-offline-login-fast";
+const shellCache = "bakhaw-learner-shell-20260615-larger-centered-fonts";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -14,7 +14,7 @@ const shellFiles = [
   "/students.js?v=20260614-instant-offline-all",
   "/student-dashboard",
   "/student-dashboard.html",
-  "/student-dashboard.css?v=20260614-half-summary",
+  "/student-dashboard.css?v=20260615-larger-centered-fonts",
   "/student-dashboard.js?v=20260614-instant-cache",
   "/guidance",
   "/guidance.html",
