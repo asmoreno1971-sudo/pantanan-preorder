@@ -3015,6 +3015,8 @@ async function serveStatic(req, res){
     "/students-offline-shell": "students.html",
     "/guidance": "guidance.html",
     "/guidance-offline-shell": "guidance.html",
+    "/guidance-report": "guidance-report.html",
+    "/guidance-report-offline-shell": "guidance-report.html",
     "/teacher-profile": "teacher-profile.html",
     "/mineralex": "mineralex/index.html",
     "/qr": "qr.html"
@@ -3035,6 +3037,8 @@ async function serveStatic(req, res){
     || pathname === "/student-dashboard.html"
     || pathname === "/guidance"
     || pathname === "/guidance.html"
+    || pathname === "/guidance-report"
+    || pathname === "/guidance-report.html"
     || pathname === "/teacher-accounts"
     || pathname === "/teacher-accounts.html"
   ) && !validTeacherSession(req)){
@@ -3042,8 +3046,9 @@ async function serveStatic(req, res){
     return;
   }
 
-  if((pathname === "/guidance" || pathname === "/guidance.html") && !validGuidanceSession(req)){
-    sendRedirect(res, "/teacher-login?next=%2Fguidance");
+  if(["/guidance", "/guidance.html", "/guidance-report", "/guidance-report.html"].includes(pathname) && !validGuidanceSession(req)){
+    const nextPage = pathname.startsWith("/guidance-report") ? "/guidance-report" : "/guidance";
+    sendRedirect(res, `/teacher-login?next=${encodeURIComponent(nextPage)}`);
     return;
   }
 

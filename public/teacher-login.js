@@ -7,7 +7,7 @@ const privacyDialog = document.getElementById("privacyDialog");
 const agreeButton = document.getElementById("agreeButton");
 const disagreeButton = document.getElementById("disagreeButton");
 const teacherDirectoryKey = "bakhawTeacherDirectory";
-const guidanceLogin = nextPage() === "/guidance";
+const guidanceLogin = ["/guidance","/guidance-report"].includes(nextPage());
 const guidanceAdmin = {
   username:"alexander.moreno",
   displayName:"Alexander Moreno"
@@ -155,7 +155,7 @@ loginForm.addEventListener("submit", async event=>{
       if(navigator.onLine){
         await LearnerOffline.registerServiceWorker();
       }
-      window.location.replace("/guidance");
+      window.location.replace(nextPage());
       return;
     }
     privacyDialog.showModal();

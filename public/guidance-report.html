@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Report | Bakhaw Integrated School</title>
+<meta name="theme-color" content="#0c6842">
+<link rel="manifest" href="/learner-manifest.webmanifest">
+<link rel="icon" href="/bakhaw-school-logo.png">
+<link rel="stylesheet" href="/guidance-report.css?v=20260615-monthly-guidance-report">
+<link rel="stylesheet" href="/teacher-session.css?v=20260613-self-pin">
+</head>
+<body>
+<main class="report-shell">
+  <header class="report-header">
+    <div class="report-brand">
+      <img src="/bakhaw-school-logo.png" alt="Bakhaw Integrated School logo">
+      <div>
+        <p>Bakhaw Integrated School</p>
+        <h1>Report</h1>
+        <span>Guidance incident summary</span>
+      </div>
+    </div>
+    <nav class="report-actions" aria-label="Report actions">
+      <button id="printReport" type="button">Print / Save PDF</button>
+      <a href="/guidance">Guidance</a>
+      <a href="/student-dashboard">Dashboard</a>
+      <button type="button" data-teacher-logout>Logout</button>
+    </nav>
+  </header>
+
+  <p id="reportStatus" class="report-status" role="status">Loading saved guidance cases...</p>
+
+  <section class="report-filters" aria-label="Report period">
+    <label>
+      <span>Report Month</span>
+      <select id="reportMonth"></select>
+    </label>
+    <label>
+      <span>Year</span>
+      <select id="reportYear"></select>
+    </label>
+    <strong id="selectedPeriod"></strong>
+  </section>
+
+  <section id="summaryCards" class="summary-cards" aria-label="Guidance totals"></section>
+
+  <section class="report-panel">
+    <div class="panel-heading">
+      <div>
+        <p>Learner level and sex</p>
+        <h2>Elementary and JHS Tally</h2>
+      </div>
+      <strong id="generatedDate"></strong>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Level</th>
+            <th>Boys</th>
+            <th>Girls</th>
+            <th>Sex Not Specified</th>
+            <th>Total Cases</th>
+          </tr>
+        </thead>
+        <tbody id="levelTallyBody"></tbody>
+        <tfoot id="levelTallyFoot"></tfoot>
+      </table>
+    </div>
+  </section>
+
+  <section class="report-panel">
+    <div class="panel-heading">
+      <div>
+        <p>Incident classification</p>
+        <h2>Incident Type Tally</h2>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="incident-table">
+        <thead>
+          <tr>
+            <th rowspan="2">Incident Type</th>
+            <th colspan="3">Elementary</th>
+            <th colspan="3">JHS</th>
+            <th rowspan="2">Overall</th>
+          </tr>
+          <tr>
+            <th>Boys</th>
+            <th>Girls</th>
+            <th>Total</th>
+            <th>Boys</th>
+            <th>Girls</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="incidentTallyBody"></tbody>
+        <tfoot id="incidentTallyFoot"></tfoot>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script src="/learner-offline.js?v=20260615-all-pages-offline"></script>
+<script src="/teacher-session.js?v=20260615-guidance-report"></script>
+<script src="/guidance-report.js?v=20260615-monthly-guidance-report"></script>
+</body>
+</html>

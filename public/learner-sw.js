@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260615-guidance-incident-types";
+const shellCache = "bakhaw-learner-shell-20260615-monthly-guidance-report";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -23,6 +23,11 @@ const shellFiles = [
   "/guidance-offline-shell",
   "/guidance.css?v=20260614-hover-actions",
   "/guidance.js?v=20260615-guidance-incident-types",
+  "/guidance-report",
+  "/guidance-report.html",
+  "/guidance-report-offline-shell",
+  "/guidance-report.css?v=20260615-monthly-guidance-report",
+  "/guidance-report.js?v=20260615-monthly-guidance-report",
   "/teacher-accounts",
   "/teacher-accounts.html",
   "/teacher-accounts-offline-shell",
@@ -64,6 +69,8 @@ self.addEventListener("fetch", event=>{
     "/student-dashboard.html":"/student-dashboard-offline-shell",
     "/guidance":"/guidance-offline-shell",
     "/guidance.html":"/guidance-offline-shell",
+    "/guidance-report":"/guidance-report-offline-shell",
+    "/guidance-report.html":"/guidance-report-offline-shell",
     "/teacher-accounts":"/teacher-accounts-offline-shell",
     "/teacher-accounts.html":"/teacher-accounts-offline-shell"
   };

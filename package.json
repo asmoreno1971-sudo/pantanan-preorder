@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check public/app.js && node --check public/cashier-offline.js && node --check public/cashier-fast.js && node --check public/cashier-sw.js && node --check public/admin.js && node --check public/kitchen.js && node --check public/qr.js && node --check public/sales.js && node --check public/transactions.js && node --check public/learner-offline.js && node --check public/learner-sw.js && node --check public/students.js && node --check public/student-dashboard.js && node --check public/guidance.js && node --check public/teacher-login.js && node --check public/teacher-session.js && node --check public/teacher-accounts.js"
+    "check": "node --check server.js && node --check public/app.js && node --check public/cashier-offline.js && node --check public/cashier-fast.js && node --check public/cashier-sw.js && node --check public/admin.js && node --check public/kitchen.js && node --check public/qr.js && node --check public/sales.js && node --check public/transactions.js && node --check public/learner-offline.js && node --check public/learner-sw.js && node --check public/students.js && node --check public/student-dashboard.js && node --check public/guidance.js && node --check public/guidance-report.js && node --check public/teacher-login.js && node --check public/teacher-session.js && node --check public/teacher-accounts.js"
   },
   "dependencies": {
     "pg": "^8.11.5"
