@@ -13,6 +13,25 @@ const guidanceAdmin = {
   displayName:"Alexander Moreno"
 };
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 5000){
+  const controller = new AbortController();
+  const timeout = window.setTimeout(()=>controller.abort(),timeoutMs);
+  try{
+    return await fetch(url,{...options,signal:controller.signal});
+  }finally{
+    window.clearTimeout(timeout);
+  }
+}
+
+function savedTeacherDirectory(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(teacherDirectoryKey) || "[]");
+    return Array.isArray(saved) ? saved : [];
+  }catch{
+    return [];
+  }
+}
+
 function escapeHtml(value){
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -48,8 +67,19 @@ async function loadTeacherDirectory(){
     return;
   }
 
+  const saved = savedTeacherDirectory();
+  if(saved.length){
+    renderTeacherDirectory(saved);
+  }
+  if(!navigator.onLine){
+    if(!saved.length){
+      loginError.textContent = "Connect to the internet once to load the teacher list.";
+    }
+    return;
+  }
+
   try{
-    const response = await fetch("/api/teacher-directory", { cache:"no-store" });
+    const response = await fetchWithTimeout("/api/teacher-directory", { cache:"no-store" });
     const data = await response.json();
     if(!response.ok || !data.ok){
       throw new Error(data.message || "Teacher list could not be loaded.");
@@ -58,10 +88,7 @@ async function loadTeacherDirectory(){
     localStorage.setItem(teacherDirectoryKey, JSON.stringify(teachers));
     renderTeacherDirectory(teachers);
   }catch{
-    const saved = JSON.parse(localStorage.getItem(teacherDirectoryKey) || "[]");
-    if(saved.length){
-      renderTeacherDirectory(saved);
-    }else{
+    if(!saved.length){
       loginError.textContent = "Connect to the internet once to load the teacher list.";
     }
   }
@@ -93,7 +120,7 @@ loginForm.addEventListener("submit", async event=>{
     let onlineLoginComplete = false;
     if(navigator.onLine){
       try{
-        const response = await fetch("/api/teacher-login", {
+        const response = await fetchWithTimeout("/api/teacher-login", {
           method:"POST",
           headers:{ "Content-Type":"application/json" },
           body:JSON.stringify({
@@ -110,7 +137,7 @@ loginForm.addEventListener("submit", async event=>{
         await LearnerOffline.rememberCredentials(usernameInput.value, pinInput.value);
         onlineLoginComplete = true;
       }catch(error){
-        if(!(error instanceof TypeError)){
+        if(!(error instanceof TypeError) && error.name !== "AbortError"){
           throw error;
         }
       }

@@ -1,10 +1,10 @@
-const shellCache = "bakhaw-learner-shell-20260615-four-digit-year";
+const shellCache = "bakhaw-learner-shell-20260615-offline-login-fast";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260614-hide-guidance-name",
-  "/teacher-login.js?v=20260615-guidance-route",
-  "/learner-offline.js?v=20260615-guidance-route",
+  "/teacher-login.js?v=20260615-offline-login-fast",
+  "/learner-offline.js?v=20260615-offline-login-fast",
   "/learner-manifest.webmanifest",
   "/teacher-session.css?v=20260613-self-pin",
   "/teacher-session.js?v=20260614-guidance-admin",
