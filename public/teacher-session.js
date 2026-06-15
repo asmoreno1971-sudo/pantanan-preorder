@@ -164,6 +164,12 @@
       });
     });
 
+    document.querySelectorAll("[data-guidance-login]").forEach(link=>{
+      link.addEventListener("click", ()=>{
+        window.LearnerOffline?.clearGuidanceSession?.();
+      });
+    });
+
     fetch("/api/teacher-session", { cache:"no-store" })
       .then(response=>response.ok ? response.json() : null)
       .then(session=>{

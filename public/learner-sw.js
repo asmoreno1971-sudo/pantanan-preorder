@@ -1,13 +1,13 @@
-const shellCache = "bakhaw-learner-shell-20260615-guidance-cases-logout-fix";
+const shellCache = "bakhaw-learner-shell-20260615-guidance-pin-gate";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260614-hide-guidance-name",
   "/teacher-login.js?v=20260615-all-pages-offline",
-  "/learner-offline.js?v=20260615-live-fresh-offline",
+  "/learner-offline.js?v=20260615-guidance-pin-gate",
   "/learner-manifest.webmanifest",
   "/teacher-session.css?v=20260613-self-pin",
-  "/teacher-session.js?v=20260615-guidance-cases-logout-fix",
+  "/teacher-session.js?v=20260615-guidance-pin-gate",
   "/students",
   "/students.html",
   "/students-offline-shell",

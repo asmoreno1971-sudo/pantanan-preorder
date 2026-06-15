@@ -265,9 +265,13 @@
     return sessionStorage.getItem("bakhawGuidanceAdmin") === "accepted";
   }
 
+  function clearGuidanceSession(){
+    sessionStorage.removeItem("bakhawGuidanceAdmin");
+  }
+
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=20260615-live-fresh-offline", { scope:"/" });
+      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=20260615-guidance-pin-gate", { scope:"/" });
       await registration.update();
       const worker = registration.installing || registration.waiting || registration.active;
       if(worker && worker.state !== "activated"){
@@ -309,6 +313,7 @@
     hasOfflineSession,
     setGuidanceSession,
     hasGuidanceSession,
+    clearGuidanceSession,
     clearOfflineSession,
     registerServiceWorker,
     onDataUpdated
