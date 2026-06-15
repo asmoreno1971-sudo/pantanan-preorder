@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260615-live-fresh-offline";
+const shellCache = "bakhaw-learner-shell-20260615-report-level-colors";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -26,7 +26,7 @@ const shellFiles = [
   "/guidance-report",
   "/guidance-report.html",
   "/guidance-report-offline-shell",
-  "/guidance-report.css?v=20260615-monthly-guidance-report",
+  "/guidance-report.css?v=20260615-report-level-colors",
   "/guidance-report.js?v=20260615-live-fresh-offline",
   "/teacher-accounts",
   "/teacher-accounts.html",
