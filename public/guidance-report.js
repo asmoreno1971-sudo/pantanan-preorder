@@ -8,6 +8,8 @@ const reportMonth = document.getElementById("reportMonth");
 const reportYear = document.getElementById("reportYear");
 const selectedPeriod = document.getElementById("selectedPeriod");
 let allCases = [];
+let reportRefreshInFlight = false;
+let lastReportRefresh = 0;
 
 const incidentTypes = [
   { label:"Physical", aliases:["physical","physical bullying"] },
@@ -191,6 +193,12 @@ function renderReport(cases){
 }
 
 async function loadReport(){
+  if(reportRefreshInFlight){
+    return;
+  }
+  reportRefreshInFlight = true;
+  lastReportRefresh = Date.now();
+  try{
   const cases = await LearnerOffline.loadGuidanceCases();
   allCases = Array.isArray(cases) ? cases : [];
   setupPeriodFilters(allCases);
@@ -219,16 +227,25 @@ async function loadReport(){
       throw new Error(data.message || "The latest cases could not be loaded.");
     }
     const latestCases = Array.isArray(data.cases) ? data.cases : [];
-    await LearnerOffline.replaceGuidanceCases(latestCases);
-    allCases = latestCases;
+    const pending = await LearnerOffline.pendingGuidanceCount();
+    if(!pending){
+      await LearnerOffline.replaceGuidanceCases(latestCases);
+    }
+    allCases = pending ? await LearnerOffline.loadGuidanceCases() : latestCases;
     setupPeriodFilters(allCases);
     renderSelectedPeriod();
+    if(pending){
+      reportStatus.textContent += ` ${pending} local change${pending === 1 ? "" : "s"} waiting to sync.`;
+    }
   }catch(error){
     if(!(error instanceof TypeError) && error?.name !== "AbortError"){
       reportStatus.textContent = error.message;
     }else{
       reportStatus.textContent += " Saved offline data remains available.";
     }
+  }
+  }finally{
+    reportRefreshInFlight = false;
   }
 }
 
@@ -239,3 +256,27 @@ reportYear.addEventListener("change",renderSelectedPeriod);
 if(window.teacherEntryAllowed !== false){
   loadReport();
 }
+window.addEventListener("online",loadReport);
+window.addEventListener("pageshow",()=>{
+  if(Date.now() - lastReportRefresh > 15000){
+    loadReport();
+  }
+});
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState === "visible" && Date.now() - lastReportRefresh > 15000){
+    loadReport();
+  }
+});
+LearnerOffline.onDataUpdated?.(async update=>{
+  if(update?.type !== "guidance" || reportRefreshInFlight){
+    return;
+  }
+  allCases = await LearnerOffline.loadGuidanceCases();
+  setupPeriodFilters(allCases);
+  renderSelectedPeriod();
+});
+window.setInterval(()=>{
+  if(document.visibilityState === "visible" && Date.now() - lastReportRefresh > 60000){
+    loadReport();
+  }
+},15000);

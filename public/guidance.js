@@ -28,6 +28,9 @@ let students = [];
 let cases = [];
 let advisories = [];
 let guidanceSyncInFlight = false;
+let guidanceLoadInFlight = false;
+let lastGuidanceRefresh = 0;
+let guidanceFormDirty = false;
 const advisoryCacheKey = "bakhaw-guidance-advisories";
 
 async function guidanceFetch(url, options = {}, timeoutMs = 3000){
@@ -633,6 +636,7 @@ function resetForm(){
   adviserInformedPickerButton.disabled = true;
   formMessage.textContent = "";
   updateAutomaticDetails();
+  guidanceFormDirty = false;
 }
 
 function renderCases(){
@@ -681,10 +685,17 @@ function editCase(item){
   adviserInformedPickerButton.disabled = !adviserInformed.checked;
   adviserInformedAt.value = displayDate(item.adviserInformedAt);
   renderPrimaryProfile();
+  guidanceFormDirty = false;
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
 async function loadData(){
+  if(guidanceLoadInFlight){
+    return;
+  }
+  guidanceLoadInFlight = true;
+  lastGuidanceRefresh = Date.now();
+  try{
   students = await LearnerOffline.loadRecords();
   cases = await LearnerOffline.loadGuidanceCases();
   try{
@@ -742,6 +753,9 @@ async function loadData(){
         await updateGuidanceSyncStatus("Offline mode: saved Guidance data remains available.");
       }
     }
+  }
+  }finally{
+    guidanceLoadInFlight = false;
   }
 }
 
@@ -894,6 +908,35 @@ window.addEventListener("online",async ()=>{
   }
 });
 window.addEventListener("offline",()=>updateGuidanceSyncStatus("Offline mode: changes remain on this device."));
+window.addEventListener("pageshow",()=>{
+  if(Date.now() - lastGuidanceRefresh > 15000 && !caseId.value){
+    loadData();
+  }
+});
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState === "visible" && Date.now() - lastGuidanceRefresh > 15000 && !caseId.value){
+    loadData();
+  }
+});
+LearnerOffline.onDataUpdated?.(async update=>{
+  if(guidanceLoadInFlight){
+    return;
+  }
+  if(update?.type === "learners"){
+    students = await LearnerOffline.loadRecords();
+    primaryStudent.innerHTML = studentOptions(primaryStudent.value);
+  }else if(update?.type === "guidance"){
+    cases = await LearnerOffline.loadGuidanceCases();
+    renderCases();
+  }
+});
+guidanceForm.addEventListener("input",()=>{ guidanceFormDirty = true; });
+guidanceForm.addEventListener("change",()=>{ guidanceFormDirty = true; });
+window.setInterval(()=>{
+  if(document.visibilityState === "visible" && !guidanceFormDirty && Date.now() - lastGuidanceRefresh > 60000){
+    loadData();
+  }
+},15000);
 
 if(window.teacherEntryAllowed !== false){
   LearnerOffline.registerServiceWorker().catch(()=>{});

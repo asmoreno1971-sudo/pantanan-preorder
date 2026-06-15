@@ -4,6 +4,7 @@ const dashboardDateTime = document.getElementById("dashboardDateTime");
 let sectionSummaries = [];
 let advisoryDirectory = {};
 let dashboardRefreshInFlight = false;
+let lastDashboardRefresh = 0;
 
 async function fetchJson(url, timeoutMs = 3000){
   const controller = new AbortController();
@@ -61,6 +62,7 @@ async function refreshDashboard(){
     return;
   }
   dashboardRefreshInFlight = true;
+  lastDashboardRefresh = Date.now();
   try{
     const [data] = await Promise.all([
       fetchJson("/api/students"),
@@ -215,3 +217,24 @@ if(window.teacherEntryAllowed === false){
   loadDashboard();
 }
 window.addEventListener("online", refreshDashboard);
+window.addEventListener("pageshow",()=>{
+  if(Date.now() - lastDashboardRefresh > 15000){
+    refreshDashboard();
+  }
+});
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState === "visible" && Date.now() - lastDashboardRefresh > 15000){
+    refreshDashboard();
+  }
+});
+LearnerOffline.onDataUpdated?.(async update=>{
+  if(update?.type !== "learners" || dashboardRefreshInFlight){
+    return;
+  }
+  await showCachedDashboard();
+});
+window.setInterval(()=>{
+  if(document.visibilityState === "visible" && Date.now() - lastDashboardRefresh > 60000){
+    refreshDashboard();
+  }
+},15000);

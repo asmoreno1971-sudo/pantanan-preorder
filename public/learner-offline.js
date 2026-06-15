@@ -7,6 +7,24 @@
   const guidanceChangesStore = "pending-guidance-changes";
   const metaStore = "meta";
   const recordOrderKey = "student-record-order";
+  const updateChannel = "BroadcastChannel" in window ? new BroadcastChannel("bakhaw-learner-updates") : null;
+
+  function announceUpdate(type){
+    const detail = { type, updatedAt:Date.now() };
+    updateChannel?.postMessage(detail);
+    window.dispatchEvent(new CustomEvent("bakhaw-data-updated",{ detail }));
+  }
+
+  function onDataUpdated(listener){
+    const localListener = event=>listener(event.detail);
+    const channelListener = event=>listener(event.data);
+    window.addEventListener("bakhaw-data-updated",localListener);
+    updateChannel?.addEventListener("message",channelListener);
+    return ()=>{
+      window.removeEventListener("bakhaw-data-updated",localListener);
+      updateChannel?.removeEventListener("message",channelListener);
+    };
+  }
 
   function openDatabase(){
     return new Promise((resolve, reject)=>{
@@ -61,7 +79,11 @@
       recordStore.clear();
       cleanRecords.forEach(record=>recordStore.put(record));
       transaction.objectStore(metaStore).put(cleanRecords.map(record=>record.id), recordOrderKey);
-      transaction.oncomplete = ()=>{ db.close(); resolve(); };
+      transaction.oncomplete = ()=>{
+        db.close();
+        announceUpdate("learners");
+        resolve();
+      };
       transaction.onerror = ()=>{ db.close(); reject(transaction.error); };
     });
   }
@@ -127,7 +149,11 @@
       const store = transaction.objectStore(guidanceCasesStore);
       store.clear();
       (Array.isArray(cases) ? cases : []).forEach(guidanceCase=>store.put(guidanceCase));
-      transaction.oncomplete = ()=>{ db.close(); resolve(); };
+      transaction.oncomplete = ()=>{
+        db.close();
+        announceUpdate("guidance");
+        resolve();
+      };
       transaction.onerror = ()=>{ db.close(); reject(transaction.error); };
     });
   }
@@ -141,10 +167,12 @@
 
   async function saveGuidanceCase(guidanceCase){
     await useStore(guidanceCasesStore, "readwrite", store=>store.put(guidanceCase));
+    announceUpdate("guidance");
   }
 
   async function removeGuidanceCase(id){
     await useStore(guidanceCasesStore, "readwrite", store=>store.delete(id));
+    announceUpdate("guidance");
   }
 
   async function queueGuidanceChange(method, guidanceCase){
@@ -239,12 +267,12 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=20260615-all-pages-offline", { scope:"/" });
+      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=20260615-live-fresh-offline", { scope:"/" });
       await registration.update();
       const worker = registration.installing || registration.waiting || registration.active;
       if(worker && worker.state !== "activated"){
         await new Promise(resolve=>{
-          const timeout = window.setTimeout(resolve, 15000);
+          const timeout = window.setTimeout(resolve, 3000);
           worker.addEventListener("statechange", ()=>{
             if(worker.state === "activated" || worker.state === "redundant"){
               window.clearTimeout(timeout);
@@ -253,7 +281,7 @@
           });
         });
       }
-      await navigator.serviceWorker.ready;
+      return registration;
     }
   }
 
@@ -282,6 +310,7 @@
     setGuidanceSession,
     hasGuidanceSession,
     clearOfflineSession,
-    registerServiceWorker
+    registerServiceWorker,
+    onDataUpdated
   };
 })();

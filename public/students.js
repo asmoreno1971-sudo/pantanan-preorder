@@ -52,6 +52,7 @@ const expandedStudentIds = new Set();
 let syncInFlight = false;
 let sectionRefreshInFlight = false;
 let reorderInFlight = false;
+let lastStudentRefresh = 0;
 
 async function studentFetch(url, options = {}, timeoutMs = 3000){
   const controller = new AbortController();
@@ -106,6 +107,7 @@ async function refreshSpreadsheetSections(rebuildDropdowns = false){
 }
 
 async function loadStudents(){
+  lastStudentRefresh = Date.now();
   const cachedStudents = await LearnerOffline.loadRecords();
   students = cachedStudents;
   spreadsheetSections = savedGradeSections();
@@ -788,5 +790,29 @@ window.setInterval(()=>refreshSpreadsheetSections(true), 60 * 1000);
 document.addEventListener("visibilitychange", ()=>{
   if(document.visibilityState === "visible"){
     refreshSpreadsheetSections(true);
+    if(Date.now() - lastStudentRefresh > 15000){
+      loadStudents();
+    }
   }
 });
+window.addEventListener("pageshow",()=>{
+  if(Date.now() - lastStudentRefresh > 15000){
+    loadStudents();
+  }
+});
+LearnerOffline.onDataUpdated?.(async update=>{
+  if(update?.type !== "learners" || syncInFlight){
+    return;
+  }
+  const latest = await LearnerOffline.loadRecords();
+  students = latest;
+  buildSectionFilter();
+  buildRecordDropdowns();
+  applySectionFromUrl();
+  applyFilters();
+});
+window.setInterval(()=>{
+  if(document.visibilityState === "visible" && !studentDialog.open && Date.now() - lastStudentRefresh > 60000){
+    loadStudents();
+  }
+},15000);
