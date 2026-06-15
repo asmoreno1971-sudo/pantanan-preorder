@@ -59,6 +59,11 @@ function displayDate(isoDate){
   return match ? `${match[2]}/${match[3]}/${match[1].slice(-2)}` : "";
 }
 
+function reportDisplayDate(isoDate){
+  const match = String(isoDate || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return match ? `${match[2]}/${match[3]}/${match[1]}` : "";
+}
+
 function isoDate(displayValue, label, required = true){
   const value = String(displayValue || "").trim();
   if(!value && !required){
@@ -168,7 +173,7 @@ function renderCaseReport(item){
     </div>
     <div class="report-meta">
       ${reportCell("Case Number",item.caseNumber)}
-      ${reportCell("Report Date",displayDate(item.reportDate) || item.reportDate)}
+      ${reportCell("Report Date",reportDisplayDate(item.reportDate) || item.reportDate)}
       ${reportCell("Case Status",item.status)}
       ${reportCell("Guidance Level",item.guidanceLevel)}
     </div>
@@ -176,7 +181,7 @@ function renderCaseReport(item){
     <section class="report-section">
       <h3>I. Incident Information</h3>
       <div class="report-detail-grid">
-        ${reportCell("Incident Date",displayDate(item.incidentDate) || item.incidentDate)}
+        ${reportCell("Incident Date",reportDisplayDate(item.incidentDate) || item.incidentDate)}
         ${reportCell("Incident Time",displayTime(item.incidentTime))}
         ${reportCell("Incident Location",item.incidentLocation,"wide-2")}
         ${reportCell("Incident Type",item.aggressionType,"wide-2")}
@@ -192,7 +197,7 @@ function renderCaseReport(item){
         ${reportCell("Grade / Section",primary.gradeSection)}
         ${reportCell("Sex",primary.sex)}
         ${reportCell("Age",primary.age)}
-        ${reportCell("Birthday",displayDate(primary.birthday) || primary.birthday)}
+        ${reportCell("Birthday",reportDisplayDate(primary.birthday) || primary.birthday)}
         ${reportCell("LRN",primary.lrn)}
         ${reportCell("Contact Number",primary.contactNumber)}
         ${reportCell("Address",primary.address,"wide-3")}
@@ -234,7 +239,7 @@ function renderCaseReport(item){
       <div class="report-detail-grid">
         ${reportCell("Class Adviser(s)",adviserText,"wide-2")}
         ${reportCell("Informed",item.adviserInformed ? "Yes" : "No")}
-        ${reportCell("Date Informed",item.adviserInformedAt ? displayDate(item.adviserInformedAt) : "Not provided")}
+        ${reportCell("Date Informed",item.adviserInformedAt ? reportDisplayDate(item.adviserInformedAt) : "Not provided")}
       </div>
     </section>
 
@@ -307,7 +312,7 @@ function renderConsolidation(){
       <td>${reportValue(item.gradeSection)}</td>
       <td class="count-cell">${item.appearances.length}</td>
       <td class="detail-cell">${detailLines(item.appearances,"role")}</td>
-      <td class="detail-cell">${detailLines(item.appearances,"incidentDate",value=>displayDate(value) || value)}</td>
+      <td class="detail-cell">${detailLines(item.appearances,"incidentDate",value=>reportDisplayDate(value) || value)}</td>
       <td class="detail-cell">${detailLines(item.appearances,"status")}</td>
       <td class="detail-cell">${detailLines(item.appearances,"caseNumber")}</td>
     </tr>`).join("") : `<tr><td class="consolidation-empty" colspan="7">No learners found in saved cases.</td></tr>`;
