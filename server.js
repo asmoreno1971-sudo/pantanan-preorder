@@ -35,6 +35,7 @@ const teacherSessionCookie = "bakhawTeacherSession";
 const teacherDefaultPin = "1234";
 const teacherDefaultPinVersion = "20260613-all-directory-teachers";
 const teacherDirectoryCsvUrl = "https://docs.google.com/spreadsheets/d/1llV9k9pReCpe7HAYt2-vZjlqMYXDmlQixgifcfRPOy0/export?format=csv&gid=785227885";
+const personnelProfileCsvUrl = "https://docs.google.com/spreadsheets/d/1llV9k9pReCpe7HAYt2-vZjlqMYXDmlQixgifcfRPOy0/export?format=csv&gid=331359598";
 const studentSheetSyncUrl = String(process.env.STUDENT_SHEET_SYNC_URL || "").trim();
 const studentSheetSyncSecret = String(process.env.STUDENT_SHEET_SYNC_SECRET || "").trim();
 const teacherDirectoryFallback = [
@@ -60,6 +61,8 @@ let dbReady = null;
 let studentSeedPromise = null;
 let teacherDirectoryCache = null;
 let teacherDirectoryCachedAt = 0;
+let personnelProfileCache = null;
+let personnelProfileCachedAt = 0;
 let gradeSectionCache = null;
 let advisoryDirectoryCache = null;
 const legacyMenuPaths = [...new Set([
@@ -315,6 +318,38 @@ async function readAdvisoryDirectory(){
   }
 
   return advisoryDirectoryCache;
+}
+
+async function readPersonnelProfiles(forceRefresh = false){
+  if(!forceRefresh && personnelProfileCache && Date.now() - personnelProfileCachedAt < 15 * 60 * 1000){
+    return personnelProfileCache;
+  }
+
+  try{
+    const response = await fetch(personnelProfileCsvUrl, { signal:AbortSignal.timeout(10000) });
+    if(!response.ok){
+      throw new Error(`Google Sheet returned ${response.status}.`);
+    }
+    const rows = parseCsvRows(await response.text());
+    const profileNames = rows
+      .map(row=>String(row[0] || "").trim())
+      .filter(Boolean)
+      .filter((name,index)=>index > 0 || !/^(name|personnel|profile|teacher name)$/i.test(name));
+    if(!profileNames.length){
+      throw new Error("Profile sheet Column A did not contain personnel names.");
+    }
+    personnelProfileCache = [...new Set(profileNames)].map((name,index)=>({
+      id:`personnel-${index + 1}`,
+      name
+    }));
+  }catch{
+    if(!personnelProfileCache){
+      personnelProfileCache = [];
+    }
+  }
+
+  personnelProfileCachedAt = Date.now();
+  return personnelProfileCache;
 }
 
 function teacherPinHash(pin, salt){
@@ -1845,6 +1880,16 @@ async function handleApi(req, res){
     return true;
   }
 
+  if(pathname === "/api/personnel" && req.method === "GET"){
+    if(!validTeacherSession(req)){
+      send(res, 401, JSON.stringify({ ok:false, message:"Teacher login required." }));
+      return true;
+    }
+    const personnel = await readPersonnelProfiles(true);
+    send(res, 200, JSON.stringify({ ok:true, personnel }));
+    return true;
+  }
+
   if(pathname === "/api/teacher-login" && req.method === "POST"){
     let body;
 
@@ -3009,6 +3054,8 @@ async function serveStatic(req, res){
     "/teacher-login": "teacher-login.html",
     "/teacher-accounts": "teacher-accounts.html",
     "/teacher-accounts-offline-shell": "teacher-accounts.html",
+    "/personnel": "personnel.html",
+    "/personnel-offline-shell": "personnel.html",
     "/student-dashboard": "student-dashboard.html",
     "/student-dashboard-offline-shell": "student-dashboard.html",
     "/students": "students.html",
@@ -3033,6 +3080,8 @@ async function serveStatic(req, res){
   if((
     pathname === "/students"
     || pathname === "/students.html"
+    || pathname === "/personnel"
+    || pathname === "/personnel.html"
     || pathname === "/student-dashboard"
     || pathname === "/student-dashboard.html"
     || pathname === "/guidance"

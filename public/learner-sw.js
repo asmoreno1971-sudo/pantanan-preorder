@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260616-unfreeze-students-header";
+const shellCache = "bakhaw-learner-shell-20260616-personnel-profile";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -13,6 +13,11 @@ const shellFiles = [
   "/students-offline-shell",
   "/students.css?v=20260616-unfreeze-header",
   "/students.js?v=20260615-live-fresh-offline",
+  "/personnel",
+  "/personnel.html",
+  "/personnel-offline-shell",
+  "/personnel.css?v=20260616-personnel-profile",
+  "/personnel.js?v=20260616-personnel-profile",
   "/student-dashboard",
   "/student-dashboard.html",
   "/student-dashboard-offline-shell",
@@ -65,6 +70,8 @@ self.addEventListener("fetch", event=>{
   const protectedShells = {
     "/students":"/students-offline-shell",
     "/students.html":"/students-offline-shell",
+    "/personnel":"/personnel-offline-shell",
+    "/personnel.html":"/personnel-offline-shell",
     "/student-dashboard":"/student-dashboard-offline-shell",
     "/student-dashboard.html":"/student-dashboard-offline-shell",
     "/guidance":"/guidance-offline-shell",

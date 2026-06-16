@@ -3,6 +3,7 @@
   const canonicalPage = {
     "/guidance.html":"/guidance",
     "/students-offline-shell":"/students",
+    "/personnel-offline-shell":"/personnel",
     "/student-dashboard-offline-shell":"/student-dashboard",
     "/guidance-offline-shell":"/guidance",
     "/guidance-report.html":"/guidance-report",
@@ -10,7 +11,7 @@
     "/teacher-accounts-offline-shell":"/teacher-accounts"
   }[window.location.pathname] || window.location.pathname;
   const protectedPage = document.body.matches(".teacher-accounts-page")
-    || ["/students", "/students.html", "/students-offline-shell", "/student-dashboard", "/student-dashboard.html", "/student-dashboard-offline-shell", "/guidance", "/guidance.html", "/guidance-offline-shell", "/guidance-report", "/guidance-report.html", "/guidance-report-offline-shell", "/teacher-accounts", "/teacher-accounts.html", "/teacher-accounts-offline-shell"]
+    || ["/students", "/students.html", "/students-offline-shell", "/personnel", "/personnel.html", "/personnel-offline-shell", "/student-dashboard", "/student-dashboard.html", "/student-dashboard-offline-shell", "/guidance", "/guidance.html", "/guidance-offline-shell", "/guidance-report", "/guidance-report.html", "/guidance-report-offline-shell", "/teacher-accounts", "/teacher-accounts.html", "/teacher-accounts-offline-shell"]
       .includes(window.location.pathname);
   window.teacherEntryAllowed = !protectedPage || (
     Boolean(window.LearnerOffline?.hasOfflineSession())

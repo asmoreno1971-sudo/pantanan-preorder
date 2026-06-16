@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<title>Personnel | Bakhaw Integrated School</title>
+<meta name="theme-color" content="#0c6842">
+<link rel="manifest" href="/learner-manifest.webmanifest">
+<link rel="icon" href="/bakhaw-school-logo.png">
+<link rel="stylesheet" href="/personnel.css?v=20260616-personnel-profile">
+<link rel="stylesheet" href="/teacher-session.css?v=20260615-guidance-pin-gate">
+</head>
+<body>
+<main class="personnel-shell">
+  <header class="personnel-header">
+    <div class="brand">
+      <img src="/bakhaw-school-logo.png" alt="Bakhaw Integrated School logo">
+      <div>
+        <p>Bakhaw Integrated School</p>
+        <h1>Personnel</h1>
+        <span>Profile sheet, Column A</span>
+      </div>
+    </div>
+    <nav class="header-actions" aria-label="Personnel navigation">
+      <a href="/student-dashboard">Dashboard</a>
+      <a href="/students">Learner Profile</a>
+      <a href="/teacher-login?next=%2Fguidance" data-guidance-login>Guidance</a>
+      <button type="button" data-teacher-logout>Logout</button>
+    </nav>
+  </header>
+
+  <section class="personnel-panel">
+    <div class="panel-heading">
+      <div>
+        <p>Personnel directory</p>
+        <h2>Profile List</h2>
+      </div>
+      <strong id="personnelCount">0 personnel</strong>
+    </div>
+    <div class="toolbar">
+      <label>
+        <span>Search Personnel</span>
+        <input id="personnelSearch" type="search" placeholder="Search name..." autocomplete="off">
+      </label>
+      <p id="personnelStatus" role="status">Saved personnel will appear immediately.</p>
+    </div>
+    <div id="personnelList" class="personnel-list" aria-live="polite"></div>
+  </section>
+</main>
+
+<script src="/learner-offline.js?v=20260615-guidance-pin-gate"></script>
+<script src="/teacher-session.js?v=20260615-guidance-pin-gate"></script>
+<script src="/personnel.js?v=20260616-personnel-profile"></script>
+</body>
+</html>
