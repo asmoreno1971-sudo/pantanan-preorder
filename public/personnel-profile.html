@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0c6842">
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/personnel-profile.css?v=20260616-personnel-autofill-name">
+<link rel="stylesheet" href="/personnel-profile.css?v=20260616-department-dropdown">
 <link rel="stylesheet" href="/teacher-session.css?v=20260615-guidance-pin-gate">
 </head>
 <body>
@@ -65,7 +65,13 @@
           </label>
           <label>
             <span>Department</span>
-            <input name="department" type="text" placeholder="Elementary / JHS">
+            <select name="department">
+              <option value="">Select department</option>
+              <option>Elementary</option>
+              <option>JHS</option>
+              <option>SHS</option>
+              <option>SPD</option>
+            </select>
           </label>
           <label>
             <span>Advisory / Assignment</span>
@@ -145,6 +151,6 @@
 
 <script src="/learner-offline.js?v=20260615-guidance-pin-gate"></script>
 <script src="/teacher-session.js?v=20260616-current-teacher"></script>
-<script src="/personnel-profile.js?v=20260616-personnel-autofill-name"></script>
+<script src="/personnel-profile.js?v=20260616-department-dropdown"></script>
 </body>
 </html>

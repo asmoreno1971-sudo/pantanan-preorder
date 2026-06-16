@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260616-current-teacher";
+const shellCache = "bakhaw-learner-shell-20260616-department-dropdown";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -21,8 +21,8 @@ const shellFiles = [
   "/personnel-profile",
   "/personnel-profile.html",
   "/personnel-profile-offline-shell",
-  "/personnel-profile.css?v=20260616-personnel-autofill-name",
-  "/personnel-profile.js?v=20260616-personnel-autofill-name",
+  "/personnel-profile.css?v=20260616-department-dropdown",
+  "/personnel-profile.js?v=20260616-department-dropdown",
   "/student-dashboard",
   "/student-dashboard.html",
   "/student-dashboard-offline-shell",
