@@ -4,6 +4,8 @@ const personnelCount = document.getElementById("personnelCount");
 const personnelSearch = document.getElementById("personnelSearch");
 const personnelStorageKey = "bakhawPersonnelProfiles";
 const teacherDirectoryKey = "bakhawTeacherDirectory";
+const personnelConsolePassword = "1111";
+const personnelConsoleUnlockKey = "bakhawPersonnelConsoleUnlocked";
 
 let personnel = [];
 let teacherDirectory = [];
@@ -77,6 +79,19 @@ function renderPersonnel(){
       <span class="personnel-name">${escapeHtml(item.name)}</span>
     </article>
   `).join("") : `<div class="empty-card">No personnel found.</div>`;
+}
+
+function ensurePersonnelConsoleAccess(){
+  if(sessionStorage.getItem(personnelConsoleUnlockKey) === "yes"){
+    return true;
+  }
+  const pin = window.prompt("Enter Personnel Consol password:");
+  if(pin === personnelConsolePassword){
+    sessionStorage.setItem(personnelConsoleUnlockKey, "yes");
+    return true;
+  }
+  window.location.replace("/student-dashboard");
+  return false;
 }
 
 async function personnelFetch(url, timeoutMs = 3000){
@@ -168,6 +183,6 @@ document.addEventListener("visibilitychange",()=>{
 });
 
 LearnerOffline.registerServiceWorker().catch(()=>{});
-if(window.teacherEntryAllowed !== false){
+if(window.teacherEntryAllowed !== false && ensurePersonnelConsoleAccess()){
   loadPersonnel();
 }

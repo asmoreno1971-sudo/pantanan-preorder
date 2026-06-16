@@ -1,6 +1,8 @@
 const dashboardRows = document.getElementById("dashboardRows");
 const dashboardStatus = document.getElementById("dashboardStatus");
 const dashboardDateTime = document.getElementById("dashboardDateTime");
+const personnelConsolePassword = "1111";
+const personnelConsoleUnlockKey = "bakhawPersonnelConsoleUnlocked";
 let sectionSummaries = [];
 let advisoryDirectory = {};
 let dashboardRefreshInFlight = false;
@@ -205,6 +207,22 @@ function escapeHtml(value){
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+document.querySelectorAll("[data-personnel-console]").forEach(link=>{
+  link.addEventListener("click", event=>{
+    if(sessionStorage.getItem(personnelConsoleUnlockKey) === "yes"){
+      return;
+    }
+    event.preventDefault();
+    const pin = window.prompt("Enter Personnel Consol password:");
+    if(pin === personnelConsolePassword){
+      sessionStorage.setItem(personnelConsoleUnlockKey, "yes");
+      window.location.href = link.href;
+    }else if(pin !== null){
+      window.alert("Incorrect Personnel Consol password.");
+    }
+  });
+});
 
 updateDashboardClock();
 window.setInterval(updateDashboardClock, 1000);
