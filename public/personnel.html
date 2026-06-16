@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0c6842">
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/personnel.css?v=20260616-personnel-profile">
+<link rel="stylesheet" href="/personnel.css?v=20260616-personnel-dropdown">
 <link rel="stylesheet" href="/teacher-session.css?v=20260615-guidance-pin-gate">
 </head>
 <body>
@@ -41,7 +41,9 @@
     <div class="toolbar">
       <label>
         <span>Search Personnel</span>
-        <input id="personnelSearch" type="search" placeholder="Search name..." autocomplete="off">
+        <select id="personnelSearch">
+          <option value="">All teachers</option>
+        </select>
       </label>
       <p id="personnelStatus" role="status">Saved personnel will appear immediately.</p>
     </div>
@@ -51,6 +53,6 @@
 
 <script src="/learner-offline.js?v=20260615-guidance-pin-gate"></script>
 <script src="/teacher-session.js?v=20260615-guidance-pin-gate"></script>
-<script src="/personnel.js?v=20260616-personnel-profile"></script>
+<script src="/personnel.js?v=20260616-personnel-dropdown"></script>
 </body>
 </html>
