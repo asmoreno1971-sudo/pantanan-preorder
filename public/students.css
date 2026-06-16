@@ -351,9 +351,6 @@ td{
 }
 
 th{
-  position:sticky;
-  top:0;
-  z-index:4;
   background:linear-gradient(180deg, #e6f3eb, #dcece3);
   color:#214c39;
   font-size:12px;
@@ -375,7 +372,7 @@ tbody tr:not(.full-record-row) > td:nth-child(2){
 }
 
 thead th:nth-child(2){
-  z-index:6;
+  z-index:3;
   background:linear-gradient(180deg, #dceee4, #d2e7dc);
 }
 

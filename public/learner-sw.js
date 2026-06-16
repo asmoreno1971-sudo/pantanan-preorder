@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260615-guidance-pin-gate";
+const shellCache = "bakhaw-learner-shell-20260616-unfreeze-students-header";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -11,7 +11,7 @@ const shellFiles = [
   "/students",
   "/students.html",
   "/students-offline-shell",
-  "/students.css?v=20260614-sticky-table",
+  "/students.css?v=20260616-unfreeze-header",
   "/students.js?v=20260615-live-fresh-offline",
   "/student-dashboard",
   "/student-dashboard.html",
