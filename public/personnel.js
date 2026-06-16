@@ -43,13 +43,40 @@ function normalizeName(value){
   return String(value || "").trim().replace(/\s+/g," ").toLowerCase();
 }
 
+function nameTokens(name){
+  return normalizeName(name)
+    .replace(/[^a-z0-9\s]/g," ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function meaningfulNameTokens(name){
+  return nameTokens(name).filter(token=>token.length > 1 && !["jr","sr","ii","iii","iv"].includes(token));
+}
+
+function samePersonName(a,b){
+  const left = nameTokens(a);
+  const right = nameTokens(b);
+  if(!left.length || !right.length){
+    return false;
+  }
+  if(left.join(" ") === right.join(" ")){
+    return true;
+  }
+  const leftMeaningful = meaningfulNameTokens(a);
+  const rightMeaningful = meaningfulNameTokens(b);
+  const smaller = leftMeaningful.length <= rightMeaningful.length ? leftMeaningful : rightMeaningful;
+  const larger = leftMeaningful.length > rightMeaningful.length ? leftMeaningful : rightMeaningful;
+  return smaller.length >= 2 && smaller.every(token=>larger.includes(token));
+}
+
 function teacherDisplayName(teacher){
   return String(teacher?.displayName || teacher?.name || teacher?.username || "").trim();
 }
 
 function renderTeacherDropdown(){
   const current = personnelSearch.value;
-  const names = (teacherDirectory.length ? teacherDirectory.map(teacherDisplayName) : personnel.map(item=>item.name))
+  const names = (personnel.length ? personnel.map(item=>item.name) : teacherDirectory.map(teacherDisplayName))
     .map(name=>String(name || "").trim())
     .filter(Boolean);
   const uniqueNames = [...new Map(names.map(name=>[normalizeName(name),name])).values()]
@@ -69,7 +96,8 @@ function renderPersonnel(){
   const visible = selected
     ? personnel.filter(item=>{
       const name = normalizeName(item.name);
-      return name === selected || name.includes(selected) || selected.includes(name);
+      return name === selected || name.includes(selected) || selected.includes(name)
+        || samePersonName(personnelSearch.value, item.name);
     })
     : personnel;
   personnelCount.textContent = `${visible.length.toLocaleString()} personnel`;
