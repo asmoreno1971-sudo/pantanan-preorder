@@ -3,6 +3,7 @@ const personnelStatus = document.getElementById("personnelStatus");
 const personnelCount = document.getElementById("personnelCount");
 const personnelSearch = document.getElementById("personnelSearch");
 const personnelStorageKey = "bakhawPersonnelProfiles";
+const personnelRecordsKey = "bakhawPersonnelProfileRecords";
 const teacherDirectoryKey = "bakhawTeacherDirectory";
 const personnelConsolePassword = "1111";
 const personnelConsoleUnlockKey = "bakhawPersonnelConsoleUnlocked";
@@ -23,6 +24,10 @@ function escapeHtml(value){
 
 function savedPersonnel(){
   try{
+    const savedRecords = JSON.parse(localStorage.getItem(personnelRecordsKey) || "[]");
+    if(Array.isArray(savedRecords) && savedRecords.length){
+      return savedRecords;
+    }
     const saved = JSON.parse(localStorage.getItem(personnelStorageKey) || "[]");
     return Array.isArray(saved) ? saved : [];
   }catch{
@@ -74,6 +79,59 @@ function teacherDisplayName(teacher){
   return String(teacher?.displayName || teacher?.name || teacher?.username || "").trim();
 }
 
+function displayValue(value){
+  const cleanValue = String(value || "").trim();
+  return cleanValue ? escapeHtml(cleanValue) : `<span class="missing-value">Not saved</span>`;
+}
+
+function profileDetails(profile){
+  return [
+    ["Sex", profile.sex],
+    ["Birthday", profile.birthday],
+    ["Position", profile.position],
+    ["Department", profile.department],
+    ["Advisory / Assignment", profile.advisory],
+    ["Contact Number", profile.contactNumber],
+    ["DepEd Email", profile.depedEmail],
+    ["Address", profile.address],
+    ["Emergency Contact", profile.emergencyContact],
+    ["Employee No.", profile.employeeNumber],
+    ["GSIS", profile.gsis],
+    ["PhilHealth", profile.philHealth],
+    ["TIN", profile.tin],
+    ["PAG-IBIG", profile.pagibig],
+    ["PRC License No.", profile.prcLicense],
+    ["Notes", profile.notes]
+  ];
+}
+
+function hasSavedDetails(profile){
+  return profileDetails(profile).some(([,value])=>String(value || "").trim());
+}
+
+function profileCard(profile,index,expanded = false){
+  const details = profileDetails(profile);
+  const summaryFields = expanded ? details : details.filter(([,value])=>String(value || "").trim()).slice(0, 4);
+  return `
+    <article class="personnel-card ${expanded ? "personnel-card-expanded" : ""}">
+      <div class="personnel-card-heading">
+        <span class="personnel-number">${index + 1}</span>
+        <div>
+          <h3 class="personnel-name">${escapeHtml(profile.name || "Unnamed personnel")}</h3>
+          <p>${hasSavedDetails(profile) ? "Saved personnel profile" : "No saved profile details yet"}</p>
+        </div>
+      </div>
+      <dl class="profile-details">
+        ${summaryFields.map(([label,value])=>`
+          <div>
+            <dt>${escapeHtml(label)}</dt>
+            <dd>${displayValue(value)}</dd>
+          </div>
+        `).join("")}
+      </dl>
+    </article>`;
+}
+
 function renderTeacherDropdown(){
   const current = personnelSearch.value;
   const names = (personnel.length ? personnel.map(item=>item.name) : teacherDirectory.map(teacherDisplayName))
@@ -101,12 +159,10 @@ function renderPersonnel(){
     })
     : personnel;
   personnelCount.textContent = `${visible.length.toLocaleString()} personnel`;
-  personnelList.innerHTML = visible.length ? visible.map((item,index)=>`
-    <article class="personnel-card">
-      <span class="personnel-number">${index + 1}</span>
-      <span class="personnel-name">${escapeHtml(item.name)}</span>
-    </article>
-  `).join("") : `<div class="empty-card">No personnel found.</div>`;
+  personnelList.classList.toggle("personnel-list-selected", Boolean(selected));
+  personnelList.innerHTML = visible.length
+    ? visible.map((item,index)=>profileCard(item,index,Boolean(selected))).join("")
+    : `<div class="empty-card">No personnel found.</div>`;
 }
 
 function ensurePersonnelConsoleAccess(){
@@ -138,7 +194,7 @@ async function refreshPersonnel(){
   }
   refreshInFlight = true;
   try{
-    const response = await personnelFetch("/api/personnel");
+    const response = await personnelFetch("/api/personnel-profiles");
     const data = await response.json();
     if(response.status === 401){
       window.location.replace(`/teacher-login?next=${encodeURIComponent("/personnel")}`);
@@ -147,14 +203,15 @@ async function refreshPersonnel(){
     if(!response.ok || !data.ok){
       throw new Error(data.message || "Personnel list could not be loaded.");
     }
-    personnel = Array.isArray(data.personnel) ? data.personnel : [];
+    personnel = Array.isArray(data.profiles) ? data.profiles : (Array.isArray(data.personnel) ? data.personnel : []);
+    localStorage.setItem(personnelRecordsKey,JSON.stringify(personnel));
     localStorage.setItem(personnelStorageKey,JSON.stringify(personnel));
     renderTeacherDropdown();
     renderPersonnel();
-    personnelStatus.textContent = `${personnel.length.toLocaleString()} personnel loaded from Profile Column A.`;
+    personnelStatus.textContent = `${personnel.length.toLocaleString()} saved personnel profile${personnel.length === 1 ? "" : "s"} loaded.`;
   }catch(error){
     personnelStatus.textContent = personnel.length
-      ? "Saved personnel shown. Reconnect to refresh from the Profile sheet."
+      ? "Saved personnel profiles shown. Reconnect to refresh."
       : (error.message || "Personnel list could not be loaded.");
   }finally{
     refreshInFlight = false;
