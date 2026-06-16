@@ -1938,8 +1938,16 @@ async function handleApi(req, res){
       send(res, 401, JSON.stringify({ ok:false, message:"Teacher login required." }));
       return true;
     }
-    const profiles = await readPersonnelProfileRecords();
-    send(res, 200, JSON.stringify({ ok:true, profiles }));
+    const [personnel, savedProfiles] = await Promise.all([
+      readPersonnelProfiles(true),
+      readPersonnelProfileRecords()
+    ]);
+    const savedByName = new Map(savedProfiles.map(profile=>[profile.name.toLowerCase(), profile]));
+    const profiles = personnel.map(item=>{
+      const saved = savedByName.get(item.name.toLowerCase()) || {};
+      return normalizePersonnelProfile({ ...saved, name:item.name });
+    });
+    send(res, 200, JSON.stringify({ ok:true, profiles, personnel }));
     return true;
   }
 
@@ -1960,6 +1968,13 @@ async function handleApi(req, res){
       send(res, 400, JSON.stringify({ ok:false, message:"Personnel name is required." }));
       return true;
     }
+    const personnel = await readPersonnelProfiles(true);
+    const officialPersonnel = personnel.find(item=>item.name.toLowerCase() === profile.name.toLowerCase());
+    if(!officialPersonnel){
+      send(res, 400, JSON.stringify({ ok:false, message:"This name is not in Personnel Consol Column A." }));
+      return true;
+    }
+    profile.name = officialPersonnel.name;
     const profiles = await readPersonnelProfileRecords();
     const profileKey = profile.name.toLowerCase();
     const index = profiles.findIndex(item=>item.name.toLowerCase() === profileKey);

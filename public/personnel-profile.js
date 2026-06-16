@@ -6,11 +6,13 @@ const saveProfileButton = document.getElementById("saveProfileButton");
 const clearProfileButton = document.getElementById("clearProfileButton");
 
 const teacherDirectoryKey = "bakhawTeacherDirectory";
+const personnelStorageKey = "bakhawPersonnelProfiles";
 const personnelProfilesKey = "bakhawPersonnelProfileRecords";
 const pendingProfilesKey = "bakhawPersonnelProfilePending";
 const currentTeacherKey = "bakhawCurrentTeacherSession";
 
 let teacherDirectory = [];
+let officialPersonnel = [];
 let profiles = [];
 let currentTeacherName = "";
 let syncInFlight = false;
@@ -49,6 +51,22 @@ function profileKey(name){
   return normalizeName(name).toLowerCase();
 }
 
+function officialPersonnelName(item){
+  return normalizeName(item?.name || item || "");
+}
+
+function officialPersonnelNames(){
+  return officialPersonnel.map(officialPersonnelName).filter(Boolean);
+}
+
+function matchingOfficialName(name){
+  const key = profileKey(name);
+  if(!key){
+    return "";
+  }
+  return officialPersonnelNames().find(officialName=>profileKey(officialName) === key) || "";
+}
+
 function profileFetch(url, options = {}, timeoutMs = 3000){
   const controller = new AbortController();
   const timeout = window.setTimeout(()=>controller.abort(), timeoutMs);
@@ -81,7 +99,7 @@ function saveCurrentTeacher(teacher){
 }
 
 function setCurrentTeacherName(name){
-  const cleanName = normalizeName(name);
+  const cleanName = matchingOfficialName(name) || normalizeName(name);
   if(!cleanName){
     return;
   }
@@ -113,8 +131,9 @@ function blankProfile(name = ""){
 }
 
 function currentProfileForName(name){
-  const key = profileKey(name);
-  return profiles.find(profile=>profileKey(profile.name) === key) || blankProfile(name);
+  const officialName = matchingOfficialName(name) || name;
+  const key = profileKey(officialName);
+  return profiles.find(profile=>profileKey(profile.name) === key) || blankProfile(officialName);
 }
 
 function setFormProfile(profile){
@@ -140,13 +159,24 @@ function profileFromForm(){
 }
 
 function upsertLocalProfile(profile){
-  const key = profileKey(profile.name);
+  const officialName = matchingOfficialName(profile.name) || profile.name;
+  profile.name = officialName;
+  const key = profileKey(officialName);
   const index = profiles.findIndex(item=>profileKey(item.name) === key);
   if(index >= 0){
     profiles[index] = { ...profiles[index], ...profile };
   }else{
     profiles.unshift(profile);
   }
+  saveStorageList(personnelProfilesKey, profiles);
+}
+
+function alignProfilesToOfficialPersonnel(){
+  if(!officialPersonnel.length){
+    return;
+  }
+  const profilesByName = new Map(profiles.map(profile=>[profileKey(profile.name), profile]));
+  profiles = officialPersonnelNames().map(name=>profilesByName.get(profileKey(name)) || blankProfile(name));
   saveStorageList(personnelProfilesKey, profiles);
 }
 
@@ -195,6 +225,25 @@ async function loadTeacherDirectory(){
   }
 }
 
+async function loadPersonnelSource(){
+  officialPersonnel = storageList(personnelStorageKey);
+  alignProfilesToOfficialPersonnel();
+  if(!navigator.onLine){
+    return;
+  }
+  try{
+    const response = await profileFetch("/api/personnel", { cache:"no-store" });
+    const data = await response.json();
+    if(response.ok && data.ok){
+      officialPersonnel = Array.isArray(data.personnel) ? data.personnel : [];
+      saveStorageList(personnelStorageKey, officialPersonnel);
+      alignProfilesToOfficialPersonnel();
+    }
+  }catch{
+    // Saved Personnel Consol list remains the offline fallback.
+  }
+}
+
 async function loadCurrentTeacher(){
   const saved = savedCurrentTeacher();
   if(saved?.displayName){
@@ -218,6 +267,7 @@ async function loadCurrentTeacher(){
 
 async function loadProfiles(){
   profiles = storageList(personnelProfilesKey);
+  alignProfilesToOfficialPersonnel();
   updateSyncStatus(profiles.length ? "Saved personnel profiles shown." : "No saved personnel profiles yet.");
   if(!navigator.onLine){
     updateSyncStatus(profiles.length ? "Offline mode: saved profiles shown." : "No offline personnel profiles are saved yet.");
@@ -234,7 +284,12 @@ async function loadProfiles(){
     if(!response.ok || !data.ok){
       throw new Error(data.message || "Personnel profiles could not be loaded.");
     }
+    if(Array.isArray(data.personnel)){
+      officialPersonnel = data.personnel;
+      saveStorageList(personnelStorageKey, officialPersonnel);
+    }
     profiles = Array.isArray(data.profiles) ? data.profiles : [];
+    alignProfilesToOfficialPersonnel();
     saveStorageList(personnelProfilesKey, profiles);
     updateSyncStatus(`${profiles.length.toLocaleString()} personnel profile${profiles.length === 1 ? "" : "s"} loaded.`);
     if(currentTeacherName || personnelName.value){
@@ -281,8 +336,16 @@ async function syncPendingProfiles(){
 profileForm.addEventListener("submit",async event=>{
   event.preventDefault();
   const profile = profileFromForm();
+  const officialName = matchingOfficialName(profile.name);
+  if(officialName){
+    profile.name = officialName;
+  }
   if(!profile.name){
     profileFormMessage.textContent = "Select a personnel name first.";
+    return;
+  }
+  if(officialPersonnel.length && !matchingOfficialName(profile.name)){
+    profileFormMessage.textContent = "Your name is not listed in Personnel Consol Column A.";
     return;
   }
   saveProfileButton.disabled = true;
@@ -340,6 +403,7 @@ document.addEventListener("visibilitychange",()=>{
 LearnerOffline.registerServiceWorker().catch(()=>{});
 if(window.teacherEntryAllowed !== false){
   loadTeacherDirectory();
+  loadPersonnelSource();
   loadCurrentTeacher();
   loadProfiles();
 }
