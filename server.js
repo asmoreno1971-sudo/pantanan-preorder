@@ -1976,6 +1976,13 @@ async function handleApi(req, res){
       const saved = savedByName.get(item.name.toLowerCase()) || {};
       return normalizePersonnelProfile({ ...saved, name:item.name });
     });
+    savedProfiles.forEach(profile=>{
+      const listed = personnel.some(item=>item.name.toLowerCase() === profile.name.toLowerCase())
+        || personnel.some(item=>samePersonnelName(profile.name, item.name));
+      if(!listed){
+        profiles.push(normalizePersonnelProfile(profile));
+      }
+    });
     send(res, 200, JSON.stringify({ ok:true, profiles, personnel }));
     return true;
   }
@@ -1997,14 +2004,16 @@ async function handleApi(req, res){
       send(res, 400, JSON.stringify({ ok:false, message:"Personnel name is required." }));
       return true;
     }
+    const session = readTeacherSession(req);
     const personnel = await readPersonnelProfiles(true);
     const officialPersonnel = personnel.find(item=>item.name.toLowerCase() === profile.name.toLowerCase())
       || personnel.find(item=>samePersonnelName(profile.name, item.name));
-    if(!officialPersonnel){
+    const currentTeacherProfile = samePersonnelName(profile.name, session?.displayName || session?.username || "");
+    if(!officialPersonnel && !currentTeacherProfile){
       send(res, 400, JSON.stringify({ ok:false, message:"This name is not in Personnel Consol Column A." }));
       return true;
     }
-    profile.name = officialPersonnel.name;
+    profile.name = officialPersonnel?.name || String(session.displayName || profile.name).trim();
     const profiles = await readPersonnelProfileRecords();
     const profileKey = profile.name.toLowerCase();
     const index = profiles.findIndex(item=>item.name.toLowerCase() === profileKey);

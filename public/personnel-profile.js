@@ -96,6 +96,10 @@ function matchingOfficialName(name){
     || "";
 }
 
+function currentTeacherCanSaveProfile(name){
+  return samePersonName(name, currentTeacherName || personnelName.value);
+}
+
 function profileFetch(url, options = {}, timeoutMs = 3000){
   const controller = new AbortController();
   const timeout = window.setTimeout(()=>controller.abort(), timeoutMs);
@@ -205,7 +209,9 @@ function alignProfilesToOfficialPersonnel(){
     return;
   }
   const profilesByName = new Map(profiles.map(profile=>[profileKey(profile.name), profile]));
-  profiles = officialPersonnelNames().map(name=>profilesByName.get(profileKey(name)) || blankProfile(name));
+  const officialProfiles = officialPersonnelNames().map(name=>profilesByName.get(profileKey(name)) || blankProfile(name));
+  const extraProfiles = profiles.filter(profile=>!matchingOfficialName(profile.name));
+  profiles = [...officialProfiles, ...extraProfiles];
   saveStorageList(personnelProfilesKey, profiles);
 }
 
@@ -373,7 +379,7 @@ profileForm.addEventListener("submit",async event=>{
     profileFormMessage.textContent = "Select a personnel name first.";
     return;
   }
-  if(officialPersonnel.length && !matchingOfficialName(profile.name)){
+  if(officialPersonnel.length && !matchingOfficialName(profile.name) && !currentTeacherCanSaveProfile(profile.name)){
     profileFormMessage.textContent = "Your name is not listed in Personnel Consol Column A.";
     return;
   }
