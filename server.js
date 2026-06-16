@@ -711,6 +711,10 @@ function personnelNameTokens(name){
     .filter(Boolean);
 }
 
+function meaningfulPersonnelNameTokens(name){
+  return personnelNameTokens(name).filter(token=>token.length > 1 && !["jr", "sr", "ii", "iii", "iv"].includes(token));
+}
+
 function samePersonnelName(leftName, rightName){
   const left = personnelNameTokens(leftName);
   const right = personnelNameTokens(rightName);
@@ -720,7 +724,11 @@ function samePersonnelName(leftName, rightName){
   if(left.join(" ") === right.join(" ")){
     return true;
   }
-  return left[0] === right[0] && right.includes(left[left.length - 1]);
+  const leftMeaningful = meaningfulPersonnelNameTokens(leftName);
+  const rightMeaningful = meaningfulPersonnelNameTokens(rightName);
+  const smaller = leftMeaningful.length <= rightMeaningful.length ? leftMeaningful : rightMeaningful;
+  const larger = leftMeaningful.length > rightMeaningful.length ? leftMeaningful : rightMeaningful;
+  return smaller.length >= 2 && smaller.every(token=>larger.includes(token));
 }
 
 function guidanceStudentName(student){

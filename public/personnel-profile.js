@@ -58,6 +58,10 @@ function nameTokens(name){
     .filter(Boolean);
 }
 
+function meaningfulNameTokens(name){
+  return nameTokens(name).filter(token=>token.length > 1 && !["jr","sr","ii","iii","iv"].includes(token));
+}
+
 function samePersonName(a,b){
   const left = nameTokens(a);
   const right = nameTokens(b);
@@ -67,7 +71,11 @@ function samePersonName(a,b){
   if(left.join(" ") === right.join(" ")){
     return true;
   }
-  return left[0] === right[0] && right.includes(left[left.length - 1]);
+  const leftMeaningful = meaningfulNameTokens(a);
+  const rightMeaningful = meaningfulNameTokens(b);
+  const smaller = leftMeaningful.length <= rightMeaningful.length ? leftMeaningful : rightMeaningful;
+  const larger = leftMeaningful.length > rightMeaningful.length ? leftMeaningful : rightMeaningful;
+  return smaller.length >= 2 && smaller.every(token=>larger.includes(token));
 }
 
 function officialPersonnelName(item){
