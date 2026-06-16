@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0c6842">
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/personnel-profile.css?v=20260616-personnel-consol-link">
+<link rel="stylesheet" href="/personnel-profile.css?v=20260617-dynamic-fields">
 <link rel="stylesheet" href="/teacher-session.css?v=20260615-guidance-pin-gate">
 </head>
 <body>
@@ -41,104 +41,13 @@
 
     <form id="personnelProfileForm" class="profile-form">
       <section class="form-section">
-        <h3>Basic Information</h3>
-        <div class="field-grid">
-          <label class="wide">
-            <span>Name *</span>
-            <input id="personnelName" name="name" type="text" readonly required placeholder="Logged-in teacher name">
-          </label>
-          <label>
-            <span>Sex *</span>
-            <select id="sex" name="sex" required>
-              <option value="">Select</option>
-              <option>Male</option>
-              <option>Female</option>
-            </select>
-          </label>
-          <label>
-            <span>Birthday</span>
-            <input id="birthday" name="birthday" type="date">
-          </label>
-          <label>
-            <span>Position</span>
-            <input name="position" type="text" placeholder="Teacher">
-          </label>
-          <label>
-            <span>Department</span>
-            <select name="department">
-              <option value="">Select department</option>
-              <option>Elementary</option>
-              <option>JHS</option>
-              <option>SHS</option>
-              <option>SPD</option>
-            </select>
-          </label>
-          <label>
-            <span>Advisory / Assignment</span>
-            <input name="advisory" type="text" placeholder="Grade / section or office">
-          </label>
-        </div>
-      </section>
-
-      <section class="form-section">
-        <h3>Contact Information</h3>
-        <div class="field-grid">
-          <label>
-            <span>Contact Number</span>
-            <input name="contactNumber" type="tel" inputmode="tel">
-          </label>
-          <label>
-            <span>DepEd Email</span>
-            <input name="depedEmail" type="email" placeholder="name@deped.gov.ph">
-          </label>
-          <label class="wide">
-            <span>Address</span>
-            <input name="address" type="text">
-          </label>
-          <label class="wide">
-            <span>Emergency Contact</span>
-            <input name="emergencyContact" type="text" placeholder="Name and contact number">
-          </label>
-        </div>
-      </section>
-
-      <section class="form-section">
-        <h3>Government and Employee IDs</h3>
-        <div class="field-grid id-grid">
-          <label>
-            <span>Employee No.</span>
-            <input name="employeeNumber" type="text">
-          </label>
-          <label>
-            <span>GSIS</span>
-            <input name="gsis" type="text">
-          </label>
-          <label>
-            <span>PhilHealth</span>
-            <input name="philHealth" type="text">
-          </label>
-          <label>
-            <span>TIN</span>
-            <input name="tin" type="text">
-          </label>
-          <label>
-            <span>PAG-IBIG</span>
-            <input name="pagibig" type="text">
-          </label>
-          <label>
-            <span>PRC License No.</span>
-            <input name="prcLicense" type="text">
-          </label>
-        </div>
-      </section>
-
-      <section class="form-section">
-        <h3>Other Details</h3>
-        <label class="wide">
-          <span>Notes</span>
-          <textarea name="notes" rows="4" placeholder="Other important details"></textarea>
+        <h3>Personnel Name</h3>
+        <label>
+          <span>Name *</span>
+          <input id="personnelName" name="name" type="text" readonly required placeholder="Logged-in teacher name">
         </label>
       </section>
+      <div id="dynamicProfileFields" class="dynamic-profile-fields"></div>
 
       <div class="form-actions">
         <button type="submit" id="saveProfileButton">Save Profile</button>
@@ -151,6 +60,6 @@
 
 <script src="/learner-offline.js?v=20260615-guidance-pin-gate"></script>
 <script src="/teacher-session.js?v=20260616-current-teacher"></script>
-<script src="/personnel-profile.js?v=20260617-save-current-teacher"></script>
+<script src="/personnel-profile.js?v=20260617-dynamic-fields"></script>
 </body>
 </html>

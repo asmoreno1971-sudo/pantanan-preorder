@@ -4,16 +4,19 @@ const profileSyncStatus = document.getElementById("profileSyncStatus");
 const profileFormMessage = document.getElementById("profileFormMessage");
 const saveProfileButton = document.getElementById("saveProfileButton");
 const clearProfileButton = document.getElementById("clearProfileButton");
+const dynamicProfileFields = document.getElementById("dynamicProfileFields");
 
 const teacherDirectoryKey = "bakhawTeacherDirectory";
 const personnelStorageKey = "bakhawPersonnelProfiles";
 const personnelProfilesKey = "bakhawPersonnelProfileRecords";
+const personnelFieldsKey = "bakhawPersonnelProfileFields";
 const pendingProfilesKey = "bakhawPersonnelProfilePending";
 const currentTeacherKey = "bakhawCurrentTeacherSession";
 
 let teacherDirectory = [];
 let officialPersonnel = [];
 let profiles = [];
+let profileFields = normalizeProfileFields(storageList(personnelFieldsKey));
 let currentTeacherName = "";
 let syncInFlight = false;
 
@@ -37,6 +40,48 @@ function storageList(key){
 
 function saveStorageList(key, value){
   localStorage.setItem(key, JSON.stringify(Array.isArray(value) ? value : []));
+}
+
+function fieldId(label){
+  return String(label || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g,"-")
+    .replace(/^-+|-+$/g,"");
+}
+
+function normalizeProfileFields(fields){
+  const source = Array.isArray(fields) && fields.length ? fields : defaultProfileFields();
+  return source
+    .map((field,index)=>{
+      const label = normalizeName(field?.label || field?.name || field || "");
+      return {
+        id:fieldId(field?.id || label) || `field-${index + 1}`,
+        label
+      };
+    })
+    .filter(field=>field.label);
+}
+
+function defaultProfileFields(){
+  return [
+    "Sex",
+    "Birthday",
+    "Position",
+    "Department",
+    "Advisory / Assignment",
+    "Contact Number",
+    "DepEd Email",
+    "Address",
+    "Emergency Contact",
+    "Employee No.",
+    "GSIS",
+    "PhilHealth",
+    "TIN",
+    "PAG-IBIG",
+    "PRC License No.",
+    "Notes"
+  ].map(label=>({ id:fieldId(label), label }));
 }
 
 function normalizeName(value){
@@ -142,8 +187,10 @@ function setCurrentTeacherName(name){
 }
 
 function blankProfile(name = ""){
+  const fields = Object.fromEntries(profileFields.map(field=>[field.id, ""]));
   return {
     name,
+    fields,
     sex:"",
     birthday:"",
     position:"",
@@ -169,26 +216,77 @@ function currentProfileForName(name){
   return profiles.find(profile=>profileKey(profile.name) === key) || blankProfile(officialName);
 }
 
+function legacyProfileValue(profile, id){
+  const legacyValues = {
+    sex:profile.sex,
+    birthday:profile.birthday,
+    position:profile.position,
+    department:profile.department,
+    "advisory-assignment":profile.advisory,
+    "contact-number":profile.contactNumber,
+    "deped-email":profile.depedEmail,
+    address:profile.address,
+    "emergency-contact":profile.emergencyContact,
+    "employee-no":profile.employeeNumber,
+    gsis:profile.gsis,
+    philhealth:profile.philHealth,
+    tin:profile.tin,
+    "pag-ibig":profile.pagibig,
+    "prc-license-no":profile.prcLicense,
+    notes:profile.notes
+  };
+  return legacyValues[id] || "";
+}
+
 function setFormProfile(profile){
-  [...profileForm.elements].forEach(field=>{
-    if(!field.name){
-      return;
+  personnelName.value = profile.name || "";
+  profileFields.forEach(field=>{
+    const input = profileForm.elements[`field:${field.id}`];
+    if(input){
+      input.value = profile.fields?.[field.id] || profile[field.id] || legacyProfileValue(profile, field.id) || "";
     }
-    field.value = profile[field.name] || "";
   });
 }
 
 function profileFromForm(){
   const formData = new FormData(profileForm);
   const profile = blankProfile(normalizeName(formData.get("name")));
-  Object.keys(profile).forEach(key=>{
-    if(key !== "name"){
-      profile[key] = String(formData.get(key) || "").trim();
-    }
+  profileFields.forEach(field=>{
+    profile.fields[field.id] = String(formData.get(`field:${field.id}`) || "").trim();
   });
-  profile.depedEmail = profile.depedEmail.toLowerCase();
+  profile.sex = profile.fields.sex || "";
+  profile.birthday = profile.fields.birthday || "";
+  profile.position = profile.fields.position || "";
+  profile.department = profile.fields.department || "";
+  profile.advisory = profile.fields["advisory-assignment"] || "";
+  profile.contactNumber = profile.fields["contact-number"] || "";
+  profile.depedEmail = String(profile.fields["deped-email"] || "").toLowerCase();
+  profile.address = profile.fields.address || "";
+  profile.emergencyContact = profile.fields["emergency-contact"] || "";
+  profile.employeeNumber = profile.fields["employee-no"] || "";
+  profile.gsis = profile.fields.gsis || "";
+  profile.philHealth = profile.fields.philhealth || "";
+  profile.tin = profile.fields.tin || "";
+  profile.pagibig = profile.fields["pag-ibig"] || "";
+  profile.prcLicense = profile.fields["prc-license-no"] || "";
+  profile.notes = profile.fields.notes || "";
   profile.updatedAt = new Date().toISOString();
   return profile;
+}
+
+function renderProfileFields(){
+  dynamicProfileFields.innerHTML = profileFields.map(field=>`
+    <section class="form-section dynamic-field-section">
+      <h3>${escapeHtml(field.label)}</h3>
+      <label>
+        <span>${escapeHtml(field.label)}</span>
+        <textarea name="field:${escapeHtml(field.id)}" rows="2" placeholder="Enter ${escapeHtml(field.label)}"></textarea>
+      </label>
+    </section>
+  `).join("");
+  if(currentTeacherName || personnelName.value){
+    setFormProfile(currentProfileForName(currentTeacherName || personnelName.value));
+  }
 }
 
 function upsertLocalProfile(profile){
@@ -271,6 +369,11 @@ async function loadPersonnelSource(){
     const data = await response.json();
     if(response.ok && data.ok){
       officialPersonnel = Array.isArray(data.personnel) ? data.personnel : [];
+      if(Array.isArray(data.fields)){
+        profileFields = normalizeProfileFields(data.fields);
+        saveStorageList(personnelFieldsKey, profileFields);
+        renderProfileFields();
+      }
       saveStorageList(personnelStorageKey, officialPersonnel);
       alignProfilesToOfficialPersonnel();
     }
@@ -322,6 +425,11 @@ async function loadProfiles(){
     if(Array.isArray(data.personnel)){
       officialPersonnel = data.personnel;
       saveStorageList(personnelStorageKey, officialPersonnel);
+    }
+    if(Array.isArray(data.fields)){
+      profileFields = normalizeProfileFields(data.fields);
+      saveStorageList(personnelFieldsKey, profileFields);
+      renderProfileFields();
     }
     profiles = Array.isArray(data.profiles) ? data.profiles : [];
     alignProfilesToOfficialPersonnel();
@@ -380,7 +488,7 @@ profileForm.addEventListener("submit",async event=>{
     return;
   }
   if(officialPersonnel.length && !matchingOfficialName(profile.name) && !currentTeacherCanSaveProfile(profile.name)){
-    profileFormMessage.textContent = "Your name is not listed in Personnel Consol Column A.";
+    profileFormMessage.textContent = "Your name is not listed in the teacher directory.";
     return;
   }
   saveProfileButton.disabled = true;
@@ -437,6 +545,7 @@ document.addEventListener("visibilitychange",()=>{
 
 LearnerOffline.registerServiceWorker().catch(()=>{});
 if(window.teacherEntryAllowed !== false){
+  renderProfileFields();
   loadTeacherDirectory();
   loadPersonnelSource();
   loadCurrentTeacher();

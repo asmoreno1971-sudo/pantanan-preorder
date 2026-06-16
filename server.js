@@ -64,6 +64,8 @@ let teacherDirectoryCache = null;
 let teacherDirectoryCachedAt = 0;
 let personnelProfileCache = null;
 let personnelProfileCachedAt = 0;
+let personnelProfileFieldCache = null;
+let personnelProfileFieldCachedAt = 0;
 let gradeSectionCache = null;
 let advisoryDirectoryCache = null;
 const legacyMenuPaths = [...new Set([
@@ -326,31 +328,78 @@ async function readPersonnelProfiles(forceRefresh = false){
     return personnelProfileCache;
   }
 
+  const teachers = await readTeacherDirectory(forceRefresh);
+  personnelProfileCache = teachers.map((teacher,index)=>({
+    id:`personnel-${index + 1}`,
+    name:teacher.displayName
+  }));
+  personnelProfileCachedAt = Date.now();
+  return personnelProfileCache;
+}
+
+function personnelFieldId(label){
+  return String(label || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function defaultPersonnelProfileFields(){
+  return [
+    "Sex",
+    "Birthday",
+    "Position",
+    "Department",
+    "Advisory / Assignment",
+    "Contact Number",
+    "DepEd Email",
+    "Address",
+    "Emergency Contact",
+    "Employee No.",
+    "GSIS",
+    "PhilHealth",
+    "TIN",
+    "PAG-IBIG",
+    "PRC License No.",
+    "Notes"
+  ].map((label,index)=>({
+    id:personnelFieldId(label) || `field-${index + 1}`,
+    label
+  }));
+}
+
+async function readPersonnelProfileFields(forceRefresh = false){
+  if(!forceRefresh && personnelProfileFieldCache && Date.now() - personnelProfileFieldCachedAt < 15 * 60 * 1000){
+    return personnelProfileFieldCache;
+  }
+
   try{
     const response = await fetch(personnelProfileCsvUrl, { signal:AbortSignal.timeout(10000) });
     if(!response.ok){
       throw new Error(`Google Sheet returned ${response.status}.`);
     }
     const rows = parseCsvRows(await response.text());
-    const profileNames = rows
+    const labels = rows
       .map(row=>String(row[0] || "").trim())
       .filter(Boolean)
-      .filter((name,index)=>index > 0 || !/^(name|personnel|profile|teacher name)$/i.test(name));
-    if(!profileNames.length){
-      throw new Error("Profile sheet Column A did not contain personnel names.");
+      .filter((label,index)=>index > 0 || !/^(field|fields|title|box title|profile field)$/i.test(label));
+    if(!labels.length){
+      throw new Error("Profile sheet Column A did not contain profile field titles.");
     }
-    personnelProfileCache = [...new Set(profileNames)].map((name,index)=>({
-      id:`personnel-${index + 1}`,
-      name
+    const uniqueLabels = [...new Map(labels.map(label=>[personnelFieldId(label) || label.toLowerCase(), label])).values()];
+    personnelProfileFieldCache = uniqueLabels.map((label,index)=>({
+      id:personnelFieldId(label) || `field-${index + 1}`,
+      label
     }));
   }catch{
-    if(!personnelProfileCache){
-      personnelProfileCache = [];
+    if(!personnelProfileFieldCache){
+      personnelProfileFieldCache = defaultPersonnelProfileFields();
     }
   }
 
-  personnelProfileCachedAt = Date.now();
-  return personnelProfileCache;
+  personnelProfileFieldCachedAt = Date.now();
+  return personnelProfileFieldCache;
 }
 
 function teacherPinHash(pin, salt){
@@ -679,6 +728,38 @@ async function writePersonnelProfileRecords(profiles){
 function normalizePersonnelProfile(profile = {}){
   const name = String(profile.name || "").trim().replace(/\s+/g, " ");
   const sex = String(profile.sex || "").trim();
+  const fields = {};
+  if(profile.fields && typeof profile.fields === "object" && !Array.isArray(profile.fields)){
+    Object.entries(profile.fields).forEach(([key,value])=>{
+      const fieldKey = personnelFieldId(key);
+      if(fieldKey){
+        fields[fieldKey] = String(value || "").trim();
+      }
+    });
+  }
+  const legacyFields = {
+    sex,
+    birthday:String(profile.birthday || "").trim(),
+    position:String(profile.position || "").trim(),
+    department:String(profile.department || "").trim(),
+    "advisory-assignment":String(profile.advisory || "").trim(),
+    "contact-number":String(profile.contactNumber || "").trim(),
+    "deped-email":String(profile.depedEmail || "").trim().toLowerCase(),
+    address:String(profile.address || "").trim(),
+    "emergency-contact":String(profile.emergencyContact || "").trim(),
+    "employee-no":String(profile.employeeNumber || "").trim(),
+    gsis:String(profile.gsis || "").trim(),
+    philhealth:String(profile.philHealth || "").trim(),
+    tin:String(profile.tin || "").trim(),
+    "pag-ibig":String(profile.pagibig || "").trim(),
+    "prc-license-no":String(profile.prcLicense || "").trim(),
+    notes:String(profile.notes || "").trim()
+  };
+  Object.entries(legacyFields).forEach(([key,value])=>{
+    if(value && !fields[key]){
+      fields[key] = value;
+    }
+  });
   return {
     id:String(profile.id || name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || crypto.randomUUID()).replace(/^-+|-+$/g, ""),
     name,
@@ -698,6 +779,7 @@ function normalizePersonnelProfile(profile = {}){
     pagibig:String(profile.pagibig || "").trim(),
     prcLicense:String(profile.prcLicense || "").trim(),
     notes:String(profile.notes || "").trim(),
+    fields,
     updatedAt:String(profile.updatedAt || new Date().toISOString())
   };
 }
@@ -1957,8 +2039,11 @@ async function handleApi(req, res){
       send(res, 401, JSON.stringify({ ok:false, message:"Teacher login required." }));
       return true;
     }
-    const personnel = await readPersonnelProfiles(true);
-    send(res, 200, JSON.stringify({ ok:true, personnel }));
+    const [personnel, fields] = await Promise.all([
+      readPersonnelProfiles(true),
+      readPersonnelProfileFields(true)
+    ]);
+    send(res, 200, JSON.stringify({ ok:true, personnel, fields }));
     return true;
   }
 
@@ -1967,9 +2052,10 @@ async function handleApi(req, res){
       send(res, 401, JSON.stringify({ ok:false, message:"Teacher login required." }));
       return true;
     }
-    const [personnel, savedProfiles] = await Promise.all([
+    const [personnel, savedProfiles, fields] = await Promise.all([
       readPersonnelProfiles(true),
-      readPersonnelProfileRecords()
+      readPersonnelProfileRecords(),
+      readPersonnelProfileFields(true)
     ]);
     const savedByName = new Map(savedProfiles.map(profile=>[profile.name.toLowerCase(), profile]));
     const profiles = personnel.map(item=>{
@@ -1983,7 +2069,7 @@ async function handleApi(req, res){
         profiles.push(normalizePersonnelProfile(profile));
       }
     });
-    send(res, 200, JSON.stringify({ ok:true, profiles, personnel }));
+    send(res, 200, JSON.stringify({ ok:true, profiles, personnel, fields }));
     return true;
   }
 
@@ -2005,15 +2091,12 @@ async function handleApi(req, res){
       return true;
     }
     const session = readTeacherSession(req);
-    const personnel = await readPersonnelProfiles(true);
-    const officialPersonnel = personnel.find(item=>item.name.toLowerCase() === profile.name.toLowerCase())
-      || personnel.find(item=>samePersonnelName(profile.name, item.name));
     const currentTeacherProfile = samePersonnelName(profile.name, session?.displayName || session?.username || "");
-    if(!officialPersonnel && !currentTeacherProfile){
-      send(res, 400, JSON.stringify({ ok:false, message:"This name is not in Personnel Consol Column A." }));
+    if(!currentTeacherProfile && session?.role !== "admin"){
+      send(res, 400, JSON.stringify({ ok:false, message:"You can only save your own personnel profile." }));
       return true;
     }
-    profile.name = officialPersonnel?.name || String(session.displayName || profile.name).trim();
+    profile.name = currentTeacherProfile ? String(session.displayName || profile.name).trim() : profile.name;
     const profiles = await readPersonnelProfileRecords();
     const profileKey = profile.name.toLowerCase();
     const index = profiles.findIndex(item=>item.name.toLowerCase() === profileKey);

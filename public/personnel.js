@@ -4,12 +4,14 @@ const personnelCount = document.getElementById("personnelCount");
 const personnelSearch = document.getElementById("personnelSearch");
 const personnelStorageKey = "bakhawPersonnelProfiles";
 const personnelRecordsKey = "bakhawPersonnelProfileRecords";
+const personnelFieldsKey = "bakhawPersonnelProfileFields";
 const teacherDirectoryKey = "bakhawTeacherDirectory";
 const personnelConsolePassword = "1111";
 const personnelConsoleUnlockKey = "bakhawPersonnelConsoleUnlocked";
 
 let personnel = [];
 let teacherDirectory = [];
+let profileFields = [];
 let refreshInFlight = false;
 let directoryRefreshInFlight = false;
 
@@ -44,8 +46,57 @@ function savedTeacherDirectory(){
   }
 }
 
+function savedProfileFields(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(personnelFieldsKey) || "[]");
+    return Array.isArray(saved) ? saved : [];
+  }catch{
+    return [];
+  }
+}
+
 function normalizeName(value){
   return String(value || "").trim().replace(/\s+/g," ").toLowerCase();
+}
+
+function fieldId(label){
+  return String(label || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g,"-")
+    .replace(/^-+|-+$/g,"");
+}
+
+function defaultProfileFields(){
+  return [
+    "Sex",
+    "Birthday",
+    "Position",
+    "Department",
+    "Advisory / Assignment",
+    "Contact Number",
+    "DepEd Email",
+    "Address",
+    "Emergency Contact",
+    "Employee No.",
+    "GSIS",
+    "PhilHealth",
+    "TIN",
+    "PAG-IBIG",
+    "PRC License No.",
+    "Notes"
+  ].map(label=>({ id:fieldId(label), label }));
+}
+
+function normalizeProfileFields(fields){
+  const source = Array.isArray(fields) && fields.length ? fields : defaultProfileFields();
+  return source.map((field,index)=>{
+    const label = String(field?.label || field?.name || field || "").trim();
+    return {
+      id:fieldId(field?.id || label) || `field-${index + 1}`,
+      label
+    };
+  }).filter(field=>field.label);
 }
 
 function nameTokens(name){
@@ -85,24 +136,25 @@ function displayValue(value){
 }
 
 function profileDetails(profile){
-  return [
-    ["Sex", profile.sex],
-    ["Birthday", profile.birthday],
-    ["Position", profile.position],
-    ["Department", profile.department],
-    ["Advisory / Assignment", profile.advisory],
-    ["Contact Number", profile.contactNumber],
-    ["DepEd Email", profile.depedEmail],
-    ["Address", profile.address],
-    ["Emergency Contact", profile.emergencyContact],
-    ["Employee No.", profile.employeeNumber],
-    ["GSIS", profile.gsis],
-    ["PhilHealth", profile.philHealth],
-    ["TIN", profile.tin],
-    ["PAG-IBIG", profile.pagibig],
-    ["PRC License No.", profile.prcLicense],
-    ["Notes", profile.notes]
-  ];
+  const legacyValues = {
+    sex:profile.sex,
+    birthday:profile.birthday,
+    position:profile.position,
+    department:profile.department,
+    "advisory-assignment":profile.advisory,
+    "contact-number":profile.contactNumber,
+    "deped-email":profile.depedEmail,
+    address:profile.address,
+    "emergency-contact":profile.emergencyContact,
+    "employee-no":profile.employeeNumber,
+    gsis:profile.gsis,
+    philhealth:profile.philHealth,
+    tin:profile.tin,
+    "pag-ibig":profile.pagibig,
+    "prc-license-no":profile.prcLicense,
+    notes:profile.notes
+  };
+  return profileFields.map(field=>[field.label, profile.fields?.[field.id] || profile[field.id] || legacyValues[field.id] || ""]);
 }
 
 function hasSavedDetails(profile){
@@ -203,6 +255,10 @@ async function refreshPersonnel(){
     if(!response.ok || !data.ok){
       throw new Error(data.message || "Personnel list could not be loaded.");
     }
+    if(Array.isArray(data.fields)){
+      profileFields = normalizeProfileFields(data.fields);
+      localStorage.setItem(personnelFieldsKey,JSON.stringify(profileFields));
+    }
     personnel = Array.isArray(data.profiles) ? data.profiles : (Array.isArray(data.personnel) ? data.personnel : []);
     localStorage.setItem(personnelRecordsKey,JSON.stringify(personnel));
     localStorage.setItem(personnelStorageKey,JSON.stringify(personnel));
@@ -246,6 +302,7 @@ async function refreshTeacherDirectory(){
 function loadPersonnel(){
   personnel = savedPersonnel();
   teacherDirectory = savedTeacherDirectory();
+  profileFields = normalizeProfileFields(savedProfileFields());
   renderTeacherDropdown();
   renderPersonnel();
   personnelStatus.textContent = personnel.length
