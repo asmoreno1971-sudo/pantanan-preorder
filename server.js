@@ -702,6 +702,27 @@ function normalizePersonnelProfile(profile = {}){
   };
 }
 
+function personnelNameTokens(name){
+  return String(name || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function samePersonnelName(leftName, rightName){
+  const left = personnelNameTokens(leftName);
+  const right = personnelNameTokens(rightName);
+  if(!left.length || !right.length){
+    return false;
+  }
+  if(left.join(" ") === right.join(" ")){
+    return true;
+  }
+  return left[0] === right[0] && right.includes(left[left.length - 1]);
+}
+
 function guidanceStudentName(student){
   const given = [student.firstName, student.middleName, student.extension].filter(Boolean).join(" ");
   return [student.familyName, given].filter(Boolean).join(", ");
@@ -1969,7 +1990,8 @@ async function handleApi(req, res){
       return true;
     }
     const personnel = await readPersonnelProfiles(true);
-    const officialPersonnel = personnel.find(item=>item.name.toLowerCase() === profile.name.toLowerCase());
+    const officialPersonnel = personnel.find(item=>item.name.toLowerCase() === profile.name.toLowerCase())
+      || personnel.find(item=>samePersonnelName(profile.name, item.name));
     if(!officialPersonnel){
       send(res, 400, JSON.stringify({ ok:false, message:"This name is not in Personnel Consol Column A." }));
       return true;

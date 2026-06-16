@@ -51,6 +51,25 @@ function profileKey(name){
   return normalizeName(name).toLowerCase();
 }
 
+function nameTokens(name){
+  return profileKey(name)
+    .replace(/[^a-z0-9\s]/g," ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function samePersonName(a,b){
+  const left = nameTokens(a);
+  const right = nameTokens(b);
+  if(!left.length || !right.length){
+    return false;
+  }
+  if(left.join(" ") === right.join(" ")){
+    return true;
+  }
+  return left[0] === right[0] && right.includes(left[left.length - 1]);
+}
+
 function officialPersonnelName(item){
   return normalizeName(item?.name || item || "");
 }
@@ -64,7 +83,9 @@ function matchingOfficialName(name){
   if(!key){
     return "";
   }
-  return officialPersonnelNames().find(officialName=>profileKey(officialName) === key) || "";
+  return officialPersonnelNames().find(officialName=>profileKey(officialName) === key)
+    || officialPersonnelNames().find(officialName=>samePersonName(name, officialName))
+    || "";
 }
 
 function profileFetch(url, options = {}, timeoutMs = 3000){
