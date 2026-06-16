@@ -246,6 +246,7 @@ function setFormProfile(profile){
     const input = profileForm.elements[`field:${field.id}`];
     if(input){
       input.value = profile.fields?.[field.id] || profile[field.id] || legacyProfileValue(profile, field.id) || "";
+      autoResizeTextarea(input);
     }
   });
 }
@@ -282,13 +283,25 @@ function renderProfileFields(){
       <h3>${escapeHtml(field.label)}</h3>
       <label>
         <span>${escapeHtml(field.label)}</span>
-        <textarea name="field:${escapeHtml(field.id)}" rows="2" placeholder="Enter ${escapeHtml(field.label)}"></textarea>
+        <textarea name="field:${escapeHtml(field.id)}" rows="1" placeholder="Enter ${escapeHtml(field.label)}"></textarea>
       </label>
     </section>
   `).join("");
+  dynamicProfileFields.querySelectorAll("textarea").forEach(textarea=>{
+    textarea.addEventListener("input",()=>autoResizeTextarea(textarea));
+    autoResizeTextarea(textarea);
+  });
   if(currentTeacherName || personnelName.value){
     setFormProfile(currentProfileForName(currentTeacherName || personnelName.value));
   }
+}
+
+function autoResizeTextarea(textarea){
+  if(!textarea || textarea.tagName !== "TEXTAREA"){
+    return;
+  }
+  textarea.style.height = "auto";
+  textarea.style.height = `${textarea.scrollHeight}px`;
 }
 
 function upsertLocalProfile(profile){

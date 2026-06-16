@@ -97,7 +97,11 @@ input[readonly]{
   color:var(--green-dark);
   font-weight:850;
 }
-textarea{ min-height:98px; resize:vertical; }
+textarea{
+  min-height:44px;
+  overflow:hidden;
+  resize:none;
+}
 .wide{ grid-column:span 2; }
 .id-grid{ grid-template-columns:repeat(6,minmax(0,1fr)); }
 .form-actions{ display:flex; flex-wrap:wrap; gap:10px; }
