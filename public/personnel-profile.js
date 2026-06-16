@@ -213,7 +213,9 @@ function blankProfile(name = ""){
 function currentProfileForName(name){
   const officialName = matchingOfficialName(name) || name;
   const key = profileKey(officialName);
-  return profiles.find(profile=>profileKey(profile.name) === key) || blankProfile(officialName);
+  const savedProfile = profiles.find(profile=>profileKey(profile.name) === key)
+    || profiles.find(profile=>samePersonName(profile.name, officialName));
+  return savedProfile ? { ...savedProfile, name:officialName } : blankProfile(officialName);
 }
 
 function legacyProfileValue(profile, id){
@@ -293,7 +295,7 @@ function upsertLocalProfile(profile){
   const officialName = matchingOfficialName(profile.name) || profile.name;
   profile.name = officialName;
   const key = profileKey(officialName);
-  const index = profiles.findIndex(item=>profileKey(item.name) === key);
+  const index = profiles.findIndex(item=>profileKey(item.name) === key || samePersonName(item.name, officialName));
   if(index >= 0){
     profiles[index] = { ...profiles[index], ...profile };
   }else{

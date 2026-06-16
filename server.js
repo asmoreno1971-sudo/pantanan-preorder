@@ -2059,7 +2059,9 @@ async function handleApi(req, res){
     ]);
     const savedByName = new Map(savedProfiles.map(profile=>[profile.name.toLowerCase(), profile]));
     const profiles = personnel.map(item=>{
-      const saved = savedByName.get(item.name.toLowerCase()) || {};
+      const saved = savedByName.get(item.name.toLowerCase())
+        || savedProfiles.find(profile=>samePersonnelName(profile.name, item.name))
+        || {};
       return normalizePersonnelProfile({ ...saved, name:item.name });
     });
     savedProfiles.forEach(profile=>{
