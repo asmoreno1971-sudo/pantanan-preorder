@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<title>Personnel Profile | Bakhaw Integrated School</title>
+<meta name="theme-color" content="#0c6842">
+<link rel="manifest" href="/learner-manifest.webmanifest">
+<link rel="icon" href="/bakhaw-school-logo.png">
+<link rel="stylesheet" href="/personnel-profile.css?v=20260616-personnel-profile-form">
+<link rel="stylesheet" href="/teacher-session.css?v=20260615-guidance-pin-gate">
+</head>
+<body>
+<main class="profile-shell">
+  <header class="profile-header">
+    <div class="brand">
+      <img src="/bakhaw-school-logo.png" alt="Bakhaw Integrated School logo">
+      <div>
+        <p>Bakhaw Integrated School</p>
+        <h1>Personnel Profile</h1>
+        <span>Individual personnel information sheet</span>
+      </div>
+    </div>
+    <nav class="header-actions" aria-label="Personnel profile navigation">
+      <a href="/personnel">Personnel</a>
+      <a href="/student-dashboard">Dashboard</a>
+      <a href="/students">Learner Profile</a>
+      <button type="button" data-teacher-logout>Logout</button>
+    </nav>
+  </header>
+
+  <section class="profile-panel">
+    <div class="panel-heading">
+      <div>
+        <p>Personnel data</p>
+        <h2>Individual Profile</h2>
+      </div>
+      <strong id="profileSyncStatus">Saved profiles will appear immediately.</strong>
+    </div>
+
+    <form id="personnelProfileForm" class="profile-form">
+      <section class="form-section">
+        <h3>Basic Information</h3>
+        <div class="field-grid">
+          <label class="wide">
+            <span>Name *</span>
+            <select id="personnelName" name="name" required>
+              <option value="">Select personnel</option>
+            </select>
+          </label>
+          <label>
+            <span>Sex *</span>
+            <select id="sex" name="sex" required>
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+            </select>
+          </label>
+          <label>
+            <span>Birthday</span>
+            <input id="birthday" name="birthday" type="date">
+          </label>
+          <label>
+            <span>Position</span>
+            <input name="position" type="text" placeholder="Teacher">
+          </label>
+          <label>
+            <span>Department</span>
+            <input name="department" type="text" placeholder="Elementary / JHS">
+          </label>
+          <label>
+            <span>Advisory / Assignment</span>
+            <input name="advisory" type="text" placeholder="Grade / section or office">
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h3>Contact Information</h3>
+        <div class="field-grid">
+          <label>
+            <span>Contact Number</span>
+            <input name="contactNumber" type="tel" inputmode="tel">
+          </label>
+          <label>
+            <span>DepEd Email</span>
+            <input name="depedEmail" type="email" placeholder="name@deped.gov.ph">
+          </label>
+          <label class="wide">
+            <span>Address</span>
+            <input name="address" type="text">
+          </label>
+          <label class="wide">
+            <span>Emergency Contact</span>
+            <input name="emergencyContact" type="text" placeholder="Name and contact number">
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h3>Government and Employee IDs</h3>
+        <div class="field-grid id-grid">
+          <label>
+            <span>Employee No.</span>
+            <input name="employeeNumber" type="text">
+          </label>
+          <label>
+            <span>GSIS</span>
+            <input name="gsis" type="text">
+          </label>
+          <label>
+            <span>PhilHealth</span>
+            <input name="philHealth" type="text">
+          </label>
+          <label>
+            <span>TIN</span>
+            <input name="tin" type="text">
+          </label>
+          <label>
+            <span>PAG-IBIG</span>
+            <input name="pagibig" type="text">
+          </label>
+          <label>
+            <span>PRC License No.</span>
+            <input name="prcLicense" type="text">
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h3>Other Details</h3>
+        <label class="wide">
+          <span>Notes</span>
+          <textarea name="notes" rows="4" placeholder="Other important details"></textarea>
+        </label>
+      </section>
+
+      <div class="form-actions">
+        <button type="submit" id="saveProfileButton">Save Profile</button>
+        <button type="button" id="clearProfileButton" class="secondary">Clear Form</button>
+      </div>
+      <p id="profileFormMessage" class="form-message" role="status"></p>
+    </form>
+  </section>
+</main>
+
+<script src="/learner-offline.js?v=20260615-guidance-pin-gate"></script>
+<script src="/teacher-session.js?v=20260615-guidance-pin-gate"></script>
+<script src="/personnel-profile.js?v=20260616-personnel-profile-form"></script>
+</body>
+</html>

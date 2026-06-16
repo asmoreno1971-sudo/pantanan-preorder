@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260616-personnel-dropdown";
+const shellCache = "bakhaw-learner-shell-20260616-personnel-profile-form";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -18,6 +18,11 @@ const shellFiles = [
   "/personnel-offline-shell",
   "/personnel.css?v=20260616-personnel-dropdown",
   "/personnel.js?v=20260616-personnel-dropdown",
+  "/personnel-profile",
+  "/personnel-profile.html",
+  "/personnel-profile-offline-shell",
+  "/personnel-profile.css?v=20260616-personnel-profile-form",
+  "/personnel-profile.js?v=20260616-personnel-profile-form",
   "/student-dashboard",
   "/student-dashboard.html",
   "/student-dashboard-offline-shell",
@@ -72,6 +77,8 @@ self.addEventListener("fetch", event=>{
     "/students.html":"/students-offline-shell",
     "/personnel":"/personnel-offline-shell",
     "/personnel.html":"/personnel-offline-shell",
+    "/personnel-profile":"/personnel-profile-offline-shell",
+    "/personnel-profile.html":"/personnel-profile-offline-shell",
     "/student-dashboard":"/student-dashboard-offline-shell",
     "/student-dashboard.html":"/student-dashboard-offline-shell",
     "/guidance":"/guidance-offline-shell",

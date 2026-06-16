@@ -19,6 +19,7 @@ const kioskSettingsPath = path.resolve(process.env.KIOSK_SETTINGS_PATH || path.j
 const studentsPath = path.resolve(process.env.STUDENTS_PATH || path.join(dataDir, "students.json"));
 const teacherAccountsPath = path.resolve(process.env.TEACHER_ACCOUNTS_PATH || path.join(dataDir, "teacher-accounts.json"));
 const guidanceCasesPath = path.resolve(process.env.GUIDANCE_CASES_PATH || path.join(dataDir, "guidance-cases.json"));
+const personnelProfilesPath = path.resolve(process.env.PERSONNEL_PROFILES_PATH || path.join(dataDir, "personnel-profiles.json"));
 const studentsImportPath = path.join(root, "students-import.csv");
 const port = Number(process.env.PORT) || 3001;
 const semaphoreApiKey = process.env.SEMAPHORE_API_KEY || "";
@@ -660,6 +661,47 @@ async function writeGuidanceCases(cases){
   await writeDataRecord("guidance-cases", guidanceCasesPath, cases);
 }
 
+async function readPersonnelProfileRecords(){
+  const profiles = await readDataRecord("personnel-profiles", personnelProfilesPath, []);
+  if(!Array.isArray(profiles)){
+    throw new Error("Personnel profile storage is not an array.");
+  }
+  return profiles.map(normalizePersonnelProfile).filter(profile=>profile.name);
+}
+
+async function writePersonnelProfileRecords(profiles){
+  if(!Array.isArray(profiles)){
+    throw new Error("Personnel profile write blocked: invalid profile data.");
+  }
+  await writeDataRecord("personnel-profiles", personnelProfilesPath, profiles.map(normalizePersonnelProfile).filter(profile=>profile.name));
+}
+
+function normalizePersonnelProfile(profile = {}){
+  const name = String(profile.name || "").trim().replace(/\s+/g, " ");
+  const sex = String(profile.sex || "").trim();
+  return {
+    id:String(profile.id || name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || crypto.randomUUID()).replace(/^-+|-+$/g, ""),
+    name,
+    sex:["Male","Female"].includes(sex) ? sex : "",
+    birthday:String(profile.birthday || "").trim(),
+    position:String(profile.position || "").trim(),
+    department:String(profile.department || "").trim(),
+    advisory:String(profile.advisory || "").trim(),
+    contactNumber:String(profile.contactNumber || "").trim(),
+    depedEmail:String(profile.depedEmail || "").trim().toLowerCase(),
+    address:String(profile.address || "").trim(),
+    emergencyContact:String(profile.emergencyContact || "").trim(),
+    employeeNumber:String(profile.employeeNumber || "").trim(),
+    gsis:String(profile.gsis || "").trim(),
+    philHealth:String(profile.philHealth || "").trim(),
+    tin:String(profile.tin || "").trim(),
+    pagibig:String(profile.pagibig || "").trim(),
+    prcLicense:String(profile.prcLicense || "").trim(),
+    notes:String(profile.notes || "").trim(),
+    updatedAt:String(profile.updatedAt || new Date().toISOString())
+  };
+}
+
 function guidanceStudentName(student){
   const given = [student.firstName, student.middleName, student.extension].filter(Boolean).join(" ");
   return [student.familyName, given].filter(Boolean).join(", ");
@@ -1114,7 +1156,8 @@ function requirePersistentStorageForProduction(key, operation){
     "kiosk-settings",
     "students",
     "teacher-accounts",
-    "guidance-cases"
+    "guidance-cases",
+    "personnel-profiles"
   ]);
 
   if(!isProduction || databaseUrl || !protectedKeys.has(key)){
@@ -1887,6 +1930,47 @@ async function handleApi(req, res){
     }
     const personnel = await readPersonnelProfiles(true);
     send(res, 200, JSON.stringify({ ok:true, personnel }));
+    return true;
+  }
+
+  if(pathname === "/api/personnel-profiles" && req.method === "GET"){
+    if(!validTeacherSession(req)){
+      send(res, 401, JSON.stringify({ ok:false, message:"Teacher login required." }));
+      return true;
+    }
+    const profiles = await readPersonnelProfileRecords();
+    send(res, 200, JSON.stringify({ ok:true, profiles }));
+    return true;
+  }
+
+  if(pathname === "/api/personnel-profiles" && req.method === "POST"){
+    if(!validTeacherSession(req)){
+      send(res, 401, JSON.stringify({ ok:false, message:"Teacher login required." }));
+      return true;
+    }
+    let body;
+    try{
+      body = JSON.parse(await readBody(req) || "{}");
+    }catch{
+      send(res, 400, JSON.stringify({ ok:false, message:"Personnel profile details could not be read." }));
+      return true;
+    }
+    const profile = normalizePersonnelProfile(body.profile || body);
+    if(!profile.name){
+      send(res, 400, JSON.stringify({ ok:false, message:"Personnel name is required." }));
+      return true;
+    }
+    const profiles = await readPersonnelProfileRecords();
+    const profileKey = profile.name.toLowerCase();
+    const index = profiles.findIndex(item=>item.name.toLowerCase() === profileKey);
+    profile.updatedAt = new Date().toISOString();
+    if(index >= 0){
+      profiles[index] = { ...profiles[index], ...profile };
+    }else{
+      profiles.unshift(profile);
+    }
+    await writePersonnelProfileRecords(profiles);
+    send(res, 200, JSON.stringify({ ok:true, profile }));
     return true;
   }
 
@@ -3056,6 +3140,8 @@ async function serveStatic(req, res){
     "/teacher-accounts-offline-shell": "teacher-accounts.html",
     "/personnel": "personnel.html",
     "/personnel-offline-shell": "personnel.html",
+    "/personnel-profile": "personnel-profile.html",
+    "/personnel-profile-offline-shell": "personnel-profile.html",
     "/student-dashboard": "student-dashboard.html",
     "/student-dashboard-offline-shell": "student-dashboard.html",
     "/students": "students.html",
@@ -3082,6 +3168,8 @@ async function serveStatic(req, res){
     || pathname === "/students.html"
     || pathname === "/personnel"
     || pathname === "/personnel.html"
+    || pathname === "/personnel-profile"
+    || pathname === "/personnel-profile.html"
     || pathname === "/student-dashboard"
     || pathname === "/student-dashboard.html"
     || pathname === "/guidance"

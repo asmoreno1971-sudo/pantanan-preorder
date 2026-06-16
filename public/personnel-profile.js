@@ -1,0 +1,310 @@
+const profileForm = document.getElementById("personnelProfileForm");
+const personnelName = document.getElementById("personnelName");
+const profileSyncStatus = document.getElementById("profileSyncStatus");
+const profileFormMessage = document.getElementById("profileFormMessage");
+const saveProfileButton = document.getElementById("saveProfileButton");
+const clearProfileButton = document.getElementById("clearProfileButton");
+
+const teacherDirectoryKey = "bakhawTeacherDirectory";
+const personnelProfilesKey = "bakhawPersonnelProfileRecords";
+const pendingProfilesKey = "bakhawPersonnelProfilePending";
+
+let teacherDirectory = [];
+let profiles = [];
+let syncInFlight = false;
+
+function escapeHtml(value){
+  return String(value || "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function storageList(key){
+  try{
+    const saved = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(saved) ? saved : [];
+  }catch{
+    return [];
+  }
+}
+
+function saveStorageList(key, value){
+  localStorage.setItem(key, JSON.stringify(Array.isArray(value) ? value : []));
+}
+
+function normalizeName(value){
+  return String(value || "").trim().replace(/\s+/g," ");
+}
+
+function teacherDisplayName(teacher){
+  return normalizeName(teacher?.displayName || teacher?.name || teacher?.username || "");
+}
+
+function profileKey(name){
+  return normalizeName(name).toLowerCase();
+}
+
+function profileFetch(url, options = {}, timeoutMs = 3000){
+  const controller = new AbortController();
+  const timeout = window.setTimeout(()=>controller.abort(), timeoutMs);
+  return fetch(url,{...options,signal:controller.signal}).finally(()=>window.clearTimeout(timeout));
+}
+
+function uniqueTeacherNames(){
+  const names = teacherDirectory.map(teacherDisplayName).filter(Boolean);
+  return [...new Map(names.map(name=>[profileKey(name), name])).values()]
+    .sort((a,b)=>a.localeCompare(b));
+}
+
+function renderTeacherDropdown(){
+  const current = personnelName.value;
+  const names = uniqueTeacherNames();
+  personnelName.innerHTML = `<option value="">Select personnel</option>${names
+    .map(name=>`<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+    .join("")}`;
+  if([...personnelName.options].some(option=>option.value === current)){
+    personnelName.value = current;
+  }
+}
+
+function blankProfile(name = ""){
+  return {
+    name,
+    sex:"",
+    birthday:"",
+    position:"",
+    department:"",
+    advisory:"",
+    contactNumber:"",
+    depedEmail:"",
+    address:"",
+    emergencyContact:"",
+    employeeNumber:"",
+    gsis:"",
+    philHealth:"",
+    tin:"",
+    pagibig:"",
+    prcLicense:"",
+    notes:""
+  };
+}
+
+function currentProfileForName(name){
+  const key = profileKey(name);
+  return profiles.find(profile=>profileKey(profile.name) === key) || blankProfile(name);
+}
+
+function setFormProfile(profile){
+  [...profileForm.elements].forEach(field=>{
+    if(!field.name){
+      return;
+    }
+    field.value = profile[field.name] || "";
+  });
+}
+
+function profileFromForm(){
+  const formData = new FormData(profileForm);
+  const profile = blankProfile(normalizeName(formData.get("name")));
+  Object.keys(profile).forEach(key=>{
+    if(key !== "name"){
+      profile[key] = String(formData.get(key) || "").trim();
+    }
+  });
+  profile.depedEmail = profile.depedEmail.toLowerCase();
+  profile.updatedAt = new Date().toISOString();
+  return profile;
+}
+
+function upsertLocalProfile(profile){
+  const key = profileKey(profile.name);
+  const index = profiles.findIndex(item=>profileKey(item.name) === key);
+  if(index >= 0){
+    profiles[index] = { ...profiles[index], ...profile };
+  }else{
+    profiles.unshift(profile);
+  }
+  saveStorageList(personnelProfilesKey, profiles);
+}
+
+function queueProfile(profile){
+  const pending = storageList(pendingProfilesKey);
+  const key = profileKey(profile.name);
+  const index = pending.findIndex(item=>profileKey(item.name) === key);
+  if(index >= 0){
+    pending[index] = profile;
+  }else{
+    pending.push(profile);
+  }
+  saveStorageList(pendingProfilesKey, pending);
+}
+
+function pendingCount(){
+  return storageList(pendingProfilesKey).length;
+}
+
+function updateSyncStatus(message){
+  const pending = pendingCount();
+  const suffix = pending ? ` ${pending} profile${pending === 1 ? "" : "s"} waiting to sync.` : "";
+  profileSyncStatus.textContent = `${message}${suffix}`;
+}
+
+async function loadTeacherDirectory(){
+  teacherDirectory = storageList(teacherDirectoryKey);
+  renderTeacherDropdown();
+  if(!navigator.onLine){
+    if(!teacherDirectory.length){
+      updateSyncStatus("Connect once to load the teacher list.");
+    }
+    return;
+  }
+  try{
+    const response = await profileFetch("/api/teacher-directory", { cache:"no-store" });
+    const data = await response.json();
+    if(!response.ok || !data.ok){
+      throw new Error(data.message || "Teacher list could not be loaded.");
+    }
+    teacherDirectory = Array.isArray(data.teachers) ? data.teachers : [];
+    saveStorageList(teacherDirectoryKey, teacherDirectory);
+    renderTeacherDropdown();
+  }catch{
+    if(!teacherDirectory.length){
+      updateSyncStatus("Teacher list could not be loaded. Try again with internet.");
+    }
+  }
+}
+
+async function loadProfiles(){
+  profiles = storageList(personnelProfilesKey);
+  updateSyncStatus(profiles.length ? "Saved personnel profiles shown." : "No saved personnel profiles yet.");
+  if(!navigator.onLine){
+    updateSyncStatus(profiles.length ? "Offline mode: saved profiles shown." : "No offline personnel profiles are saved yet.");
+    return;
+  }
+  try{
+    await syncPendingProfiles();
+    const response = await profileFetch("/api/personnel-profiles", { cache:"no-store" });
+    const data = await response.json();
+    if(response.status === 401){
+      window.location.replace(`/teacher-login?next=${encodeURIComponent("/personnel-profile")}`);
+      return;
+    }
+    if(!response.ok || !data.ok){
+      throw new Error(data.message || "Personnel profiles could not be loaded.");
+    }
+    profiles = Array.isArray(data.profiles) ? data.profiles : [];
+    saveStorageList(personnelProfilesKey, profiles);
+    updateSyncStatus(`${profiles.length.toLocaleString()} personnel profile${profiles.length === 1 ? "" : "s"} loaded.`);
+    if(personnelName.value){
+      setFormProfile(currentProfileForName(personnelName.value));
+    }
+  }catch(error){
+    updateSyncStatus(profiles.length ? "Saved profiles shown. Reconnect to refresh." : (error.message || "Personnel profiles could not be loaded."));
+  }
+}
+
+async function syncPendingProfiles(){
+  if(syncInFlight || !navigator.onLine){
+    return;
+  }
+  const pending = storageList(pendingProfilesKey);
+  if(!pending.length){
+    return;
+  }
+  syncInFlight = true;
+  try{
+    const remaining = [];
+    for(const profile of pending){
+      try{
+        const response = await profileFetch("/api/personnel-profiles", {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({ profile })
+        });
+        const data = await response.json();
+        if(!response.ok || !data.ok){
+          throw new Error(data.message || "Profile could not be synchronized.");
+        }
+        upsertLocalProfile(data.profile || profile);
+      }catch{
+        remaining.push(profile);
+      }
+    }
+    saveStorageList(pendingProfilesKey, remaining);
+  }finally{
+    syncInFlight = false;
+  }
+}
+
+personnelName.addEventListener("change",()=>{
+  setFormProfile(currentProfileForName(personnelName.value));
+  profileFormMessage.textContent = personnelName.value ? "Profile loaded for editing." : "";
+});
+
+profileForm.addEventListener("submit",async event=>{
+  event.preventDefault();
+  const profile = profileFromForm();
+  if(!profile.name){
+    profileFormMessage.textContent = "Select a personnel name first.";
+    return;
+  }
+  saveProfileButton.disabled = true;
+  saveProfileButton.textContent = "Saving...";
+  upsertLocalProfile(profile);
+  try{
+    if(!navigator.onLine){
+      throw new Error("offline");
+    }
+    const response = await profileFetch("/api/personnel-profiles", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ profile })
+    });
+    const data = await response.json();
+    if(response.status === 401){
+      window.location.replace(`/teacher-login?next=${encodeURIComponent("/personnel-profile")}`);
+      return;
+    }
+    if(!response.ok || !data.ok){
+      throw new Error(data.message || "Profile could not be saved.");
+    }
+    upsertLocalProfile(data.profile || profile);
+    profileFormMessage.textContent = `${profile.name} profile saved.`;
+  }catch(error){
+    queueProfile(profile);
+    profileFormMessage.textContent = `${profile.name} profile saved offline and will sync automatically.`;
+  }finally{
+    saveProfileButton.disabled = false;
+    saveProfileButton.textContent = "Save Profile";
+    updateSyncStatus("Saved personnel profiles shown.");
+  }
+});
+
+clearProfileButton.addEventListener("click",()=>{
+  const name = personnelName.value;
+  profileForm.reset();
+  personnelName.value = name;
+  setFormProfile(blankProfile(name));
+  profileFormMessage.textContent = "Form cleared.";
+});
+
+window.addEventListener("online",async ()=>{
+  updateSyncStatus("Connection restored. Syncing personnel profiles...");
+  await syncPendingProfiles();
+  await loadProfiles();
+});
+window.addEventListener("offline",()=>updateSyncStatus("Offline mode: changes stay on this device."));
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState === "visible"){
+    syncPendingProfiles().then(loadProfiles).catch(()=>{});
+  }
+});
+
+LearnerOffline.registerServiceWorker().catch(()=>{});
+if(window.teacherEntryAllowed !== false){
+  loadTeacherDirectory();
+  loadProfiles();
+}
