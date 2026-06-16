@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0c6842">
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/personnel-profile.css?v=20260616-personnel-profile-form">
+<link rel="stylesheet" href="/personnel-profile.css?v=20260616-personnel-autofill-name">
 <link rel="stylesheet" href="/teacher-session.css?v=20260615-guidance-pin-gate">
 </head>
 <body>
@@ -45,9 +45,7 @@
         <div class="field-grid">
           <label class="wide">
             <span>Name *</span>
-            <select id="personnelName" name="name" required>
-              <option value="">Select personnel</option>
-            </select>
+            <input id="personnelName" name="name" type="text" readonly required placeholder="Logged-in teacher name">
           </label>
           <label>
             <span>Sex *</span>
@@ -146,7 +144,7 @@
 </main>
 
 <script src="/learner-offline.js?v=20260615-guidance-pin-gate"></script>
-<script src="/teacher-session.js?v=20260615-guidance-pin-gate"></script>
-<script src="/personnel-profile.js?v=20260616-personnel-profile-form"></script>
+<script src="/teacher-session.js?v=20260616-current-teacher"></script>
+<script src="/personnel-profile.js?v=20260616-personnel-autofill-name"></script>
 </body>
 </html>

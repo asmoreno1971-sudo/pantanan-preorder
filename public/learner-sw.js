@@ -1,13 +1,13 @@
-const shellCache = "bakhaw-learner-shell-20260616-personnel-profile-button";
+const shellCache = "bakhaw-learner-shell-20260616-current-teacher";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260614-hide-guidance-name",
-  "/teacher-login.js?v=20260615-all-pages-offline",
+  "/teacher-login.js?v=20260616-current-teacher",
   "/learner-offline.js?v=20260615-guidance-pin-gate",
   "/learner-manifest.webmanifest",
   "/teacher-session.css?v=20260613-self-pin",
-  "/teacher-session.js?v=20260615-guidance-pin-gate",
+  "/teacher-session.js?v=20260616-current-teacher",
   "/students",
   "/students.html",
   "/students-offline-shell",
@@ -21,8 +21,8 @@ const shellFiles = [
   "/personnel-profile",
   "/personnel-profile.html",
   "/personnel-profile-offline-shell",
-  "/personnel-profile.css?v=20260616-personnel-profile-form",
-  "/personnel-profile.js?v=20260616-personnel-profile-form",
+  "/personnel-profile.css?v=20260616-personnel-autofill-name",
+  "/personnel-profile.js?v=20260616-personnel-autofill-name",
   "/student-dashboard",
   "/student-dashboard.html",
   "/student-dashboard-offline-shell",

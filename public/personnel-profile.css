@@ -86,6 +86,11 @@ input,select,textarea{
   color:var(--ink);
   background:#fff;
 }
+input[readonly]{
+  background:#eef6f1;
+  color:var(--green-dark);
+  font-weight:850;
+}
 textarea{ min-height:98px; resize:vertical; }
 .wide{ grid-column:span 2; }
 .id-grid{ grid-template-columns:repeat(6,minmax(0,1fr)); }

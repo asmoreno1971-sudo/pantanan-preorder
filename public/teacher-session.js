@@ -4,6 +4,7 @@
     "/guidance.html":"/guidance",
     "/students-offline-shell":"/students",
     "/personnel-offline-shell":"/personnel",
+    "/personnel-profile-offline-shell":"/personnel-profile",
     "/student-dashboard-offline-shell":"/student-dashboard",
     "/guidance-offline-shell":"/guidance",
     "/guidance-report.html":"/guidance-report",
@@ -11,7 +12,7 @@
     "/teacher-accounts-offline-shell":"/teacher-accounts"
   }[window.location.pathname] || window.location.pathname;
   const protectedPage = document.body.matches(".teacher-accounts-page")
-    || ["/students", "/students.html", "/students-offline-shell", "/personnel", "/personnel.html", "/personnel-offline-shell", "/student-dashboard", "/student-dashboard.html", "/student-dashboard-offline-shell", "/guidance", "/guidance.html", "/guidance-offline-shell", "/guidance-report", "/guidance-report.html", "/guidance-report-offline-shell", "/teacher-accounts", "/teacher-accounts.html", "/teacher-accounts-offline-shell"]
+    || ["/students", "/students.html", "/students-offline-shell", "/personnel", "/personnel.html", "/personnel-offline-shell", "/personnel-profile", "/personnel-profile.html", "/personnel-profile-offline-shell", "/student-dashboard", "/student-dashboard.html", "/student-dashboard-offline-shell", "/guidance", "/guidance.html", "/guidance-offline-shell", "/guidance-report", "/guidance-report.html", "/guidance-report-offline-shell", "/teacher-accounts", "/teacher-accounts.html", "/teacher-accounts-offline-shell"]
       .includes(window.location.pathname);
   window.teacherEntryAllowed = !protectedPage || (
     Boolean(window.LearnerOffline?.hasOfflineSession())
@@ -178,6 +179,13 @@
           document.querySelectorAll("[data-admin-only]").forEach(element=>{
             element.hidden = false;
           });
+        }
+        if(session?.ok && (session.displayName || session.username)){
+          localStorage.setItem("bakhawCurrentTeacherSession", JSON.stringify({
+            username:String(session.username || "").trim().toLowerCase(),
+            displayName:String(session.displayName || session.username || "").trim(),
+            savedAt:new Date().toISOString()
+          }));
         }
       })
       .catch(()=>{});

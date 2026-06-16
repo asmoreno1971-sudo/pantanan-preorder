@@ -7,6 +7,7 @@ const privacyDialog = document.getElementById("privacyDialog");
 const agreeButton = document.getElementById("agreeButton");
 const disagreeButton = document.getElementById("disagreeButton");
 const teacherDirectoryKey = "bakhawTeacherDirectory";
+const currentTeacherKey = "bakhawCurrentTeacherSession";
 const guidanceLogin = ["/guidance","/guidance-report"].includes(nextPage());
 const guidanceAdmin = {
   username:"alexander.moreno",
@@ -39,6 +40,19 @@ function escapeHtml(value){
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function saveCurrentTeacherSession(){
+  const selected = usernameInput.selectedOptions?.[0];
+  const displayName = selected?.textContent?.trim() || usernameInput.value.trim();
+  if(!displayName){
+    return;
+  }
+  localStorage.setItem(currentTeacherKey, JSON.stringify({
+    username:usernameInput.value.trim().toLowerCase(),
+    displayName,
+    savedAt:new Date().toISOString()
+  }));
 }
 
 function renderTeacherDirectory(teachers){
@@ -135,6 +149,7 @@ loginForm.addEventListener("submit", async event=>{
           throw new Error(data.message || "Login failed.");
         }
         await LearnerOffline.rememberCredentials(usernameInput.value, pinInput.value);
+        saveCurrentTeacherSession();
         onlineLoginComplete = true;
       }catch(error){
         if(!(error instanceof TypeError) && error.name !== "AbortError"){
@@ -146,6 +161,7 @@ loginForm.addEventListener("submit", async event=>{
     if(!onlineLoginComplete && !await LearnerOffline.verifyCredentials(usernameInput.value, pinInput.value)){
       throw new Error("Offline login is unavailable. Connect once and sign in successfully on this device first.");
     }
+    saveCurrentTeacherSession();
 
     LearnerOffline.setOfflineSession(false);
     if(guidanceLogin){

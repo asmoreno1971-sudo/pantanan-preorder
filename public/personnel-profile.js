@@ -8,9 +8,11 @@ const clearProfileButton = document.getElementById("clearProfileButton");
 const teacherDirectoryKey = "bakhawTeacherDirectory";
 const personnelProfilesKey = "bakhawPersonnelProfileRecords";
 const pendingProfilesKey = "bakhawPersonnelProfilePending";
+const currentTeacherKey = "bakhawCurrentTeacherSession";
 
 let teacherDirectory = [];
 let profiles = [];
+let currentTeacherName = "";
 let syncInFlight = false;
 
 function escapeHtml(value){
@@ -59,15 +61,33 @@ function uniqueTeacherNames(){
     .sort((a,b)=>a.localeCompare(b));
 }
 
-function renderTeacherDropdown(){
-  const current = personnelName.value;
-  const names = uniqueTeacherNames();
-  personnelName.innerHTML = `<option value="">Select personnel</option>${names
-    .map(name=>`<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
-    .join("")}`;
-  if([...personnelName.options].some(option=>option.value === current)){
-    personnelName.value = current;
+function savedCurrentTeacher(){
+  try{
+    return JSON.parse(localStorage.getItem(currentTeacherKey) || "null") || null;
+  }catch{
+    return null;
   }
+}
+
+function saveCurrentTeacher(teacher){
+  if(!teacher?.displayName && !teacher?.username){
+    return;
+  }
+  localStorage.setItem(currentTeacherKey, JSON.stringify({
+    username:String(teacher.username || "").trim().toLowerCase(),
+    displayName:normalizeName(teacher.displayName || teacher.name || teacher.username || ""),
+    savedAt:new Date().toISOString()
+  }));
+}
+
+function setCurrentTeacherName(name){
+  const cleanName = normalizeName(name);
+  if(!cleanName){
+    return;
+  }
+  currentTeacherName = cleanName;
+  personnelName.value = cleanName;
+  setFormProfile(currentProfileForName(cleanName));
 }
 
 function blankProfile(name = ""){
@@ -154,7 +174,6 @@ function updateSyncStatus(message){
 
 async function loadTeacherDirectory(){
   teacherDirectory = storageList(teacherDirectoryKey);
-  renderTeacherDropdown();
   if(!navigator.onLine){
     if(!teacherDirectory.length){
       updateSyncStatus("Connect once to load the teacher list.");
@@ -169,11 +188,31 @@ async function loadTeacherDirectory(){
     }
     teacherDirectory = Array.isArray(data.teachers) ? data.teachers : [];
     saveStorageList(teacherDirectoryKey, teacherDirectory);
-    renderTeacherDropdown();
   }catch{
     if(!teacherDirectory.length){
       updateSyncStatus("Teacher list could not be loaded. Try again with internet.");
     }
+  }
+}
+
+async function loadCurrentTeacher(){
+  const saved = savedCurrentTeacher();
+  if(saved?.displayName){
+    setCurrentTeacherName(saved.displayName);
+  }
+  if(!navigator.onLine){
+    return;
+  }
+  try{
+    const response = await profileFetch("/api/teacher-session", { cache:"no-store" });
+    const session = await response.json();
+    if(response.ok && session?.ok && session.displayName){
+      saveCurrentTeacher(session);
+      setCurrentTeacherName(session.displayName);
+      return;
+    }
+  }catch{
+    // Saved session name remains the offline fallback.
   }
 }
 
@@ -198,8 +237,8 @@ async function loadProfiles(){
     profiles = Array.isArray(data.profiles) ? data.profiles : [];
     saveStorageList(personnelProfilesKey, profiles);
     updateSyncStatus(`${profiles.length.toLocaleString()} personnel profile${profiles.length === 1 ? "" : "s"} loaded.`);
-    if(personnelName.value){
-      setFormProfile(currentProfileForName(personnelName.value));
+    if(currentTeacherName || personnelName.value){
+      setCurrentTeacherName(currentTeacherName || personnelName.value);
     }
   }catch(error){
     updateSyncStatus(profiles.length ? "Saved profiles shown. Reconnect to refresh." : (error.message || "Personnel profiles could not be loaded."));
@@ -238,11 +277,6 @@ async function syncPendingProfiles(){
     syncInFlight = false;
   }
 }
-
-personnelName.addEventListener("change",()=>{
-  setFormProfile(currentProfileForName(personnelName.value));
-  profileFormMessage.textContent = personnelName.value ? "Profile loaded for editing." : "";
-});
 
 profileForm.addEventListener("submit",async event=>{
   event.preventDefault();
@@ -284,9 +318,9 @@ profileForm.addEventListener("submit",async event=>{
 });
 
 clearProfileButton.addEventListener("click",()=>{
-  const name = personnelName.value;
+  const name = currentTeacherName || personnelName.value;
   profileForm.reset();
-  personnelName.value = name;
+  setCurrentTeacherName(name);
   setFormProfile(blankProfile(name));
   profileFormMessage.textContent = "Form cleared.";
 });
@@ -306,5 +340,6 @@ document.addEventListener("visibilitychange",()=>{
 LearnerOffline.registerServiceWorker().catch(()=>{});
 if(window.teacherEntryAllowed !== false){
   loadTeacherDirectory();
+  loadCurrentTeacher();
   loadProfiles();
 }
