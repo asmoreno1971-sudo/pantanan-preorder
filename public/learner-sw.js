@@ -22,7 +22,7 @@ const shellFiles = [
   "/personnel-profile.html",
   "/personnel-profile-offline-shell",
   "/personnel-profile.css?v=20260617-four-columns",
-  "/personnel-profile.js?v=20260617-no-duplicate-name",
+  "/personnel-profile.js?v=20260617-year-started-dropdown",
   "/student-dashboard",
   "/student-dashboard.html",
   "/student-dashboard-offline-shell",

@@ -306,7 +306,7 @@ function renderProfileFields(){
       <h3>${escapeHtml(field.label)}</h3>
       <label>
         <span>${escapeHtml(field.label)}</span>
-        ${field.id === "advisory-assignment" ? advisorySelectMarkup(field) : answerTextareaMarkup(field)}
+        ${fieldInputMarkup(field)}
       </label>
     </section>
   `).join("");
@@ -319,8 +319,30 @@ function renderProfileFields(){
   }
 }
 
+function fieldInputMarkup(field){
+  if(field.id === "advisory-assignment"){
+    return advisorySelectMarkup(field);
+  }
+  if(field.id === "year-started-at-deped"){
+    return yearStartedSelectMarkup(field);
+  }
+  return answerTextareaMarkup(field);
+}
+
 function answerTextareaMarkup(field){
   return `<textarea name="field:${escapeHtml(field.id)}" rows="1" placeholder="Enter ${escapeHtml(field.label)}"></textarea>`;
+}
+
+function yearStartedSelectMarkup(field){
+  const currentYear = new Date().getFullYear();
+  const options = Array.from({ length:currentYear - 1980 + 1 },(_,index)=>String(1980 + index))
+    .map(year=>`<option value="${year}">${year}</option>`)
+    .join("");
+  return `
+    <select name="field:${escapeHtml(field.id)}">
+      <option value="">Select Year</option>
+      ${options}
+    </select>`;
 }
 
 function advisorySelectMarkup(field){
