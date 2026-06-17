@@ -167,9 +167,9 @@ function profileCard(profile,index,expanded = false){
   return `
     <article class="personnel-card ${expanded ? "personnel-card-expanded" : ""}">
       <div class="personnel-card-heading">
-        <span class="personnel-number">${index + 1}</span>
+        ${expanded ? "" : `<span class="personnel-number">${index + 1}</span>`}
         <div>
-          <h3 class="personnel-name">${escapeHtml(profile.name || "Unnamed personnel")}</h3>
+          ${expanded ? "" : `<h3 class="personnel-name">${escapeHtml(profile.name || "Unnamed personnel")}</h3>`}
           <p>${hasSavedDetails(profile) ? "Saved personnel profile" : "No saved profile details yet"}</p>
         </div>
       </div>
@@ -203,6 +203,12 @@ function renderTeacherDropdown(){
 
 function renderPersonnel(){
   const selected = normalizeName(personnelSearch.value);
+  if(!selected){
+    personnelCount.textContent = `${personnel.length.toLocaleString()} personnel`;
+    personnelList.classList.remove("personnel-list-selected");
+    personnelList.innerHTML = "";
+    return;
+  }
   const visible = selected
     ? personnel.filter(item=>{
       const name = normalizeName(item.name);
