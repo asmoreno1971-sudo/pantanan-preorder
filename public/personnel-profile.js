@@ -13,6 +13,7 @@ const personnelFieldsKey = "bakhawPersonnelProfileFields";
 const gradeSectionsKey = "bakhawGradeSections";
 const pendingProfilesKey = "bakhawPersonnelProfilePending";
 const currentTeacherKey = "bakhawCurrentTeacherSession";
+const specialAssignmentOptions = ["Special Teacher - Elementary", "Special Teacher - JHS"];
 
 let teacherDirectory = [];
 let officialPersonnel = [];
@@ -323,7 +324,11 @@ function answerTextareaMarkup(field){
 }
 
 function advisorySelectMarkup(field){
-  const options = gradeSections.map(section=>`<option value="${escapeHtml(section)}">${escapeHtml(section)}</option>`).join("");
+  const choices = [...new Map([...gradeSections, ...specialAssignmentOptions]
+    .map(section=>String(section || "").trim())
+    .filter(Boolean)
+    .map(section=>[section.toLowerCase(), section])).values()];
+  const options = choices.map(section=>`<option value="${escapeHtml(section)}">${escapeHtml(section)}</option>`).join("");
   return `
     <select name="field:${escapeHtml(field.id)}">
       <option value="">Select Grade / Section</option>
