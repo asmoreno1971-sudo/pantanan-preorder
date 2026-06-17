@@ -38,27 +38,34 @@ select{ font:inherit; }
 
 .records-header{
   display:grid;
-  grid-template-columns:minmax(0, 1.5fr) minmax(260px, .7fr) auto;
-  gap:16px;
+  grid-template-columns:minmax(420px, 1fr) minmax(420px, auto);
+  grid-template-areas:
+    "brand actions"
+    "clock actions";
+  gap:16px 24px;
   align-items:center;
-  padding:18px 22px;
-  border:1px solid rgba(255, 255, 255, .42);
-  border-radius:18px;
+  padding:22px 24px;
+  border:1px solid rgba(255, 255, 255, .32);
+  border-radius:22px;
   background:
-    linear-gradient(135deg, rgba(9, 81, 52, .97), rgba(23, 121, 79, .94)),
+    linear-gradient(135deg, rgba(7, 73, 47, .98), rgba(20, 122, 77, .95)),
     #176b45;
   color:#fff;
-  box-shadow:var(--shadow);
+  box-shadow:0 22px 58px rgba(8, 65, 42, .18);
+  overflow:hidden;
 }
 
 .live-clock{
+  grid-area:clock;
+  width:min(360px, 100%);
   display:grid;
   gap:5px;
-  justify-items:center;
-  padding:10px 14px;
-  border:1px solid rgba(255, 255, 255, .2);
-  border-radius:13px;
-  background:rgba(4, 63, 40, .34);
+  justify-items:start;
+  margin-left:132px;
+  padding:12px 16px;
+  border:1px solid rgba(255, 255, 255, .18);
+  border-radius:14px;
+  background:rgba(4, 55, 35, .42);
   box-shadow:inset 0 1px 0 rgba(255, 255, 255, .12);
 }
 
@@ -72,27 +79,29 @@ select{ font:inherit; }
 
 .live-clock strong{
   color:#fff4c8;
-  font-size:20px;
+  font-size:21px;
+  font-weight:900;
   font-variant-numeric:tabular-nums;
   white-space:nowrap;
 }
 
 .header-brand{
+  grid-area:brand;
   display:flex;
-  gap:20px;
+  gap:22px;
   align-items:center;
   min-width:0;
 }
 
 .school-logo{
-  width:112px;
-  height:112px;
+  width:110px;
+  height:110px;
   flex:0 0 auto;
   object-fit:cover;
-  border:5px solid rgba(255, 255, 255, .88);
+  border:6px solid rgba(255, 255, 255, .95);
   border-radius:50%;
   background:#fff;
-  box-shadow:0 10px 28px rgba(0, 33, 20, .3);
+  box-shadow:0 14px 34px rgba(0, 33, 20, .28);
 }
 
 .eyebrow{
@@ -108,14 +117,18 @@ h1,
 h2{ margin:0; }
 
 h1{
-  font-size:clamp(32px, 5vw, 48px);
-  letter-spacing:-.04em;
+  font-size:54px;
+  line-height:.98;
+  letter-spacing:0;
   color:#fff;
 }
 
 .subtitle{
-  margin:8px 0 0;
+  max-width:340px;
+  margin:14px 0 0;
   color:#dcefe5;
+  font-size:16px;
+  line-height:1.35;
 }
 
 .header-actions,
@@ -123,6 +136,14 @@ h1{
   display:flex;
   gap:10px;
   align-items:center;
+}
+
+.header-actions{
+  grid-area:actions;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  align-self:center;
+  max-width:720px;
 }
 
 .button{
@@ -149,6 +170,19 @@ h1{
   border-color:#b8ccc0;
   background:#fff;
   color:var(--green-dark);
+}
+
+.header-actions .button{
+  min-height:48px;
+  padding:11px 18px;
+  border-color:rgba(255, 255, 255, .76);
+  border-radius:12px;
+  box-shadow:0 10px 24px rgba(0, 42, 26, .12);
+}
+
+.header-actions .button:hover{
+  transform:translateY(-1px);
+  box-shadow:0 14px 28px rgba(0, 42, 26, .16);
 }
 
 .button-quiet{
@@ -587,13 +621,15 @@ dialog::backdrop{ background:rgba(15, 35, 25, .58); }
 
 @media (max-width:820px){
   .records-header{
-    display:flex;
-    align-items:stretch;
-    flex-direction:column;
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "brand"
+      "clock"
+      "actions";
   }
 
-  .live-clock{ justify-items:start; }
-  .header-actions{ flex-wrap:wrap; }
+  .live-clock{ margin-left:0; justify-items:start; }
+  .header-actions{ max-width:none; justify-content:flex-start; }
   .header-actions .button{ flex:1; }
   .school-logo{ width:96px; height:96px; }
   .stats-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
@@ -604,9 +640,12 @@ dialog::backdrop{ background:rgba(15, 35, 25, .58); }
 
 @media (max-width:560px){
   .records-shell{ width:min(100% - 18px, 1500px); padding-top:10px; }
-  .records-header{ padding:20px; border-radius:13px; }
+  .records-header{ padding:18px; border-radius:15px; }
   .header-brand{ align-items:flex-start; gap:14px; }
   .school-logo{ width:76px; height:76px; border-width:3px; }
+  h1{ font-size:38px; }
+  .subtitle{ max-width:none; font-size:15px; }
+  .live-clock strong{ font-size:18px; }
   .stats-grid{ grid-template-columns:1fr; gap:8px; }
   .toolbar{ grid-template-columns:1fr; }
   .form-grid{ grid-template-columns:1fr; }

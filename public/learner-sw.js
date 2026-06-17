@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260617-typable-learners";
+const shellCache = "bakhaw-learner-shell-20260617-header-polish";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -11,7 +11,7 @@ const shellFiles = [
   "/students",
   "/students.html",
   "/students-offline-shell",
-  "/students.css?v=20260616-unfreeze-header",
+  "/students.css?v=20260617-header-polish",
   "/students.js?v=20260615-live-fresh-offline",
   "/personnel",
   "/personnel.html",
