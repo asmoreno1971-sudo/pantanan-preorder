@@ -59,6 +59,20 @@ function normalizeName(value){
   return String(value || "").trim().replace(/\s+/g," ").toLowerCase();
 }
 
+function formatBirthday(value){
+  const cleanValue = String(value || "").trim();
+  const isoMatch = cleanValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(isoMatch){
+    return `${isoMatch[2]}/${isoMatch[3]}/${isoMatch[1]}`;
+  }
+  const slashMatch = cleanValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+  if(slashMatch){
+    const year = slashMatch[3].length === 2 ? `19${slashMatch[3]}` : slashMatch[3];
+    return `${slashMatch[1].padStart(2,"0")}/${slashMatch[2].padStart(2,"0")}/${year}`;
+  }
+  return cleanValue;
+}
+
 function fieldId(label){
   return String(label || "")
     .trim()
@@ -154,7 +168,10 @@ function profileDetails(profile){
     "prc-license-no":profile.prcLicense,
     notes:profile.notes
   };
-  return profileFields.map(field=>[field.label, profile.fields?.[field.id] || profile[field.id] || legacyValues[field.id] || ""]);
+  return profileFields.map(field=>{
+    const value = profile.fields?.[field.id] || profile[field.id] || legacyValues[field.id] || "";
+    return [field.label, field.id === "birthday" ? formatBirthday(value) : value];
+  });
 }
 
 function hasSavedDetails(profile){

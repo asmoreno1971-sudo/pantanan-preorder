@@ -88,6 +88,20 @@ function normalizeName(value){
   return String(value || "").trim().replace(/\s+/g," ");
 }
 
+function formatBirthday(value){
+  const cleanValue = String(value || "").trim();
+  const isoMatch = cleanValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(isoMatch){
+    return `${isoMatch[2]}/${isoMatch[3]}/${isoMatch[1]}`;
+  }
+  const slashMatch = cleanValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+  if(slashMatch){
+    const year = slashMatch[3].length === 2 ? `19${slashMatch[3]}` : slashMatch[3];
+    return `${slashMatch[1].padStart(2,"0")}/${slashMatch[2].padStart(2,"0")}/${year}`;
+  }
+  return cleanValue;
+}
+
 function teacherDisplayName(teacher){
   return normalizeName(teacher?.displayName || teacher?.name || teacher?.username || "");
 }
@@ -245,7 +259,8 @@ function setFormProfile(profile){
   profileFields.forEach(field=>{
     const input = profileForm.elements[`field:${field.id}`];
     if(input){
-      input.value = profile.fields?.[field.id] || profile[field.id] || legacyProfileValue(profile, field.id) || "";
+      const value = profile.fields?.[field.id] || profile[field.id] || legacyProfileValue(profile, field.id) || "";
+      input.value = field.id === "birthday" ? formatBirthday(value) : value;
       autoResizeTextarea(input);
     }
   });
@@ -255,7 +270,8 @@ function profileFromForm(){
   const formData = new FormData(profileForm);
   const profile = blankProfile(normalizeName(formData.get("name")));
   profileFields.forEach(field=>{
-    profile.fields[field.id] = String(formData.get(`field:${field.id}`) || "").trim();
+    const value = String(formData.get(`field:${field.id}`) || "").trim();
+    profile.fields[field.id] = field.id === "birthday" ? formatBirthday(value) : value;
   });
   profile.sex = profile.fields.sex || "";
   profile.birthday = profile.fields.birthday || "";

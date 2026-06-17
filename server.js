@@ -345,6 +345,20 @@ function personnelFieldId(label){
     .replace(/^-+|-+$/g, "");
 }
 
+function formatPersonnelBirthday(value){
+  const cleanValue = String(value || "").trim();
+  const isoMatch = cleanValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(isoMatch){
+    return `${isoMatch[2]}/${isoMatch[3]}/${isoMatch[1]}`;
+  }
+  const slashMatch = cleanValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+  if(slashMatch){
+    const year = slashMatch[3].length === 2 ? `19${slashMatch[3]}` : slashMatch[3];
+    return `${slashMatch[1].padStart(2, "0")}/${slashMatch[2].padStart(2, "0")}/${year}`;
+  }
+  return cleanValue;
+}
+
 function defaultPersonnelProfileFields(){
   return [
     "Sex",
@@ -733,13 +747,13 @@ function normalizePersonnelProfile(profile = {}){
     Object.entries(profile.fields).forEach(([key,value])=>{
       const fieldKey = personnelFieldId(key);
       if(fieldKey){
-        fields[fieldKey] = String(value || "").trim();
+        fields[fieldKey] = fieldKey === "birthday" ? formatPersonnelBirthday(value) : String(value || "").trim();
       }
     });
   }
   const legacyFields = {
     sex,
-    birthday:String(profile.birthday || "").trim(),
+    birthday:formatPersonnelBirthday(profile.birthday),
     position:String(profile.position || "").trim(),
     department:String(profile.department || "").trim(),
     "advisory-assignment":String(profile.advisory || "").trim(),
@@ -764,7 +778,7 @@ function normalizePersonnelProfile(profile = {}){
     id:String(profile.id || name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || crypto.randomUUID()).replace(/^-+|-+$/g, ""),
     name,
     sex:["Male","Female"].includes(sex) ? sex : "",
-    birthday:String(profile.birthday || "").trim(),
+    birthday:formatPersonnelBirthday(profile.birthday),
     position:String(profile.position || "").trim(),
     department:String(profile.department || "").trim(),
     advisory:String(profile.advisory || "").trim(),
