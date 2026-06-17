@@ -65,7 +65,7 @@ button,input,select,textarea{ font:inherit; }
 .profile-form{ display:grid; gap:14px; padding:0 22px 22px; }
 .dynamic-profile-fields{
   display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-columns:repeat(4,minmax(0,1fr));
   gap:14px;
 }
 .form-section{

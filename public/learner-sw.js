@@ -21,7 +21,7 @@ const shellFiles = [
   "/personnel-profile",
   "/personnel-profile.html",
   "/personnel-profile-offline-shell",
-  "/personnel-profile.css?v=20260617-auto-resize-fields",
+  "/personnel-profile.css?v=20260617-four-columns",
   "/personnel-profile.js?v=20260617-no-duplicate-name",
   "/student-dashboard",
   "/student-dashboard.html",
