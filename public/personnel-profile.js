@@ -100,6 +100,11 @@ function isDateField(field){
   return field?.id === "birthday" || String(field?.id || "").includes("date");
 }
 
+function isPrcExpiryDateField(field){
+  const id = String(field?.id || "");
+  return id.includes("expiry") && id.includes("prc");
+}
+
 function formatDateValue(value){
   const cleanValue = String(value || "").trim();
   const isoMatch = cleanValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -366,13 +371,15 @@ function sexSelectMarkup(field){
 function dateInputMarkup(field){
   const escapedId = escapeHtml(field.id);
   const currentYear = new Date().getFullYear();
+  const firstYear = isPrcExpiryDateField(field) ? 2026 : 1900;
+  const lastYear = isPrcExpiryDateField(field) ? 2035 : currentYear + 30;
   const monthOptions = Array.from({ length:12 },(_,index)=>String(index + 1).padStart(2,"0"))
     .map(month=>`<option value="${month}">${month}</option>`)
     .join("");
   const dayOptions = Array.from({ length:31 },(_,index)=>String(index + 1).padStart(2,"0"))
     .map(day=>`<option value="${day}">${day}</option>`)
     .join("");
-  const yearOptions = Array.from({ length:currentYear + 30 - 1900 + 1 },(_,index)=>String(1900 + index))
+  const yearOptions = Array.from({ length:lastYear - firstYear + 1 },(_,index)=>String(firstYear + index))
     .map(year=>`<option value="${year}">${year}</option>`)
     .join("");
   return `
