@@ -97,16 +97,12 @@ input[readonly]{
   color:var(--green-dark);
   font-weight:850;
 }
-.date-input-wrap{
+.date-roller-wrap{
   display:grid;
-  grid-template-columns:minmax(0,1fr) 44px;
+  grid-template-columns:repeat(3,minmax(0,1fr));
   gap:8px;
 }
-.date-input-wrap input{ min-width:0; }
-.date-picker-input{
-  padding:9px;
-  cursor:pointer;
-}
+.date-roller-wrap select{ min-width:0; }
 textarea{
   min-height:44px;
   overflow:hidden;

@@ -273,10 +273,7 @@ function setFormProfile(profile){
       }
       input.value = displayValue;
       if(isDateField(field)){
-        const picker = dynamicProfileFields.querySelector(`[data-date-for="field:${field.id}"]`);
-        if(picker){
-          picker.value = parseMmDdYyyy(displayValue);
-        }
+        setDateRollerValue(field.id, displayValue);
       }
       autoResizeTextarea(input);
     }
@@ -323,7 +320,7 @@ function renderProfileFields(){
     textarea.addEventListener("input",()=>autoResizeTextarea(textarea));
     autoResizeTextarea(textarea);
   });
-  bindDatePickers();
+  bindDateRollers();
   if(currentTeacherName || personnelName.value){
     setFormProfile(currentProfileForName(currentTeacherName || personnelName.value));
   }
@@ -360,10 +357,31 @@ function sexSelectMarkup(field){
 
 function dateInputMarkup(field){
   const escapedId = escapeHtml(field.id);
+  const currentYear = new Date().getFullYear();
+  const monthOptions = Array.from({ length:12 },(_,index)=>String(index + 1).padStart(2,"0"))
+    .map(month=>`<option value="${month}">${month}</option>`)
+    .join("");
+  const dayOptions = Array.from({ length:31 },(_,index)=>String(index + 1).padStart(2,"0"))
+    .map(day=>`<option value="${day}">${day}</option>`)
+    .join("");
+  const yearOptions = Array.from({ length:currentYear + 30 - 1900 + 1 },(_,index)=>String(1900 + index))
+    .map(year=>`<option value="${year}">${year}</option>`)
+    .join("");
   return `
-    <div class="date-input-wrap">
-      <input name="field:${escapedId}" type="text" inputmode="numeric" maxlength="10" placeholder="MM/DD/YYYY" autocomplete="off">
-      <input class="date-picker-input" data-date-for="field:${escapedId}" type="date" tabindex="-1" aria-label="Pick ${escapeHtml(field.label)}">
+    <div class="date-roller-wrap">
+      <input name="field:${escapedId}" type="hidden">
+      <select data-date-for="field:${escapedId}" data-date-part="month" aria-label="${escapeHtml(field.label)} month">
+        <option value="">MM</option>
+        ${monthOptions}
+      </select>
+      <select data-date-for="field:${escapedId}" data-date-part="day" aria-label="${escapeHtml(field.label)} day">
+        <option value="">DD</option>
+        ${dayOptions}
+      </select>
+      <select data-date-for="field:${escapedId}" data-date-part="year" aria-label="${escapeHtml(field.label)} year">
+        <option value="">YYYY</option>
+        ${yearOptions}
+      </select>
     </div>`;
 }
 
@@ -394,28 +412,50 @@ function advisorySelectMarkup(field){
 
 function parseMmDdYyyy(value){
   const match = String(value || "").trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  return match ? `${match[3]}-${match[1]}-${match[2]}` : "";
+  return match ? { month:match[1], day:match[2], year:match[3] } : null;
 }
 
-function bindDatePickers(){
-  dynamicProfileFields.querySelectorAll(".date-picker-input").forEach(picker=>{
-    const input = profileForm.elements[picker.dataset.dateFor];
-    if(!input){
-      return;
-    }
-    picker.value = parseMmDdYyyy(input.value);
-    input.addEventListener("input",()=>{
-      input.value = input.value.replace(/[^\d/]/g,"").slice(0,10);
-      picker.value = parseMmDdYyyy(formatDateValue(input.value));
-    });
-    input.addEventListener("blur",()=>{
-      input.value = formatDateValue(input.value);
-      picker.value = parseMmDdYyyy(input.value);
-    });
-    picker.addEventListener("change",()=>{
-      input.value = formatDateValue(picker.value);
+function bindDateRollers(){
+  dynamicProfileFields.querySelectorAll(".date-roller-wrap").forEach(wrapper=>{
+    wrapper.querySelectorAll("select").forEach(select=>{
+      select.addEventListener("change",()=>updateDateRollerValue(select.dataset.dateFor));
     });
   });
+}
+
+function setDateRollerValue(fieldIdValue, value){
+  const parsed = parseMmDdYyyy(formatDateValue(value));
+  const inputName = `field:${fieldIdValue}`;
+  const hiddenInput = profileForm.elements[inputName];
+  if(hiddenInput){
+    hiddenInput.value = parsed ? `${parsed.month}/${parsed.day}/${parsed.year}` : "";
+  }
+  ["month","day","year"].forEach(part=>{
+    const select = dynamicProfileFields.querySelector(`[data-date-for="${inputName}"][data-date-part="${part}"]`);
+    if(!select){
+      return;
+    }
+    const partValue = parsed?.[part] || "";
+    if(partValue && ![...select.options].some(option=>option.value === partValue)){
+      select.appendChild(new Option(partValue, partValue));
+    }
+    select.value = partValue;
+  });
+}
+
+function updateDateRollerValue(inputName){
+  const hiddenInput = profileForm.elements[inputName];
+  if(!hiddenInput){
+    return;
+  }
+  const partValue = part=>{
+    const select = dynamicProfileFields.querySelector(`[data-date-for="${inputName}"][data-date-part="${part}"]`);
+    return select?.value || "";
+  };
+  const month = partValue("month");
+  const day = partValue("day");
+  const year = partValue("year");
+  hiddenInput.value = month && day && year ? `${month}/${day}/${year}` : "";
 }
 
 function autoResizeTextarea(textarea){
