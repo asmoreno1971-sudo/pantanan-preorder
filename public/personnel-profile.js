@@ -10,6 +10,7 @@ const teacherDirectoryKey = "bakhawTeacherDirectory";
 const personnelStorageKey = "bakhawPersonnelProfiles";
 const personnelProfilesKey = "bakhawPersonnelProfileRecords";
 const personnelFieldsKey = "bakhawPersonnelProfileFields";
+const gradeSectionsKey = "bakhawGradeSections";
 const pendingProfilesKey = "bakhawPersonnelProfilePending";
 const currentTeacherKey = "bakhawCurrentTeacherSession";
 
@@ -17,6 +18,7 @@ let teacherDirectory = [];
 let officialPersonnel = [];
 let profiles = [];
 let profileFields = normalizeProfileFields(storageList(personnelFieldsKey));
+let gradeSections = storageList(gradeSectionsKey);
 let currentTeacherName = "";
 let syncInFlight = false;
 
@@ -260,7 +262,11 @@ function setFormProfile(profile){
     const input = profileForm.elements[`field:${field.id}`];
     if(input){
       const value = profile.fields?.[field.id] || profile[field.id] || legacyProfileValue(profile, field.id) || "";
-      input.value = field.id === "birthday" ? formatBirthday(value) : value;
+      const displayValue = field.id === "birthday" ? formatBirthday(value) : value;
+      if(input.tagName === "SELECT" && displayValue && ![...input.options].some(option=>option.value === displayValue)){
+        input.appendChild(new Option(displayValue, displayValue));
+      }
+      input.value = displayValue;
       autoResizeTextarea(input);
     }
   });
@@ -299,7 +305,7 @@ function renderProfileFields(){
       <h3>${escapeHtml(field.label)}</h3>
       <label>
         <span>${escapeHtml(field.label)}</span>
-        <textarea name="field:${escapeHtml(field.id)}" rows="1" placeholder="Enter ${escapeHtml(field.label)}"></textarea>
+        ${field.id === "advisory-assignment" ? advisorySelectMarkup(field) : answerTextareaMarkup(field)}
       </label>
     </section>
   `).join("");
@@ -310,6 +316,19 @@ function renderProfileFields(){
   if(currentTeacherName || personnelName.value){
     setFormProfile(currentProfileForName(currentTeacherName || personnelName.value));
   }
+}
+
+function answerTextareaMarkup(field){
+  return `<textarea name="field:${escapeHtml(field.id)}" rows="1" placeholder="Enter ${escapeHtml(field.label)}"></textarea>`;
+}
+
+function advisorySelectMarkup(field){
+  const options = gradeSections.map(section=>`<option value="${escapeHtml(section)}">${escapeHtml(section)}</option>`).join("");
+  return `
+    <select name="field:${escapeHtml(field.id)}">
+      <option value="">Select Grade / Section</option>
+      ${options}
+    </select>`;
 }
 
 function autoResizeTextarea(textarea){
@@ -386,6 +405,28 @@ async function loadTeacherDirectory(){
     if(!teacherDirectory.length){
       updateSyncStatus("Teacher list could not be loaded. Try again with internet.");
     }
+  }
+}
+
+async function loadGradeSections(){
+  gradeSections = storageList(gradeSectionsKey);
+  if(gradeSections.length){
+    renderProfileFields();
+  }
+  if(!navigator.onLine){
+    return;
+  }
+  try{
+    const response = await profileFetch("/api/grade-sections", { cache:"no-store" });
+    const data = await response.json();
+    if(!response.ok || !data.ok){
+      throw new Error(data.message || "Grade / Sections could not be loaded.");
+    }
+    gradeSections = Array.isArray(data.sections) ? data.sections : [];
+    saveStorageList(gradeSectionsKey, gradeSections);
+    renderProfileFields();
+  }catch{
+    // Saved Grade / Sections remain the offline fallback.
   }
 }
 
@@ -578,6 +619,7 @@ LearnerOffline.registerServiceWorker().catch(()=>{});
 if(window.teacherEntryAllowed !== false){
   renderProfileFields();
   loadTeacherDirectory();
+  loadGradeSections();
   loadPersonnelSource();
   loadCurrentTeacher();
   loadProfiles();
