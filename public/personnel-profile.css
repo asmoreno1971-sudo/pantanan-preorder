@@ -97,6 +97,16 @@ input[readonly]{
   color:var(--green-dark);
   font-weight:850;
 }
+.date-input-wrap{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 44px;
+  gap:8px;
+}
+.date-input-wrap input{ min-width:0; }
+.date-picker-input{
+  padding:9px;
+  cursor:pointer;
+}
 textarea{
   min-height:44px;
   overflow:hidden;

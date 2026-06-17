@@ -268,6 +268,12 @@ function setFormProfile(profile){
         input.appendChild(new Option(displayValue, displayValue));
       }
       input.value = displayValue;
+      if(field.id === "birthday"){
+        const picker = dynamicProfileFields.querySelector(`[data-date-for="field:${field.id}"]`);
+        if(picker){
+          picker.value = parseMmDdYyyy(displayValue);
+        }
+      }
       autoResizeTextarea(input);
     }
   });
@@ -313,12 +319,19 @@ function renderProfileFields(){
     textarea.addEventListener("input",()=>autoResizeTextarea(textarea));
     autoResizeTextarea(textarea);
   });
+  bindBirthdayPickers();
   if(currentTeacherName || personnelName.value){
     setFormProfile(currentProfileForName(currentTeacherName || personnelName.value));
   }
 }
 
 function fieldInputMarkup(field){
+  if(field.id === "sex"){
+    return sexSelectMarkup(field);
+  }
+  if(field.id === "birthday"){
+    return birthdayInputMarkup(field);
+  }
   if(field.id === "advisory-assignment"){
     return advisorySelectMarkup(field);
   }
@@ -330,6 +343,24 @@ function fieldInputMarkup(field){
 
 function answerTextareaMarkup(field){
   return `<textarea name="field:${escapeHtml(field.id)}" rows="1" placeholder="Enter ${escapeHtml(field.label)}"></textarea>`;
+}
+
+function sexSelectMarkup(field){
+  return `
+    <select name="field:${escapeHtml(field.id)}">
+      <option value="">Select Sex</option>
+      <option>Male</option>
+      <option>Female</option>
+    </select>`;
+}
+
+function birthdayInputMarkup(field){
+  const escapedId = escapeHtml(field.id);
+  return `
+    <div class="date-input-wrap">
+      <input name="field:${escapedId}" type="text" inputmode="numeric" maxlength="10" placeholder="MM/DD/YYYY" autocomplete="off">
+      <input class="date-picker-input" data-date-for="field:${escapedId}" type="date" tabindex="-1" aria-label="Pick ${escapeHtml(field.label)}">
+    </div>`;
 }
 
 function yearStartedSelectMarkup(field){
@@ -355,6 +386,32 @@ function advisorySelectMarkup(field){
       <option value="">Select Grade / Section</option>
       ${options}
     </select>`;
+}
+
+function parseMmDdYyyy(value){
+  const match = String(value || "").trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return match ? `${match[3]}-${match[1]}-${match[2]}` : "";
+}
+
+function bindBirthdayPickers(){
+  dynamicProfileFields.querySelectorAll(".date-picker-input").forEach(picker=>{
+    const input = profileForm.elements[picker.dataset.dateFor];
+    if(!input){
+      return;
+    }
+    picker.value = parseMmDdYyyy(input.value);
+    input.addEventListener("input",()=>{
+      input.value = input.value.replace(/[^\d/]/g,"").slice(0,10);
+      picker.value = parseMmDdYyyy(formatBirthday(input.value));
+    });
+    input.addEventListener("blur",()=>{
+      input.value = formatBirthday(input.value);
+      picker.value = parseMmDdYyyy(input.value);
+    });
+    picker.addEventListener("change",()=>{
+      input.value = formatBirthday(picker.value);
+    });
+  });
 }
 
 function autoResizeTextarea(textarea){
