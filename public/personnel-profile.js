@@ -305,7 +305,6 @@ function renderProfileFields(){
     <section class="form-section dynamic-field-section">
       <h3>${escapeHtml(field.label)}</h3>
       <label>
-        <span>${escapeHtml(field.label)}</span>
         ${fieldInputMarkup(field)}
       </label>
     </section>
