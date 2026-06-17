@@ -59,7 +59,11 @@ function normalizeName(value){
   return String(value || "").trim().replace(/\s+/g," ").toLowerCase();
 }
 
-function formatBirthday(value){
+function isDateField(field){
+  return field?.id === "birthday" || String(field?.id || "").includes("date");
+}
+
+function formatDateValue(value){
   const cleanValue = String(value || "").trim();
   const isoMatch = cleanValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if(isoMatch){
@@ -170,7 +174,7 @@ function profileDetails(profile){
   };
   return profileFields.map(field=>{
     const value = profile.fields?.[field.id] || profile[field.id] || legacyValues[field.id] || "";
-    return [field.label, field.id === "birthday" ? formatBirthday(value) : value];
+    return [field.label, isDateField(field) ? formatDateValue(value) : value];
   });
 }
 

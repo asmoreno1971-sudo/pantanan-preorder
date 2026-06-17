@@ -345,7 +345,11 @@ function personnelFieldId(label){
     .replace(/^-+|-+$/g, "");
 }
 
-function formatPersonnelBirthday(value){
+function isPersonnelDateField(fieldKey){
+  return fieldKey === "birthday" || String(fieldKey || "").includes("date");
+}
+
+function formatPersonnelDate(value){
   const cleanValue = String(value || "").trim();
   const isoMatch = cleanValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if(isoMatch){
@@ -747,13 +751,13 @@ function normalizePersonnelProfile(profile = {}){
     Object.entries(profile.fields).forEach(([key,value])=>{
       const fieldKey = personnelFieldId(key);
       if(fieldKey){
-        fields[fieldKey] = fieldKey === "birthday" ? formatPersonnelBirthday(value) : String(value || "").trim();
+        fields[fieldKey] = isPersonnelDateField(fieldKey) ? formatPersonnelDate(value) : String(value || "").trim();
       }
     });
   }
   const legacyFields = {
     sex,
-    birthday:formatPersonnelBirthday(profile.birthday),
+    birthday:formatPersonnelDate(profile.birthday),
     position:String(profile.position || "").trim(),
     department:String(profile.department || "").trim(),
     "advisory-assignment":String(profile.advisory || "").trim(),
@@ -778,7 +782,7 @@ function normalizePersonnelProfile(profile = {}){
     id:String(profile.id || name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || crypto.randomUUID()).replace(/^-+|-+$/g, ""),
     name,
     sex:["Male","Female"].includes(sex) ? sex : "",
-    birthday:formatPersonnelBirthday(profile.birthday),
+    birthday:formatPersonnelDate(profile.birthday),
     position:String(profile.position || "").trim(),
     department:String(profile.department || "").trim(),
     advisory:String(profile.advisory || "").trim(),

@@ -91,7 +91,11 @@ function normalizeName(value){
   return String(value || "").trim().replace(/\s+/g," ");
 }
 
-function formatBirthday(value){
+function isDateField(field){
+  return field?.id === "birthday" || String(field?.id || "").includes("date");
+}
+
+function formatDateValue(value){
   const cleanValue = String(value || "").trim();
   const isoMatch = cleanValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if(isoMatch){
@@ -263,12 +267,12 @@ function setFormProfile(profile){
     const input = profileForm.elements[`field:${field.id}`];
     if(input){
       const value = profile.fields?.[field.id] || profile[field.id] || legacyProfileValue(profile, field.id) || "";
-      const displayValue = field.id === "birthday" ? formatBirthday(value) : value;
+      const displayValue = isDateField(field) ? formatDateValue(value) : value;
       if(input.tagName === "SELECT" && displayValue && ![...input.options].some(option=>option.value === displayValue)){
         input.appendChild(new Option(displayValue, displayValue));
       }
       input.value = displayValue;
-      if(field.id === "birthday"){
+      if(isDateField(field)){
         const picker = dynamicProfileFields.querySelector(`[data-date-for="field:${field.id}"]`);
         if(picker){
           picker.value = parseMmDdYyyy(displayValue);
@@ -284,7 +288,7 @@ function profileFromForm(){
   const profile = blankProfile(normalizeName(formData.get("name")));
   profileFields.forEach(field=>{
     const value = String(formData.get(`field:${field.id}`) || "").trim();
-    profile.fields[field.id] = field.id === "birthday" ? formatBirthday(value) : value;
+    profile.fields[field.id] = isDateField(field) ? formatDateValue(value) : value;
   });
   profile.sex = profile.fields.sex || "";
   profile.birthday = profile.fields.birthday || "";
@@ -319,7 +323,7 @@ function renderProfileFields(){
     textarea.addEventListener("input",()=>autoResizeTextarea(textarea));
     autoResizeTextarea(textarea);
   });
-  bindBirthdayPickers();
+  bindDatePickers();
   if(currentTeacherName || personnelName.value){
     setFormProfile(currentProfileForName(currentTeacherName || personnelName.value));
   }
@@ -329,8 +333,8 @@ function fieldInputMarkup(field){
   if(field.id === "sex"){
     return sexSelectMarkup(field);
   }
-  if(field.id === "birthday"){
-    return birthdayInputMarkup(field);
+  if(isDateField(field)){
+    return dateInputMarkup(field);
   }
   if(field.id === "advisory-assignment"){
     return advisorySelectMarkup(field);
@@ -354,7 +358,7 @@ function sexSelectMarkup(field){
     </select>`;
 }
 
-function birthdayInputMarkup(field){
+function dateInputMarkup(field){
   const escapedId = escapeHtml(field.id);
   return `
     <div class="date-input-wrap">
@@ -393,7 +397,7 @@ function parseMmDdYyyy(value){
   return match ? `${match[3]}-${match[1]}-${match[2]}` : "";
 }
 
-function bindBirthdayPickers(){
+function bindDatePickers(){
   dynamicProfileFields.querySelectorAll(".date-picker-input").forEach(picker=>{
     const input = profileForm.elements[picker.dataset.dateFor];
     if(!input){
@@ -402,14 +406,14 @@ function bindBirthdayPickers(){
     picker.value = parseMmDdYyyy(input.value);
     input.addEventListener("input",()=>{
       input.value = input.value.replace(/[^\d/]/g,"").slice(0,10);
-      picker.value = parseMmDdYyyy(formatBirthday(input.value));
+      picker.value = parseMmDdYyyy(formatDateValue(input.value));
     });
     input.addEventListener("blur",()=>{
-      input.value = formatBirthday(input.value);
+      input.value = formatDateValue(input.value);
       picker.value = parseMmDdYyyy(input.value);
     });
     picker.addEventListener("change",()=>{
-      input.value = formatBirthday(picker.value);
+      input.value = formatDateValue(picker.value);
     });
   });
 }
