@@ -210,9 +210,6 @@ function escapeHtml(value){
 
 document.querySelectorAll("[data-personnel-console]").forEach(link=>{
   link.addEventListener("click", event=>{
-    if(sessionStorage.getItem(personnelConsoleUnlockKey) === "yes"){
-      return;
-    }
     event.preventDefault();
     const pin = window.prompt("Enter Personnel Consol password:");
     if(pin === personnelConsolePassword){

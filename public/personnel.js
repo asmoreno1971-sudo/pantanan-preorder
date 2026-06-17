@@ -242,11 +242,11 @@ function renderPersonnel(){
 
 function ensurePersonnelConsoleAccess(){
   if(sessionStorage.getItem(personnelConsoleUnlockKey) === "yes"){
+    sessionStorage.removeItem(personnelConsoleUnlockKey);
     return true;
   }
   const pin = window.prompt("Enter Personnel Consol password:");
   if(pin === personnelConsolePassword){
-    sessionStorage.setItem(personnelConsoleUnlockKey, "yes");
     return true;
   }
   window.location.replace("/student-dashboard");
