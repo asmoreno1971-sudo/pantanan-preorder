@@ -63,7 +63,7 @@ function normalizeProfileFields(fields){
         label
       };
     })
-    .filter(field=>field.label);
+    .filter(field=>field.label && field.id !== "name");
 }
 
 function defaultProfileFields(){

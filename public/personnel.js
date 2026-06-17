@@ -110,7 +110,7 @@ function normalizeProfileFields(fields){
       id:fieldId(field?.id || label) || `field-${index + 1}`,
       label
     };
-  }).filter(field=>field.label);
+  }).filter(field=>field.label && field.id !== "name");
 }
 
 function nameTokens(name){

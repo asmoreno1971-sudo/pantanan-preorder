@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260617-hide-default-personnel-list";
+const shellCache = "bakhaw-learner-shell-20260617-no-duplicate-name";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -17,12 +17,12 @@ const shellFiles = [
   "/personnel.html",
   "/personnel-offline-shell",
   "/personnel.css?v=20260617-hide-default-list",
-  "/personnel.js?v=20260617-hide-default-list",
+  "/personnel.js?v=20260617-no-duplicate-name",
   "/personnel-profile",
   "/personnel-profile.html",
   "/personnel-profile-offline-shell",
   "/personnel-profile.css?v=20260617-auto-resize-fields",
-  "/personnel-profile.js?v=20260617-advisory-special-options",
+  "/personnel-profile.js?v=20260617-no-duplicate-name",
   "/student-dashboard",
   "/student-dashboard.html",
   "/student-dashboard-offline-shell",

@@ -405,7 +405,7 @@ async function readPersonnelProfileFields(forceRefresh = false){
     personnelProfileFieldCache = uniqueLabels.map((label,index)=>({
       id:personnelFieldId(label) || `field-${index + 1}`,
       label
-    }));
+    })).filter(field=>field.label && field.id !== "name");
   }catch{
     if(!personnelProfileFieldCache){
       personnelProfileFieldCache = defaultPersonnelProfileFields();
