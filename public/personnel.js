@@ -169,7 +169,7 @@ function profileCard(profile,index,expanded = false){
       <div class="personnel-card-heading">
         ${expanded ? "" : `<span class="personnel-number">${index + 1}</span>`}
         <div>
-          ${expanded ? "" : `<h3 class="personnel-name">${escapeHtml(profile.name || "Unnamed personnel")}</h3>`}
+          <h3 class="personnel-name">${escapeHtml(profile.name || "Unnamed personnel")}</h3>
           <p>${hasSavedDetails(profile) ? "Saved personnel profile" : "No saved profile details yet"}</p>
         </div>
       </div>
