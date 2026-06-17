@@ -1,5 +1,6 @@
 const guidanceForm = document.getElementById("guidanceForm");
 const primaryStudent = document.getElementById("primaryStudent");
+const studentOptions = document.getElementById("studentOptions");
 const primaryProfile = document.getElementById("primaryProfile");
 const involvedList = document.getElementById("involvedList");
 const adviserSummary = document.getElementById("adviserSummary");
@@ -379,20 +380,44 @@ function studentName(student){
   return [student.familyName,given].filter(Boolean).join(", ");
 }
 
-function studentOptions(selected = ""){
-  const ordered = [...students].sort((a,b)=>
+function orderedStudents(){
+  return [...students].sort((a,b)=>
     String(a.gradeSection).localeCompare(String(b.gradeSection),undefined,{numeric:true})
     || String(a.familyName).localeCompare(String(b.familyName))
     || String(a.firstName).localeCompare(String(b.firstName))
   );
-  return `<option value="">Select learner</option>${ordered.map(student=>
-    `<option value="${escapeHtml(student.id)}" ${student.id === selected ? "selected" : ""}>${escapeHtml(studentName(student))}</option>`
-  ).join("")}`;
+}
+
+function refreshStudentOptions(){
+  studentOptions.innerHTML = orderedStudents().map(student=>
+    `<option value="${escapeHtml(studentName(student))}">${escapeHtml(student.gradeSection || "")}</option>`
+  ).join("");
+}
+
+function selectedStudentFromInput(input){
+  const value = String(input?.value || "").trim();
+  if(!value){
+    return null;
+  }
+  return students.find(student=>student.id === value)
+    || students.find(student=>studentName(student).toLowerCase() === value.toLowerCase())
+    || students.find(student=>studentName(student).toLowerCase().includes(value.toLowerCase()));
+}
+
+function studentInputValue(studentId, fallbackName = ""){
+  const student = students.find(item=>item.id === studentId);
+  return student ? studentName(student) : String(fallbackName || "").trim();
+}
+
+function studentIdFromInput(input){
+  return selectedStudentFromInput(input)?.id || "";
 }
 
 function selectedStudents(){
-  const ids = [primaryStudent.value, ...[...involvedList.querySelectorAll(".involved-student")].map(select=>select.value)].filter(Boolean);
-  return ids.map(id=>students.find(student=>student.id === id)).filter(Boolean);
+  return [
+    selectedStudentFromInput(primaryStudent),
+    ...[...involvedList.querySelectorAll(".involved-student")].map(selectedStudentFromInput)
+  ].filter(Boolean);
 }
 
 function isJhs(student){
@@ -401,7 +426,7 @@ function isJhs(student){
 }
 
 function renderPrimaryProfile(){
-  const student = students.find(item=>item.id === primaryStudent.value);
+  const student = selectedStudentFromInput(primaryStudent);
   if(!student){
     primaryProfile.className = "profile-card empty";
     primaryProfile.textContent = "Select a learner to reveal the complete profile.";
@@ -415,10 +440,11 @@ function renderPrimaryProfile(){
 }
 
 function addInvolvedRow(data = {}){
+  const selectedValue = studentInputValue(data.studentId || data.student?.id || "", data.student?.name || "");
   const row = document.createElement("div");
   row.className = "involved-row";
   row.innerHTML = `
-    <label><span>Learner</span><select class="involved-student">${studentOptions(data.studentId || data.student?.id || "")}</select></label>
+    <label><span>Learner</span><input class="involved-student" list="studentOptions" value="${escapeHtml(selectedValue)}" placeholder="Type learner name" autocomplete="off"></label>
     <label><span>Role</span><select class="involved-role">${roles.map(role=>`<option ${role === data.role ? "selected" : ""}>${role}</option>`).join("")}</select></label>
     <label><span>Notes</span><input class="involved-notes" value="${escapeHtml(data.notes || "")}" placeholder="Participation or observation"></label>
     <button class="remove-involved" type="button">Remove</button>`;
@@ -426,6 +452,7 @@ function addInvolvedRow(data = {}){
     row.remove();
     updateAutomaticDetails();
   });
+  row.querySelector(".involved-student").addEventListener("input", updateAutomaticDetails);
   row.querySelector(".involved-student").addEventListener("change", updateAutomaticDetails);
   involvedList.appendChild(row);
 }
@@ -451,10 +478,10 @@ function casePayload(){
     incidentDate:isoDate(document.getElementById("incidentDate").value,"Incident Date"),
     incidentTime:incidentTime.value,
     incidentLocation:document.getElementById("incidentLocation").value,
-    primaryStudentId:primaryStudent.value,
+    primaryStudentId:studentIdFromInput(primaryStudent),
     primaryRole:document.getElementById("primaryRole").value,
     involved:[...involvedList.querySelectorAll(".involved-row")].map(row=>({
-      studentId:row.querySelector(".involved-student").value,
+      studentId:studentIdFromInput(row.querySelector(".involved-student")),
       role:row.querySelector(".involved-role").value,
       notes:row.querySelector(".involved-notes").value.trim()
     })).filter(item=>item.studentId),
@@ -667,7 +694,7 @@ function editCase(item){
   document.getElementById("incidentDate").value = displayDate(item.incidentDate);
   setIncidentTime(item.incidentTime);
   document.getElementById("incidentLocation").value = item.incidentLocation || "";
-  primaryStudent.value = item.primaryStudent?.id || "";
+  primaryStudent.value = studentInputValue(item.primaryStudent?.id || "", item.primaryStudent?.name || "");
   document.getElementById("primaryRole").value = item.primaryRole || "Victim";
   item.involved?.forEach(addInvolvedRow);
   const legacyIncidentTypes = {
@@ -718,7 +745,7 @@ async function loadData(){
   }catch{
     advisories = [];
   }
-  primaryStudent.innerHTML = studentOptions();
+  refreshStudentOptions();
   resetForm();
   renderCases();
   if(!savedCaseError){
@@ -766,7 +793,7 @@ async function loadData(){
         cases = await LearnerOffline.loadGuidanceCases();
       }
       localStorage.setItem(advisoryCacheKey,JSON.stringify(advisories));
-      primaryStudent.innerHTML = studentOptions();
+      refreshStudentOptions();
       resetForm();
       renderCases();
       if(pendingGuidanceChanges){
@@ -851,6 +878,7 @@ guidanceForm.addEventListener("submit",async event=>{
   }
 });
 
+primaryStudent.addEventListener("input",renderPrimaryProfile);
 primaryStudent.addEventListener("change",renderPrimaryProfile);
 document.getElementById("addInvolvedButton").addEventListener("click",()=>addInvolvedRow());
 document.getElementById("clearCaseButton").addEventListener("click",resetForm);
@@ -950,7 +978,7 @@ LearnerOffline.onDataUpdated?.(async update=>{
   }
   if(update?.type === "learners"){
     students = await LearnerOffline.loadRecords();
-    primaryStudent.innerHTML = studentOptions(primaryStudent.value);
+    refreshStudentOptions();
   }else if(update?.type === "guidance"){
     cases = await LearnerOffline.loadGuidanceCases();
     renderCases();

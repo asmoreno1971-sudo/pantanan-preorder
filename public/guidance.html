@@ -90,7 +90,8 @@
         <div class="form-grid two">
           <label>
             <span>Learner Name *</span>
-            <select id="primaryStudent" required><option value="">Select learner</option></select>
+            <input id="primaryStudent" list="studentOptions" required placeholder="Type learner name" autocomplete="off">
+            <datalist id="studentOptions"></datalist>
           </label>
           <label>
             <span>Involvement to the Incident *</span>
@@ -305,6 +306,6 @@
 
 <script src="/learner-offline.js?v=20260615-guidance-pin-gate"></script>
 <script src="/teacher-session.js?v=20260616-current-teacher"></script>
-<script src="/guidance.js?v=20260615-guidance-cases-logout-fix"></script>
+<script src="/guidance.js?v=20260617-typable-learners"></script>
 </body>
 </html>

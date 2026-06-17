@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260617-prc-expiry-years";
+const shellCache = "bakhaw-learner-shell-20260617-typable-learners";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -32,7 +32,7 @@ const shellFiles = [
   "/guidance.html",
   "/guidance-offline-shell",
   "/guidance.css?v=20260614-hover-actions",
-  "/guidance.js?v=20260615-guidance-cases-logout-fix",
+  "/guidance.js?v=20260617-typable-learners",
   "/guidance-report",
   "/guidance-report.html",
   "/guidance-report-offline-shell",
