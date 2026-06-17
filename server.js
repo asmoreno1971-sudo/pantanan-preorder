@@ -383,7 +383,8 @@ function defaultPersonnelProfileFields(){
     "Notes"
   ].map((label,index)=>({
     id:personnelFieldId(label) || `field-${index + 1}`,
-    label
+    label,
+    options:[]
   }));
 }
 
@@ -402,14 +403,25 @@ async function readPersonnelProfileFields(forceRefresh = false){
       .map(row=>String(row[0] || "").trim())
       .filter(Boolean)
       .filter((label,index)=>index > 0 || !/^(field|fields|title|box title|profile field)$/i.test(label));
+    const columnBOptions = [...new Map(rows
+      .flatMap(row=>personnelFieldOptions(row[1]))
+      .filter(option=>!/^(option|options|choice|choices|department)$/i.test(option))
+      .map(option=>[option.toLowerCase(), option])).values()];
     if(!labels.length){
       throw new Error("Profile sheet Column A did not contain profile field titles.");
     }
-    const uniqueLabels = [...new Map(labels.map(label=>[personnelFieldId(label) || label.toLowerCase(), label])).values()];
-    personnelProfileFieldCache = uniqueLabels.map((label,index)=>({
-      id:personnelFieldId(label) || `field-${index + 1}`,
-      label
-    })).filter(field=>field.label && field.id !== "name");
+    const uniqueFields = new Map();
+    labels.forEach((label,index)=>{
+      const id = personnelFieldId(label) || `field-${index + 1}`;
+      if(!uniqueFields.has(id)){
+        uniqueFields.set(id, {
+          id,
+          label,
+          options:id === "department" ? columnBOptions : []
+        });
+      }
+    });
+    personnelProfileFieldCache = [...uniqueFields.values()].filter(field=>field.label && field.id !== "name");
   }catch{
     if(!personnelProfileFieldCache){
       personnelProfileFieldCache = defaultPersonnelProfileFields();
@@ -418,6 +430,14 @@ async function readPersonnelProfileFields(forceRefresh = false){
 
   personnelProfileFieldCachedAt = Date.now();
   return personnelProfileFieldCache;
+}
+
+function personnelFieldOptions(value){
+  return String(value || "")
+    .split(/[\r\n;|,]+/)
+    .flatMap(part=>part.split(","))
+    .map(option=>option.trim())
+    .filter(Boolean);
 }
 
 function teacherPinHash(pin, salt){

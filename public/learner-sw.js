@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260617-no-duplicate-name";
+const shellCache = "bakhaw-learner-shell-20260617-column-b-options";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -17,12 +17,12 @@ const shellFiles = [
   "/personnel.html",
   "/personnel-offline-shell",
   "/personnel.css?v=20260617-hide-default-list",
-  "/personnel.js?v=20260617-date-picker-fields",
+  "/personnel.js?v=20260617-column-b-options",
   "/personnel-profile",
   "/personnel-profile.html",
   "/personnel-profile-offline-shell",
-  "/personnel-profile.css?v=20260617-date-rollers",
-  "/personnel-profile.js?v=20260617-date-rollers",
+  "/personnel-profile.css?v=20260617-column-b-options",
+  "/personnel-profile.js?v=20260617-column-b-options",
   "/student-dashboard",
   "/student-dashboard.html",
   "/student-dashboard-offline-shell",

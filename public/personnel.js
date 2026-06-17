@@ -110,9 +110,14 @@ function normalizeProfileFields(fields){
   const source = Array.isArray(fields) && fields.length ? fields : defaultProfileFields();
   return source.map((field,index)=>{
     const label = String(field?.label || field?.name || field || "").trim();
+    const options = Array.isArray(field?.options) ? field.options : [];
     return {
       id:fieldId(field?.id || label) || `field-${index + 1}`,
-      label
+      label,
+      options:[...new Map(options
+        .map(option=>String(option || "").trim())
+        .filter(Boolean)
+        .map(option=>[option.toLowerCase(), option])).values()]
     };
   }).filter(field=>field.label && field.id !== "name");
 }

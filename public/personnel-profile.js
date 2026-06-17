@@ -58,9 +58,14 @@ function normalizeProfileFields(fields){
   return source
     .map((field,index)=>{
       const label = normalizeName(field?.label || field?.name || field || "");
+      const options = Array.isArray(field?.options) ? field.options : [];
       return {
         id:fieldId(field?.id || label) || `field-${index + 1}`,
-        label
+        label,
+        options:[...new Map(options
+          .map(option=>normalizeName(option))
+          .filter(Boolean)
+          .map(option=>[option.toLowerCase(), option])).values()]
       };
     })
     .filter(field=>field.label && field.id !== "name");
@@ -339,6 +344,9 @@ function fieldInputMarkup(field){
   if(field.id === "year-started-at-deped"){
     return yearStartedSelectMarkup(field);
   }
+  if(field.options?.length){
+    return profileOptionSelectMarkup(field);
+  }
   return answerTextareaMarkup(field);
 }
 
@@ -393,6 +401,17 @@ function yearStartedSelectMarkup(field){
   return `
     <select name="field:${escapeHtml(field.id)}">
       <option value="">Select Year</option>
+      ${options}
+    </select>`;
+}
+
+function profileOptionSelectMarkup(field){
+  const options = field.options
+    .map(option=>`<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`)
+    .join("");
+  return `
+    <select name="field:${escapeHtml(field.id)}">
+      <option value="">Select ${escapeHtml(field.label)}</option>
       ${options}
     </select>`;
 }
