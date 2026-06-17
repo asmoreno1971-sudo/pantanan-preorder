@@ -383,8 +383,12 @@ function alignProfilesToOfficialPersonnel(){
     return;
   }
   const profilesByName = new Map(profiles.map(profile=>[profileKey(profile.name), profile]));
-  const officialProfiles = officialPersonnelNames().map(name=>profilesByName.get(profileKey(name)) || blankProfile(name));
-  const extraProfiles = profiles.filter(profile=>!matchingOfficialName(profile.name));
+  const officialProfiles = officialPersonnelNames().map(name=>{
+    const savedProfile = profilesByName.get(profileKey(name))
+      || profiles.find(profile=>samePersonName(profile.name, name));
+    return savedProfile ? { ...savedProfile, name } : blankProfile(name);
+  });
+  const extraProfiles = profiles.filter(profile=>!officialPersonnelNames().some(name=>samePersonName(profile.name, name)));
   profiles = [...officialProfiles, ...extraProfiles];
   saveStorageList(personnelProfilesKey, profiles);
 }
