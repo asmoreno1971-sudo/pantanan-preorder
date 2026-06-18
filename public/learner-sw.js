@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-20260617-offline-pages";
+const shellCache = "bakhaw-learner-shell-20260618-saved-profile-hydration";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
@@ -17,7 +17,7 @@ const shellFiles = [
   "/personnel.js?v=20260617-column-b-options",
   "/personnel-profile-offline-shell",
   "/personnel-profile.css?v=20260617-prc-expiry-years",
-  "/personnel-profile.js?v=20260617-prc-expiry-years",
+  "/personnel-profile.js?v=20260618-saved-profile-hydration",
   "/student-dashboard-offline-shell",
   "/student-dashboard.css?v=20260616-personnel-consol",
   "/student-dashboard.js?v=20260617-console-password",

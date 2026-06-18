@@ -241,6 +241,48 @@ function blankProfile(name = ""){
   };
 }
 
+function profileFieldValue(profile, field){
+  if(!profile || !field){
+    return "";
+  }
+  return profile.fields?.[field.id] || profile[field.id] || legacyProfileValue(profile, field.id) || "";
+}
+
+function profileHasSavedDetails(profile){
+  if(!profile){
+    return false;
+  }
+  return profileFields.some(field=>String(profileFieldValue(profile, field) || "").trim());
+}
+
+function mergeProfileLists(...lists){
+  const merged = new Map();
+  lists.flat().filter(profile=>profile?.name).forEach(profile=>{
+    const key = profileKey(profile.name);
+    const existing = merged.get(key);
+    if(!existing){
+      merged.set(key, profile);
+      return;
+    }
+    const existingHasDetails = profileHasSavedDetails(existing);
+    const profileHasDetails = profileHasSavedDetails(profile);
+    if(profileHasDetails && !existingHasDetails){
+      merged.set(key, { ...existing, ...profile });
+      return;
+    }
+    if(profileHasDetails === existingHasDetails && String(profile.updatedAt || "") > String(existing.updatedAt || "")){
+      merged.set(key, { ...existing, ...profile });
+    }
+  });
+  return [...merged.values()];
+}
+
+function storedPersonnelProfiles(){
+  const profileRecords = storageList(personnelProfilesKey);
+  const personnelRecords = storageList(personnelStorageKey).filter(profile=>profileHasSavedDetails(profile));
+  return mergeProfileLists(profileRecords, personnelRecords);
+}
+
 function currentProfileForName(name){
   const officialName = matchingOfficialName(name) || name;
   const key = profileKey(officialName);
@@ -256,6 +298,7 @@ function legacyProfileValue(profile, id){
     position:profile.position,
     department:profile.department,
     "advisory-assignment":profile.advisory,
+    contact:profile.contactNumber || profile.fields?.["contact-number"],
     "contact-number":profile.contactNumber,
     "deped-email":profile.depedEmail,
     address:profile.address,
@@ -276,7 +319,7 @@ function setFormProfile(profile){
   profileFields.forEach(field=>{
     const input = profileForm.elements[`field:${field.id}`];
     if(input){
-      const value = profile.fields?.[field.id] || profile[field.id] || legacyProfileValue(profile, field.id) || "";
+      const value = profileFieldValue(profile, field);
       const displayValue = isDateField(field) ? formatDateValue(value) : value;
       if(input.tagName === "SELECT" && displayValue && ![...input.options].some(option=>option.value === displayValue)){
         input.appendChild(new Option(displayValue, displayValue));
@@ -302,7 +345,7 @@ function profileFromForm(){
   profile.position = profile.fields.position || "";
   profile.department = profile.fields.department || "";
   profile.advisory = profile.fields["advisory-assignment"] || "";
-  profile.contactNumber = profile.fields["contact-number"] || "";
+  profile.contactNumber = profile.fields["contact-number"] || profile.fields.contact || "";
   profile.depedEmail = String(profile.fields["deped-email"] || "").toLowerCase();
   profile.address = profile.fields.address || "";
   profile.emergencyContact = profile.fields["emergency-contact"] || "";
@@ -509,6 +552,7 @@ function alignProfilesToOfficialPersonnel(){
   if(!officialPersonnel.length){
     return;
   }
+  profiles = mergeProfileLists(profiles, storedPersonnelProfiles());
   const profilesByName = new Map(profiles.map(profile=>[profileKey(profile.name), profile]));
   const officialProfiles = officialPersonnelNames().map(name=>{
     const savedProfile = profilesByName.get(profileKey(name))
@@ -633,7 +677,7 @@ async function loadCurrentTeacher(){
 }
 
 async function loadProfiles(){
-  profiles = storageList(personnelProfilesKey);
+  profiles = storedPersonnelProfiles();
   alignProfilesToOfficialPersonnel();
   updateSyncStatus(profiles.length ? "Saved personnel profiles shown." : "No saved personnel profiles yet.");
   if(!navigator.onLine){
@@ -660,7 +704,7 @@ async function loadProfiles(){
       saveStorageList(personnelFieldsKey, profileFields);
       renderProfileFields();
     }
-    profiles = Array.isArray(data.profiles) ? data.profiles : [];
+    profiles = mergeProfileLists(Array.isArray(data.profiles) ? data.profiles : [], storedPersonnelProfiles());
     alignProfilesToOfficialPersonnel();
     saveStorageList(personnelProfilesKey, profiles);
     updateSyncStatus(`${profiles.length.toLocaleString()} personnel profile${profiles.length === 1 ? "" : "s"} loaded.`);
