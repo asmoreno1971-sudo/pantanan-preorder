@@ -6,7 +6,7 @@ const crypto = require("node:crypto");
 const root = __dirname;
 const publicDir = path.join(root, "public");
 const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : root;
-const databaseUrl = process.env.EXTERNAL_DATABASE_URL || process.env.DATABASE_URL || "";
+const databaseUrl = process.env.DATABASE_URL || process.env.EXTERNAL_DATABASE_URL || "";
 const dataNamespace = String(process.env.DATA_NAMESPACE || "").trim();
 const teacherProfileHome = process.env.TEACHER_PROFILE_HOME === "true";
 const isProduction = process.env.NODE_ENV === "production";
@@ -213,6 +213,20 @@ function safeCredentialEqual(received, expected){
   const receivedHash = crypto.createHash("sha256").update(String(received || "")).digest();
   const expectedHash = crypto.createHash("sha256").update(String(expected || "")).digest();
   return crypto.timingSafeEqual(receivedHash, expectedHash);
+}
+
+function isDatabaseConnectionError(error){
+  const code = String(error?.code || "");
+  const message = String(error?.message || "");
+  return ["ENOTFOUND", "ECONNREFUSED", "ETIMEDOUT", "EAI_AGAIN"].includes(code)
+    || /getaddrinfo|database connection|connection terminated|timeout/i.test(message);
+}
+
+function publicErrorMessage(error){
+  if(isDatabaseConnectionError(error)){
+    return "Database connection is temporarily unavailable. Try again, or use offline login on this device if it was already set up.";
+  }
+  return error?.message || "The request could not be completed.";
 }
 
 function normalizedTeacherUsername(value){
@@ -535,7 +549,14 @@ async function readTeacherAccounts(){
   }
 
   if(changed){
-    await writeTeacherAccounts(normalized);
+    try{
+      await writeTeacherAccounts(normalized);
+    }catch(error){
+      if(!isDatabaseConnectionError(error)){
+        throw error;
+      }
+      console.warn(`Teacher account defaults could not be persisted; continuing with in-memory defaults. ${error.message}`);
+    }
   }
 
   return normalized;
@@ -618,22 +639,31 @@ async function getDbPool(){
 }
 
 async function readDataRecord(key, filePath, fallbackValue){
-  const pool = await getDbPool();
+  try{
+    const pool = await getDbPool();
 
-  if(pool){
-    const dbKey = storageKey(key);
-    const existing = await pool.query("select value from app_data where key = $1", [dbKey]);
+    if(pool){
+      const dbKey = storageKey(key);
+      const existing = await pool.query("select value from app_data where key = $1", [dbKey]);
 
-    if(existing.rows.length){
-      return existing.rows[0].value;
+      if(existing.rows.length){
+        return existing.rows[0].value;
+      }
+
+      const seed = await readJsonSeed(filePath, fallbackValue);
+      await pool.query(
+        "insert into app_data (key, value, updated_at) values ($1, $2::jsonb, now()) on conflict (key) do nothing",
+        [dbKey, JSON.stringify(seed)]
+      );
+      return seed;
     }
-
-    const seed = await readJsonSeed(filePath, fallbackValue);
-    await pool.query(
-      "insert into app_data (key, value, updated_at) values ($1, $2::jsonb, now()) on conflict (key) do nothing",
-      [dbKey, JSON.stringify(seed)]
-    );
-    return seed;
+  }catch(error){
+    if(!isDatabaseConnectionError(error)){
+      throw error;
+    }
+    dbReady = null;
+    console.warn(`Database unavailable while reading ${key}; using fallback data. ${error.message}`);
+    return readJsonSeed(filePath, fallbackValue);
   }
 
   requirePersistentStorageForProduction(key, "read");
@@ -3406,7 +3436,7 @@ const server = http.createServer(async (req, res)=>{
 
     await serveStatic(req, res);
   }catch(error){
-    send(res, 500, JSON.stringify({ ok:false, message:error.message }));
+    send(res, 500, JSON.stringify({ ok:false, message:publicErrorMessage(error) }));
   }
 });
 

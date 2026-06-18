@@ -1,9 +1,9 @@
-const shellCache = "bakhaw-learner-shell-20260618-saved-profile-hydration";
+const shellCache = "bakhaw-learner-shell-20260618-db-fallback-login";
 const shellFiles = [
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260614-hide-guidance-name",
-  "/teacher-login.js?v=20260616-current-teacher",
+  "/teacher-login.js?v=20260618-db-fallback-login",
   "/learner-offline.js?v=20260617-offline-pages",
   "/learner-manifest.webmanifest",
   "/teacher-session.css?v=20260613-self-pin",

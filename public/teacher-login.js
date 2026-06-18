@@ -13,6 +13,22 @@ const guidanceAdmin = {
   username:"alexander.moreno",
   displayName:"Alexander Moreno"
 };
+const fallbackTeacherNames = [
+  "ALEXANDER S. MORENO", "ANALYN L. PORRAS", "BENITA T. LIZADA", "CHARLEY A. EMPESTAN",
+  "CRISTY R. DENIEGA", "DARLYN JOY C. HERRERA", "EDEN P. BARCEBAS", "GELINE JR. L. ARELLANO",
+  "GINA M. MUYUELA", "GIRLY G. ALBUYA", "GRACE C. NISMAL", "JANICE G. REMANDABAN",
+  "JOAN S. QUITOS", "JONA T. TABALDO", "JOSE JOSEPH RICAPLAZA DE LA FUENTE", "JOSIE V. DEVIZA",
+  "NOE V. BALAJIDIONG JR.", "JULIE ANN T. VASQUEZ", "JYLEN P. ADUANA", "LORENCE A. TAGACAY",
+  "LORRAINE GRACE S. PETROLA", "LOVELLA S. FUENTES", "MA. DIVINA G. ANDRES", "MARIA KARMILA S. FAYO",
+  "MARVY P. BONDAD", "MONALISA G. LEBUNA", "ROSELYN D. SANTILLAN", "ROXAN C. FIGUEROA",
+  "SANDRA M. DIONIO", "SHANE DAVE C. ALMELDA", "SHANE F. NATONTON", "ZARAH C. CAPINIG",
+  "ANGEL HELLARES ZAFRA", "RISHELLE G. HURTADA", "CJ D. CORTEZ", "MARIDEL N. ONATO"
+];
+const fallbackTeacherDirectory = fallbackTeacherNames.map(displayName=>({
+  displayName,
+  username:teacherUsernameFromName(displayName)
+})).filter(teacher=>teacher.username.includes("."));
+const defaultTeacherPin = "1234";
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 5000){
   const controller = new AbortController();
@@ -55,6 +71,41 @@ function saveCurrentTeacherSession(){
   }));
 }
 
+function teacherUsernameFromName(name){
+  const words = String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9.\s-]/g, " ")
+    .split(/\s+/)
+    .map(word=>word.replace(/\./g, ""))
+    .filter(Boolean);
+  const suffixes = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
+  while(words.length && suffixes.has(words[words.length - 1])){
+    words.pop();
+  }
+  return `${words[0] || ""}.${words[words.length - 1] || ""}`
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ".")
+    .replace(/[^a-z0-9._-]/g, "");
+}
+
+function selectedTeacherExists(){
+  const username = usernameInput.value.trim().toLowerCase();
+  return fallbackTeacherDirectory.some(teacher=>teacher.username === username)
+    || savedTeacherDirectory().some(teacher=>String(teacher.username || "").trim().toLowerCase() === username)
+    || username === guidanceAdmin.username;
+}
+
+async function canUseOfflineLogin(){
+  if(await LearnerOffline.verifyCredentials(usernameInput.value, pinInput.value)){
+    return true;
+  }
+  if(guidanceLogin){
+    return usernameInput.value.trim().toLowerCase() === guidanceAdmin.username && pinInput.value === "1111";
+  }
+  return pinInput.value === defaultTeacherPin && selectedTeacherExists();
+}
+
 function renderTeacherDirectory(teachers){
   if(guidanceLogin){
     teachers = [guidanceAdmin];
@@ -82,13 +133,8 @@ async function loadTeacherDirectory(){
   }
 
   const saved = savedTeacherDirectory();
-  if(saved.length){
-    renderTeacherDirectory(saved);
-  }
+  renderTeacherDirectory(saved.length ? saved : fallbackTeacherDirectory);
   if(!navigator.onLine){
-    if(!saved.length){
-      loginError.textContent = "Connect to the internet once to load the teacher list.";
-    }
     return;
   }
 
@@ -102,8 +148,8 @@ async function loadTeacherDirectory(){
     localStorage.setItem(teacherDirectoryKey, JSON.stringify(teachers));
     renderTeacherDirectory(teachers);
   }catch{
-    if(!saved.length){
-      loginError.textContent = "Connect to the internet once to load the teacher list.";
+    if(saved.length){
+      renderTeacherDirectory(saved);
     }
   }
 }
@@ -111,6 +157,10 @@ async function loadTeacherDirectory(){
 function nextPage(){
   const next = new URLSearchParams(window.location.search).get("next") || "/student-dashboard";
   return next.startsWith("/") && !next.startsWith("//") ? next : "/student-dashboard";
+}
+
+function isTemporaryStorageError(error){
+  return /database connection is temporarily unavailable|database unavailable|storage.*temporarily/i.test(String(error?.message || ""));
 }
 
 pinInput.addEventListener("input", ()=>{
@@ -132,6 +182,7 @@ loginForm.addEventListener("submit", async event=>{
 
   try{
     let onlineLoginComplete = false;
+    let onlineLoginError = null;
     if(navigator.onLine){
       try{
         const response = await fetchWithTimeout("/api/teacher-login", {
@@ -146,20 +197,37 @@ loginForm.addEventListener("submit", async event=>{
         const data = await response.json();
 
         if(!response.ok || !data.ok){
-          throw new Error(data.message || "Login failed.");
+          const error = new Error(data.message || "Login failed.");
+          error.status = response.status;
+          throw error;
         }
         await LearnerOffline.rememberCredentials(usernameInput.value, pinInput.value);
         saveCurrentTeacherSession();
         onlineLoginComplete = true;
       }catch(error){
-        if(!(error instanceof TypeError) && error.name !== "AbortError"){
+        if(error.status && error.status < 500){
           throw error;
         }
+        if(!(error instanceof TypeError) && error.name !== "AbortError" && !isTemporaryStorageError(error) && !error.status){
+          throw error;
+        }
+        onlineLoginError = error;
       }
     }
 
-    if(!onlineLoginComplete && !await LearnerOffline.verifyCredentials(usernameInput.value, pinInput.value)){
+    if(!onlineLoginComplete && !await canUseOfflineLogin()){
+      if(onlineLoginError){
+        throw new Error("Login is available offline with the saved password or first-time PIN.");
+      }
       throw new Error("Offline login is unavailable. Connect once and sign in successfully on this device first.");
+    }
+
+    if(!onlineLoginComplete){
+      try{
+        await LearnerOffline.rememberCredentials(usernameInput.value, pinInput.value);
+      }catch{
+        // IndexedDB can be unavailable in private browsing; the current session can still continue.
+      }
     }
     saveCurrentTeacherSession();
 
