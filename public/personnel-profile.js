@@ -333,6 +333,25 @@ function profileFetch(url, options = {}, timeoutMs = 15000){
   return fetch(url,{...options,signal:controller.signal}).finally(()=>window.clearTimeout(timeout));
 }
 
+async function saveProfileOnline(profile, timeoutMs = 45000){
+  const response = await profileFetch("/api/personnel-profiles", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({ profile })
+  }, timeoutMs);
+  const data = await response.json();
+  if(response.status === 401){
+    window.location.replace(`/login?next=${encodeURIComponent("/personnel-profile")}`);
+    return null;
+  }
+  if(!response.ok || !data.ok){
+    const error = new Error(data.message || "Profile could not be saved.");
+    error.status = response.status;
+    throw error;
+  }
+  return data.profile || profile;
+}
+
 function uniqueTeacherNames(){
   const names = teacherDirectory.map(teacherDisplayName).filter(Boolean);
   return [...new Map(names.map(name=>[profileKey(name), name])).values()]
@@ -935,16 +954,11 @@ async function syncPendingProfiles(){
     const remaining = [];
     for(const profile of pending){
       try{
-        const response = await profileFetch("/api/personnel-profiles", {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({ profile })
-        });
-        const data = await response.json();
-        if(!response.ok || !data.ok){
-          throw new Error(data.message || "Profile could not be synchronized.");
+        const savedProfile = await saveProfileOnline(profile);
+        if(!savedProfile){
+          return;
         }
-        upsertLocalProfile(data.profile || profile);
+        upsertLocalProfile(savedProfile);
       }catch{
         remaining.push(profile);
       }
@@ -977,22 +991,11 @@ profileForm.addEventListener("submit",async event=>{
     if(!navigator.onLine){
       throw new Error("offline");
     }
-    const response = await profileFetch("/api/personnel-profiles", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({ profile })
-    });
-    const data = await response.json();
-    if(response.status === 401){
-      window.location.replace(`/login?next=${encodeURIComponent("/personnel-profile")}`);
+    const savedProfile = await saveProfileOnline(profile);
+    if(!savedProfile){
       return;
     }
-    if(!response.ok || !data.ok){
-      const error = new Error(data.message || "Profile could not be saved.");
-      error.status = response.status;
-      throw error;
-    }
-    upsertLocalProfile(data.profile || profile);
+    upsertLocalProfile(savedProfile);
     setFormProfile(profile);
     profileFormMessage.textContent = `${profile.name} profile saved.`;
   }catch(error){
@@ -1002,7 +1005,19 @@ profileForm.addEventListener("submit",async event=>{
     }
     queueProfile(profile);
     setFormProfile(profile);
-    profileFormMessage.textContent = `${profile.name} profile saved offline and will sync automatically.`;
+    profileFormMessage.textContent = navigator.onLine
+      ? `${profile.name} profile saved locally. Syncing to server...`
+      : `${profile.name} profile saved offline and will sync automatically.`;
+    if(navigator.onLine){
+      syncPendingProfiles()
+        .then(()=>{
+          profileFormMessage.textContent = pendingCount()
+            ? `${profile.name} profile saved locally. ${pendingCount()} profile${pendingCount() === 1 ? "" : "s"} waiting to sync.`
+            : `${profile.name} profile saved.`;
+          updateSyncStatus(pendingCount() ? "Saved personnel profiles shown." : "All personnel profiles synced.");
+        })
+        .catch(()=>{});
+    }
   }finally{
     saveProfileButton.disabled = false;
     saveProfileButton.textContent = "Save Profile";

@@ -18,7 +18,7 @@ const shellFiles = [
   "/personnel.js?v=20260619-profile-data-merge",
   "/personnel-profile-offline-shell",
   "/personnel-profile.css?v=20260618-shared-personnel-photo",
-  "/personnel-profile.js?v=20260619-save-profile-data",
+  "/personnel-profile.js?v=20260619-profile-save-status",
   "/student-dashboard-offline-shell",
   "/student-dashboard.css?v=20260616-personnel-consol",
   "/student-dashboard.js?v=20260617-console-password",
