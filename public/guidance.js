@@ -629,7 +629,7 @@ async function syncPendingGuidanceChanges(){
       const response = await guidanceFetch(endpoint,options);
       const data = await response.json();
       if(response.status === 401 || response.status === 403){
-        window.location.replace(`/teacher-login?next=${encodeURIComponent("/guidance")}`);
+        window.location.replace(`/login?next=${encodeURIComponent("/guidance")}`);
         throw new Error("Guidance login is required before saved changes can sync.");
       }
       if(!response.ok && !(change.method === "DELETE" && response.status === 404)){
@@ -767,7 +767,7 @@ async function loadData(){
         guidanceFetch("/api/advisory-directory",{cache:"no-store"})
       ]);
       if(caseResponse.status === 401 || caseResponse.status === 403){
-        window.location.replace(`/teacher-login?next=${encodeURIComponent("/guidance")}`);
+        window.location.replace(`/login?next=${encodeURIComponent("/guidance")}`);
         return;
       }
       const [studentData,caseData,adviserData] = await Promise.all([

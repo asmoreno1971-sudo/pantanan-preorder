@@ -29,14 +29,27 @@ const fallbackTeacherDirectory = fallbackTeacherNames.map(displayName=>({
   username:teacherUsernameFromName(displayName)
 })).filter(teacher=>teacher.username.includes("."));
 const defaultTeacherPin = "1234";
+let serverSessionReady = false;
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = 5000){
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000){
   const controller = new AbortController();
   const timeout = window.setTimeout(()=>controller.abort(),timeoutMs);
   try{
     return await fetch(url,{...options,signal:controller.signal});
   }finally{
     window.clearTimeout(timeout);
+  }
+}
+
+async function readJsonResponse(response, fallbackMessage){
+  const text = await response.text();
+  if(!text.trim()){
+    throw new Error(fallbackMessage || "The server returned an empty response.");
+  }
+  try{
+    return JSON.parse(text);
+  }catch{
+    throw new Error(fallbackMessage || "The server response could not be read.");
   }
 }
 
@@ -58,14 +71,27 @@ function escapeHtml(value){
     .replace(/'/g, "&#039;");
 }
 
-function saveCurrentTeacherSession(){
+function currentTeacherDisplayName(){
   const selected = usernameInput.selectedOptions?.[0];
-  const displayName = selected?.textContent?.trim() || usernameInput.value.trim();
+  const displayName = selected?.textContent?.trim() || "";
+  return displayName && displayName !== "Select your name" ? displayName : "";
+}
+
+function currentTeacherUsername(){
+  const username = usernameInput.value.trim().toLowerCase();
+  if(username){
+    return username;
+  }
+  return teacherUsernameFromName(currentTeacherDisplayName());
+}
+
+function saveCurrentTeacherSession(){
+  const displayName = currentTeacherDisplayName() || currentTeacherUsername();
   if(!displayName){
     return;
   }
   localStorage.setItem(currentTeacherKey, JSON.stringify({
-    username:usernameInput.value.trim().toLowerCase(),
+    username:currentTeacherUsername(),
     displayName,
     savedAt:new Date().toISOString()
   }));
@@ -90,18 +116,25 @@ function teacherUsernameFromName(name){
 }
 
 function selectedTeacherExists(){
-  const username = usernameInput.value.trim().toLowerCase();
+  const username = currentTeacherUsername();
+  if(currentTeacherDisplayName() && username){
+    return true;
+  }
   return fallbackTeacherDirectory.some(teacher=>teacher.username === username)
     || savedTeacherDirectory().some(teacher=>String(teacher.username || "").trim().toLowerCase() === username)
     || username === guidanceAdmin.username;
 }
 
 async function canUseOfflineLogin(){
-  if(await LearnerOffline.verifyCredentials(usernameInput.value, pinInput.value)){
-    return true;
+  try{
+    if(await LearnerOffline.verifyCredentials(currentTeacherUsername(), pinInput.value)){
+      return true;
+    }
+  }catch{
+    // Browser storage can be unavailable or blocked; the default PIN path can still work.
   }
   if(guidanceLogin){
-    return usernameInput.value.trim().toLowerCase() === guidanceAdmin.username && pinInput.value === "1111";
+    return currentTeacherUsername() === guidanceAdmin.username && pinInput.value === "1111";
   }
   return pinInput.value === defaultTeacherPin && selectedTeacherExists();
 }
@@ -140,7 +173,7 @@ async function loadTeacherDirectory(){
 
   try{
     const response = await fetchWithTimeout("/api/teacher-directory", { cache:"no-store" });
-    const data = await response.json();
+    const data = await readJsonResponse(response, "Teacher list could not be loaded.");
     if(!response.ok || !data.ok){
       throw new Error(data.message || "Teacher list could not be loaded.");
     }
@@ -170,6 +203,7 @@ pinInput.addEventListener("input", ()=>{
 loginForm.addEventListener("submit", async event=>{
   event.preventDefault();
   loginError.textContent = "";
+  serverSessionReady = false;
 
   if(!/^\d{4}$/.test(pinInput.value)){
     loginError.textContent = "Password must contain exactly 4 digits.";
@@ -181,6 +215,35 @@ loginForm.addEventListener("submit", async event=>{
   loginButton.textContent = "Signing in...";
 
   try{
+    const localLoginAllowed = await canUseOfflineLogin();
+    if(localLoginAllowed){
+      saveCurrentTeacherSession();
+      LearnerOffline.setOfflineSession(true);
+      if(guidanceLogin){
+        LearnerOffline.setGuidanceSession(true);
+      }
+      LearnerOffline.rememberCredentials(currentTeacherUsername(), pinInput.value).catch(()=>{});
+      if(navigator.onLine){
+        try{
+          await fetchWithTimeout("/api/teacher-login", {
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body:JSON.stringify({
+              username:currentTeacherUsername(),
+              pin:pinInput.value,
+              guidanceLogin
+            })
+          }, 8000);
+        }catch{
+          // Local session is already set; keep opening the app even if the cookie refresh is slow.
+        }
+        LearnerOffline.registerServiceWorker().catch(()=>{});
+      }
+      loginButton.textContent = guidanceLogin ? "Opening Guidance..." : "Opening...";
+      window.location.replace(nextPage());
+      return;
+    }
+
     let onlineLoginComplete = false;
     let onlineLoginError = null;
     if(navigator.onLine){
@@ -189,61 +252,62 @@ loginForm.addEventListener("submit", async event=>{
           method:"POST",
           headers:{ "Content-Type":"application/json" },
           body:JSON.stringify({
-            username:usernameInput.value.trim(),
+            username:currentTeacherUsername(),
             pin:pinInput.value,
             guidanceLogin
           })
         });
-        const data = await response.json();
+        const data = await readJsonResponse(response, "Login is available offline with the saved password or first-time PIN.");
 
         if(!response.ok || !data.ok){
           const error = new Error(data.message || "Login failed.");
           error.status = response.status;
           throw error;
         }
-        await LearnerOffline.rememberCredentials(usernameInput.value, pinInput.value);
+        await LearnerOffline.rememberCredentials(currentTeacherUsername(), pinInput.value);
         saveCurrentTeacherSession();
         onlineLoginComplete = true;
+        serverSessionReady = true;
       }catch(error){
-        if(error.status && error.status < 500){
-          throw error;
-        }
-        if(!(error instanceof TypeError) && error.name !== "AbortError" && !isTemporaryStorageError(error) && !error.status){
-          throw error;
-        }
         onlineLoginError = error;
       }
     }
 
     if(!onlineLoginComplete && !await canUseOfflineLogin()){
       if(onlineLoginError){
+        if(onlineLoginError.status && onlineLoginError.status < 500){
+          throw onlineLoginError;
+        }
         throw new Error("Login is available offline with the saved password or first-time PIN.");
       }
       throw new Error("Offline login is unavailable. Connect once and sign in successfully on this device first.");
     }
 
     if(!onlineLoginComplete){
+      serverSessionReady = false;
       try{
-        await LearnerOffline.rememberCredentials(usernameInput.value, pinInput.value);
+        await LearnerOffline.rememberCredentials(currentTeacherUsername(), pinInput.value);
       }catch{
         // IndexedDB can be unavailable in private browsing; the current session can still continue.
       }
     }
     saveCurrentTeacherSession();
 
-    LearnerOffline.setOfflineSession(false);
+    LearnerOffline.setOfflineSession(true);
     if(guidanceLogin){
-      LearnerOffline.setOfflineSession(true);
       LearnerOffline.setGuidanceSession(true);
       loginButton.textContent = "Opening Guidance...";
       if(navigator.onLine){
-        await LearnerOffline.registerServiceWorker();
+        LearnerOffline.registerServiceWorker().catch(()=>{});
       }
       window.location.replace(nextPage());
       return;
     }
-    privacyDialog.showModal();
-    agreeButton.focus();
+    loginButton.textContent = "Opening...";
+    if(navigator.onLine){
+      LearnerOffline.registerServiceWorker().catch(()=>{});
+    }
+    window.location.replace(nextPage());
   }catch(error){
     loginError.textContent = error.message;
     pinInput.value = "";
@@ -264,16 +328,20 @@ agreeButton.addEventListener("click", async ()=>{
   agreeButton.textContent = "Continuing...";
 
   try{
-    if(navigator.onLine){
+    if(navigator.onLine && serverSessionReady){
       try{
         const response = await fetchWithTimeout("/api/teacher-consent", { method:"POST" });
-        const data = await response.json();
+        const data = await readJsonResponse(response, "Your agreement could not be recorded.");
 
         if(!response.ok || !data.ok){
-          throw new Error(data.message || "Your agreement could not be recorded.");
+          const error = new Error(data.message || "Your agreement could not be recorded.");
+          error.status = response.status;
+          throw error;
         }
       }catch(error){
-        if(!(error instanceof TypeError) && error.name !== "AbortError"){
+        if(error.status === 401 || error.status === 403){
+          serverSessionReady = false;
+        }else if(!(error instanceof TypeError) && error.name !== "AbortError"){
           throw error;
         }
       }

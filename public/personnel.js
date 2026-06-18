@@ -6,6 +6,7 @@ const personnelStorageKey = "bakhawPersonnelProfiles";
 const personnelRecordsKey = "bakhawPersonnelProfileRecords";
 const personnelFieldsKey = "bakhawPersonnelProfileFields";
 const teacherDirectoryKey = "bakhawTeacherDirectory";
+const personnelPhotosKey = "bakhawPersonnelProfilePhotos";
 const personnelConsolePassword = "1111";
 const personnelConsoleUnlockKey = "bakhawPersonnelConsoleUnlocked";
 
@@ -52,6 +53,15 @@ function savedProfileFields(){
     return Array.isArray(saved) ? saved : [];
   }catch{
     return [];
+  }
+}
+
+function savedPersonnelPhotos(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(personnelPhotosKey) || "{}");
+    return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+  }catch{
+    return {};
   }
 }
 
@@ -158,6 +168,14 @@ function displayValue(value){
   return cleanValue ? escapeHtml(cleanValue) : `<span class="missing-value">Not saved</span>`;
 }
 
+function savedPhotoForPersonnel(name){
+  const photos = savedPersonnelPhotos();
+  const key = normalizeName(name);
+  return photos[key]?.dataUrl
+    || Object.values(photos).find(photo=>samePersonName(photo?.name, name))?.dataUrl
+    || "";
+}
+
 function profileDetails(profile){
   const legacyValues = {
     sex:profile.sex,
@@ -190,14 +208,18 @@ function hasSavedDetails(profile){
 function profileCard(profile,index,expanded = false){
   const details = profileDetails(profile);
   const summaryFields = expanded ? details : details.filter(([,value])=>String(value || "").trim()).slice(0, 4);
+  const profileUrl = `/personnel-profile?name=${encodeURIComponent(profile.name || "")}`;
+  const photoUrl = savedPhotoForPersonnel(profile.name);
   return `
     <article class="personnel-card ${expanded ? "personnel-card-expanded" : ""}">
       <div class="personnel-card-heading">
+        ${photoUrl ? `<img class="personnel-card-photo" src="${escapeHtml(photoUrl)}" alt="">` : ""}
         ${expanded ? "" : `<span class="personnel-number">${index + 1}</span>`}
         <div>
           <h3 class="personnel-name">${escapeHtml(profile.name || "Unnamed personnel")}</h3>
           <p>${hasSavedDetails(profile) ? "Saved personnel profile" : "No saved profile details yet"}</p>
         </div>
+        <a class="personnel-profile-link" href="${profileUrl}">Open Profile</a>
       </div>
       <dl class="profile-details">
         ${summaryFields.map(([label,value])=>`
@@ -281,7 +303,7 @@ async function refreshPersonnel(){
     const response = await personnelFetch("/api/personnel-profiles");
     const data = await response.json();
     if(response.status === 401){
-      window.location.replace(`/teacher-login?next=${encodeURIComponent("/personnel")}`);
+      window.location.replace(`/login?next=${encodeURIComponent("/personnel")}`);
       return;
     }
     if(!response.ok || !data.ok){

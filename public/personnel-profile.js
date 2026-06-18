@@ -5,6 +5,9 @@ const profileFormMessage = document.getElementById("profileFormMessage");
 const saveProfileButton = document.getElementById("saveProfileButton");
 const clearProfileButton = document.getElementById("clearProfileButton");
 const dynamicProfileFields = document.getElementById("dynamicProfileFields");
+const personnelNameOptions = document.getElementById("personnelNameOptions");
+const teacherPhotoInput = document.getElementById("teacherPhotoInput");
+const teacherPhotoCanvas = document.getElementById("teacherPhotoCanvas");
 
 const teacherDirectoryKey = "bakhawTeacherDirectory";
 const personnelStorageKey = "bakhawPersonnelProfiles";
@@ -13,6 +16,7 @@ const personnelFieldsKey = "bakhawPersonnelProfileFields";
 const gradeSectionsKey = "bakhawGradeSections";
 const pendingProfilesKey = "bakhawPersonnelProfilePending";
 const currentTeacherKey = "bakhawCurrentTeacherSession";
+const personnelPhotosKey = "bakhawPersonnelProfilePhotos";
 const specialAssignmentOptions = ["Special Teacher - Elementary", "Special Teacher - JHS"];
 
 let teacherDirectory = [];
@@ -22,6 +26,8 @@ let profileFields = normalizeProfileFields(storageList(personnelFieldsKey));
 let gradeSections = storageList(gradeSectionsKey);
 let currentTeacherName = "";
 let syncInFlight = false;
+let teacherPhotoImage = null;
+let schoolLogoImage = null;
 
 function escapeHtml(value){
   return String(value || "")
@@ -43,6 +49,56 @@ function storageList(key){
 
 function saveStorageList(key, value){
   localStorage.setItem(key, JSON.stringify(Array.isArray(value) ? value : []));
+}
+
+function storageObject(key){
+  try{
+    const saved = JSON.parse(localStorage.getItem(key) || "{}");
+    return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+  }catch{
+    return {};
+  }
+}
+
+function savePersonnelPhoto(name, dataUrl){
+  const cleanName = matchingOfficialName(name) || normalizeName(name);
+  if(!cleanName || !dataUrl){
+    return;
+  }
+  const photos = storageObject(personnelPhotosKey);
+  photos[profileKey(cleanName)] = {
+    name:cleanName,
+    dataUrl,
+    savedAt:new Date().toISOString()
+  };
+  localStorage.setItem(personnelPhotosKey, JSON.stringify(photos));
+}
+
+function savedPersonnelPhoto(name){
+  const cleanName = matchingOfficialName(name) || normalizeName(name);
+  const photos = storageObject(personnelPhotosKey);
+  const key = profileKey(cleanName);
+  return photos[key]?.dataUrl
+    || Object.values(photos).find(photo=>samePersonName(photo?.name, cleanName))?.dataUrl
+    || "";
+}
+
+function loadSavedPersonnelPhoto(name){
+  const dataUrl = savedPersonnelPhoto(name);
+  if(!dataUrl){
+    teacherPhotoImage = null;
+    renderTeacherPhotoFrame();
+    return;
+  }
+  loadImage(dataUrl)
+    .then(image=>{
+      teacherPhotoImage = image;
+      renderTeacherPhotoFrame();
+    })
+    .catch(()=>{
+      teacherPhotoImage = null;
+      renderTeacherPhotoFrame();
+    });
 }
 
 function fieldId(label){
@@ -117,6 +173,101 @@ function formatDateValue(value){
     return `${slashMatch[1].padStart(2,"0")}/${slashMatch[2].padStart(2,"0")}/${year}`;
   }
   return cleanValue;
+}
+
+function loadImage(src){
+  return new Promise((resolve,reject)=>{
+    const image = new Image();
+    image.onload = ()=>resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
+}
+
+function drawCoverImage(context,image,x,y,width,height){
+  const scale = Math.max(width / image.width, height / image.height);
+  const sourceWidth = width / scale;
+  const sourceHeight = height / scale;
+  const sourceX = (image.width - sourceWidth) / 2;
+  const sourceY = (image.height - sourceHeight) / 2;
+  context.drawImage(image,sourceX,sourceY,sourceWidth,sourceHeight,x,y,width,height);
+}
+
+function wrappedCanvasText(context,text,x,y,maxWidth,lineHeight,maxLines){
+  const words = String(text || "").trim().split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = "";
+  words.forEach(word=>{
+    const nextLine = line ? `${line} ${word}` : word;
+    if(context.measureText(nextLine).width <= maxWidth || !line){
+      line = nextLine;
+      return;
+    }
+    lines.push(line);
+    line = word;
+  });
+  if(line){
+    lines.push(line);
+  }
+  lines.slice(0,maxLines).forEach((item,index)=>{
+    const display = index === maxLines - 1 && lines.length > maxLines ? `${item.replace(/\s+\S+$/,"")}...` : item;
+    context.fillText(display,x,y + (index * lineHeight));
+  });
+}
+
+function currentProfileForFrame(){
+  return currentProfileForName(selectedPersonnelName());
+}
+
+function photoFrameSubtitle(profile){
+  return profileFieldValue(profile,{ id:"position" })
+    || profileFieldValue(profile,{ id:"advisory-assignment" })
+    || "Bakhaw Integrated School Personnel";
+}
+
+function renderTeacherPhotoFrame(){
+  if(!teacherPhotoCanvas){
+    return;
+  }
+  const context = teacherPhotoCanvas.getContext("2d");
+  const width = teacherPhotoCanvas.width;
+  const height = teacherPhotoCanvas.height;
+  const profile = currentProfileForFrame();
+  const name = normalizeName(profile.name || selectedPersonnelName()) || "Teacher Name";
+
+  context.fillStyle = "#fffefa";
+  context.fillRect(0,0,width,height);
+
+  const photoX = 17;
+  const photoY = 17;
+  const photoW = width - 34;
+  const photoH = height - 34;
+  context.fillStyle = "#edf7f1";
+  context.fillRect(photoX,photoY,photoW,photoH);
+  if(teacherPhotoImage){
+    drawCoverImage(context,teacherPhotoImage,photoX,photoY,photoW,photoH);
+  }else{
+    context.fillStyle = "#62766d";
+    context.font = "800 12px Segoe UI, Arial, sans-serif";
+    context.textAlign = "center";
+    context.fillText("UPLOAD TEACHER PHOTO",width / 2,photoY + (photoH / 2));
+    context.textAlign = "left";
+  }
+
+  context.fillStyle = "rgba(11,104,66,.92)";
+  context.fillRect(17,height - 52,width - 34,35);
+  context.fillStyle = "#ffffff";
+  context.font = "900 12px Segoe UI, Arial, sans-serif";
+  context.textAlign = "center";
+  wrappedCanvasText(context,name.toUpperCase(),width / 2,height - 31,width - 52,13,1);
+  context.textAlign = "left";
+
+  context.strokeStyle = "#0b6842";
+  context.lineWidth = 9;
+  context.strokeRect(6,6,width - 12,height - 12);
+  context.strokeStyle = "#f0c75e";
+  context.lineWidth = 3;
+  context.strokeRect(14,14,width - 28,height - 28);
 }
 
 function teacherDisplayName(teacher){
@@ -207,14 +358,52 @@ function saveCurrentTeacher(teacher){
   }));
 }
 
+function requestedPersonnelName(){
+  const params = new URLSearchParams(window.location.search);
+  return normalizeName(params.get("name") || params.get("personnel") || "");
+}
+
+function selectedPersonnelName(){
+  return normalizeName(personnelName.value || requestedPersonnelName() || currentTeacherName);
+}
+
+function renderPersonnelNameOptions(){
+  if(!personnelNameOptions){
+    return;
+  }
+  const names = [
+    ...officialPersonnelNames(),
+    ...profiles.map(profile=>profile.name),
+    ...uniqueTeacherNames(),
+    currentTeacherName
+  ].map(normalizeName).filter(Boolean);
+  const uniqueNames = [...new Map(names.map(name=>[profileKey(name), name])).values()]
+    .sort((a,b)=>a.localeCompare(b));
+  personnelNameOptions.innerHTML = uniqueNames
+    .map(name=>`<option value="${escapeHtml(name)}"></option>`)
+    .join("");
+}
+
+function setPersonnelProfileName(name){
+  const cleanName = matchingOfficialName(name) || normalizeName(name);
+  if(!cleanName){
+    return;
+  }
+  personnelName.value = cleanName;
+  setFormProfile(currentProfileForName(cleanName));
+  loadSavedPersonnelPhoto(cleanName);
+}
+
 function setCurrentTeacherName(name){
   const cleanName = matchingOfficialName(name) || normalizeName(name);
   if(!cleanName){
     return;
   }
   currentTeacherName = cleanName;
-  personnelName.value = cleanName;
-  setFormProfile(currentProfileForName(cleanName));
+  if(!requestedPersonnelName() && !personnelName.value){
+    setPersonnelProfileName(cleanName);
+  }
+  renderPersonnelNameOptions();
 }
 
 function blankProfile(name = ""){
@@ -331,6 +520,7 @@ function setFormProfile(profile){
       autoResizeTextarea(input);
     }
   });
+  renderTeacherPhotoFrame();
 }
 
 function profileFromForm(){
@@ -373,9 +563,13 @@ function renderProfileFields(){
     textarea.addEventListener("input",()=>autoResizeTextarea(textarea));
     autoResizeTextarea(textarea);
   });
+  dynamicProfileFields.querySelectorAll("input,select,textarea").forEach(input=>{
+    input.addEventListener("input",renderTeacherPhotoFrame);
+    input.addEventListener("change",renderTeacherPhotoFrame);
+  });
   bindDateRollers();
-  if(currentTeacherName || personnelName.value){
-    setFormProfile(currentProfileForName(currentTeacherName || personnelName.value));
+  if(selectedPersonnelName()){
+    setPersonnelProfileName(selectedPersonnelName());
   }
 }
 
@@ -414,8 +608,8 @@ function sexSelectMarkup(field){
 function dateInputMarkup(field){
   const escapedId = escapeHtml(field.id);
   const currentYear = new Date().getFullYear();
-  const firstYear = isPrcExpiryDateField(field) ? 2026 : 1900;
-  const lastYear = isPrcExpiryDateField(field) ? 2035 : currentYear + 30;
+  const firstYear = isPrcExpiryDateField(field) ? 2026 : 1965;
+  const lastYear = isPrcExpiryDateField(field) ? 2035 : currentYear;
   const monthOptions = Array.from({ length:12 },(_,index)=>String(index + 1).padStart(2,"0"))
     .map(month=>`<option value="${month}">${month}</option>`)
     .join("");
@@ -562,6 +756,7 @@ function alignProfilesToOfficialPersonnel(){
   const extraProfiles = profiles.filter(profile=>!officialPersonnelNames().some(name=>samePersonName(profile.name, name)));
   profiles = [...officialProfiles, ...extraProfiles];
   saveStorageList(personnelProfilesKey, profiles);
+  renderPersonnelNameOptions();
 }
 
 function queueProfile(profile){
@@ -602,6 +797,7 @@ async function loadTeacherDirectory(){
     }
     teacherDirectory = Array.isArray(data.teachers) ? data.teachers : [];
     saveStorageList(teacherDirectoryKey, teacherDirectory);
+    renderPersonnelNameOptions();
   }catch{
     if(!teacherDirectory.length){
       updateSyncStatus("Teacher list could not be loaded. Try again with internet.");
@@ -649,6 +845,9 @@ async function loadPersonnelSource(){
       }
       saveStorageList(personnelStorageKey, officialPersonnel);
       alignProfilesToOfficialPersonnel();
+      if(selectedPersonnelName()){
+        setPersonnelProfileName(selectedPersonnelName());
+      }
     }
   }catch{
     // Saved Personnel Consol list remains the offline fallback.
@@ -660,6 +859,9 @@ async function loadCurrentTeacher(){
   if(saved?.displayName){
     setCurrentTeacherName(saved.displayName);
   }
+  if(requestedPersonnelName()){
+    setPersonnelProfileName(requestedPersonnelName());
+  }
   if(!navigator.onLine){
     return;
   }
@@ -669,6 +871,9 @@ async function loadCurrentTeacher(){
     if(response.ok && session?.ok && session.displayName){
       saveCurrentTeacher(session);
       setCurrentTeacherName(session.displayName);
+      if(requestedPersonnelName()){
+        setPersonnelProfileName(requestedPersonnelName());
+      }
       return;
     }
   }catch{
@@ -689,7 +894,7 @@ async function loadProfiles(){
     const response = await profileFetch("/api/personnel-profiles", { cache:"no-store" });
     const data = await response.json();
     if(response.status === 401){
-      window.location.replace(`/teacher-login?next=${encodeURIComponent("/personnel-profile")}`);
+      window.location.replace(`/login?next=${encodeURIComponent("/personnel-profile")}`);
       return;
     }
     if(!response.ok || !data.ok){
@@ -708,8 +913,8 @@ async function loadProfiles(){
     alignProfilesToOfficialPersonnel();
     saveStorageList(personnelProfilesKey, profiles);
     updateSyncStatus(`${profiles.length.toLocaleString()} personnel profile${profiles.length === 1 ? "" : "s"} loaded.`);
-    if(currentTeacherName || personnelName.value){
-      setCurrentTeacherName(currentTeacherName || personnelName.value);
+    if(selectedPersonnelName()){
+      setPersonnelProfileName(selectedPersonnelName());
     }
   }catch(error){
     updateSyncStatus(profiles.length ? "Saved profiles shown. Reconnect to refresh." : (error.message || "Personnel profiles could not be loaded."));
@@ -778,16 +983,24 @@ profileForm.addEventListener("submit",async event=>{
     });
     const data = await response.json();
     if(response.status === 401){
-      window.location.replace(`/teacher-login?next=${encodeURIComponent("/personnel-profile")}`);
+      window.location.replace(`/login?next=${encodeURIComponent("/personnel-profile")}`);
       return;
     }
     if(!response.ok || !data.ok){
-      throw new Error(data.message || "Profile could not be saved.");
+      const error = new Error(data.message || "Profile could not be saved.");
+      error.status = response.status;
+      throw error;
     }
     upsertLocalProfile(data.profile || profile);
+    setFormProfile(profile);
     profileFormMessage.textContent = `${profile.name} profile saved.`;
   }catch(error){
+    if(error.status && error.status < 500){
+      profileFormMessage.textContent = error.message;
+      return;
+    }
     queueProfile(profile);
+    setFormProfile(profile);
     profileFormMessage.textContent = `${profile.name} profile saved offline and will sync automatically.`;
   }finally{
     saveProfileButton.disabled = false;
@@ -797,11 +1010,43 @@ profileForm.addEventListener("submit",async event=>{
 });
 
 clearProfileButton.addEventListener("click",()=>{
-  const name = currentTeacherName || personnelName.value;
+  const name = selectedPersonnelName();
   profileForm.reset();
-  setCurrentTeacherName(name);
   setFormProfile(blankProfile(name));
   profileFormMessage.textContent = "Form cleared.";
+});
+
+["change","blur"].forEach(eventName=>{
+  personnelName.addEventListener(eventName,()=>{
+    setPersonnelProfileName(personnelName.value);
+    profileFormMessage.textContent = personnelName.value
+      ? `${personnelName.value} saved data shown.`
+      : "";
+  });
+});
+
+teacherPhotoInput?.addEventListener("change",()=>{
+  const file = teacherPhotoInput.files?.[0];
+  if(!file){
+    teacherPhotoImage = null;
+    renderTeacherPhotoFrame();
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const dataUrl = String(reader.result || "");
+    loadImage(dataUrl)
+      .then(image=>{
+        teacherPhotoImage = image;
+        savePersonnelPhoto(selectedPersonnelName(), dataUrl);
+        renderTeacherPhotoFrame();
+      })
+      .catch(()=>{
+        teacherPhotoImage = null;
+        renderTeacherPhotoFrame();
+      });
+  };
+  reader.readAsDataURL(file);
 });
 
 window.addEventListener("online",async ()=>{
@@ -818,7 +1063,16 @@ document.addEventListener("visibilitychange",()=>{
 
 LearnerOffline.registerServiceWorker().catch(()=>{});
 if(window.teacherEntryAllowed !== false){
+  loadImage("/bakhaw-school-logo.png")
+    .then(image=>{
+      schoolLogoImage = image;
+      renderTeacherPhotoFrame();
+    })
+    .catch(()=>renderTeacherPhotoFrame());
   renderProfileFields();
+  if(requestedPersonnelName()){
+    setPersonnelProfileName(requestedPersonnelName());
+  }
   loadTeacherDirectory();
   loadGradeSections();
   loadPersonnelSource();

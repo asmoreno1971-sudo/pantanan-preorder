@@ -278,7 +278,7 @@ async function initializeTeacherAccounts(){
       showOfflineAccountMessage();
       return;
     }
-    window.location.replace("/teacher-login?next=/teacher-accounts");
+    window.location.replace("/login?next=/teacher-accounts");
     return;
   }
   adminUnlockDialog.showModal();

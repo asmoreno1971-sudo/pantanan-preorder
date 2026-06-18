@@ -37,13 +37,13 @@ Open:
 
 After deploying this Render blueprint, open:
 
-- Customer page: `https://bis1.onrender.com/`
-- Kitchen page: `https://bis1.onrender.com/kitchen`
-- Admin page: `https://bis1.onrender.com/admin`
-- QR page: `https://bis1.onrender.com/qr`
-- Teacher login: `https://bis1.onrender.com/teacher-login`
-- Learner dashboard: `https://bis1.onrender.com/student-dashboard`
-- Learner profiles: `https://bis1.onrender.com/students`
+- Customer page: `https://bis.onrender.com/`
+- Kitchen page: `https://bis.onrender.com/kitchen`
+- Admin page: `https://bis.onrender.com/admin`
+- QR page: `https://bis.onrender.com/qr`
+- Teacher login: `https://bis.onrender.com/teacher-login`
+- Learner dashboard: `https://bis.onrender.com/student-dashboard`
+- Learner profiles: `https://bis.onrender.com/students`
 
 The learner pages prepare an offline copy after the first successful online login and privacy agreement on each device. Cached learner records remain searchable offline, and add/edit/delete changes are queued in IndexedDB and synchronized automatically when the connection returns.
 

@@ -220,7 +220,7 @@ async function loadReport(){
     }
     const data = await response.json();
     if(response.status === 401 || response.status === 403){
-      window.location.replace("/teacher-login?next=%2Fguidance-report");
+      window.location.replace("/login?next=%2Fguidance-report");
       return;
     }
     if(!response.ok || !data.ok){

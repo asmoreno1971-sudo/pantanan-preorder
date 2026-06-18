@@ -2,7 +2,7 @@
   "name": "Bakhaw Integrated School Learner Records",
   "short_name": "Learner Records",
   "description": "Offline-ready learner profiles and enrollment dashboard.",
-  "start_url": "/teacher-login",
+  "start_url": "/login",
   "scope": "/",
   "display": "standalone",
   "background_color": "#edf7f1",

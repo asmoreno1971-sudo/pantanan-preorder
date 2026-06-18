@@ -54,15 +54,65 @@ button,input,select,textarea{ font:inherit; }
 }
 .panel-heading{
   display:flex;
-  align-items:center;
-  justify-content:space-between;
+  align-items:start;
+  justify-content:flex-end;
   gap:12px;
   padding:18px 22px 10px;
 }
 .panel-heading p{ margin:0 0 4px; color:var(--green); font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
 .panel-heading h2{ margin:0; font-size:30px; color:var(--green-dark); }
-#profileSyncStatus{ color:var(--muted); font-size:15px; text-align:right; }
 .profile-form{ display:grid; gap:14px; padding:0 22px 22px; }
+.photo-frame-section{
+  width:min(120px,100%);
+  margin-left:auto;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+}
+.profile-header .photo-frame-section{
+  flex:0 0 auto;
+  margin:0 auto;
+  color:var(--ink);
+}
+.photo-frame-tool{
+  display:grid;
+  grid-template-columns:1fr;
+  justify-items:center;
+  align-items:center;
+  gap:8px;
+}
+.photo-upload-control{
+  align-self:center;
+  display:inline-grid;
+  width:max-content;
+  cursor:pointer;
+}
+.photo-upload-control input{
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  pointer-events:none;
+}
+.photo-upload-control span{
+  min-height:32px;
+  padding:6px 10px;
+  border:1px solid rgba(255,255,255,.65);
+  border-radius:8px;
+  color:#fff;
+  background:transparent;
+  font-weight:850;
+  line-height:1.1;
+}
+#teacherPhotoCanvas{
+  width:100%;
+  max-width:116px;
+  aspect-ratio:1/1;
+  border:1px solid #bfd2c7;
+  border-radius:12px;
+  background:#fff;
+}
 .dynamic-profile-fields{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
@@ -130,8 +180,11 @@ textarea{
 @media(max-width:760px){
   .profile-header{ align-items:stretch; flex-direction:column; }
   .header-actions{ justify-content:flex-start; }
+  .profile-header .photo-frame-section{ margin:0; }
   .panel-heading{ align-items:flex-start; flex-direction:column; }
-  #profileSyncStatus{ text-align:left; }
+  .photo-frame-section{ width:100%; margin-left:0; }
+  .photo-frame-tool{ grid-template-columns:1fr; }
+  #teacherPhotoCanvas{ max-width:140px; }
 }
 @media(max-width:560px){
   .profile-shell{ width:calc(100% - 16px); padding-top:8px; }

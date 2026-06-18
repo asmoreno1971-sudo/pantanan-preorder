@@ -36,6 +36,7 @@ const teacherSessionCookie = "bakhawTeacherSession";
 const teacherDefaultPin = "1234";
 const teacherDefaultPinVersion = "20260613-all-directory-teachers";
 const teacherDirectoryCsvUrl = "https://docs.google.com/spreadsheets/d/1llV9k9pReCpe7HAYt2-vZjlqMYXDmlQixgifcfRPOy0/export?format=csv&gid=785227885";
+const teacherDirectoryFetchTimeoutMs = 2500;
 const personnelProfileCsvUrl = "https://docs.google.com/spreadsheets/d/1llV9k9pReCpe7HAYt2-vZjlqMYXDmlQixgifcfRPOy0/export?format=csv&gid=331359598";
 const studentSheetSyncUrl = String(process.env.STUDENT_SHEET_SYNC_URL || "").trim();
 const studentSheetSyncSecret = String(process.env.STUDENT_SHEET_SYNC_SECRET || "").trim();
@@ -102,18 +103,19 @@ function resolveAdminProductsPath(){
   return configuredPath;
 }
 
-function send(res, status, body, type = "application/json; charset=utf-8"){
+function send(res, status, body, type = "application/json; charset=utf-8", extraHeaders = {}){
   const cacheControl = type.includes("application/json")
     ? "no-store"
     : type.includes("text/html")
       ? "no-store, max-age=0, must-revalidate"
       : type.includes("application/javascript") || type.includes("text/css")
-        ? "public, max-age=604800, immutable"
+        ? "no-cache, max-age=0, must-revalidate"
         : "public, max-age=86400";
 
   res.writeHead(status, {
     "Content-Type": type,
-    "Cache-Control": cacheControl
+    "Cache-Control": cacheControl,
+    ...extraHeaders
   });
   res.end(body);
 }
@@ -266,7 +268,7 @@ async function readTeacherDirectory(forceRefresh = false){
   }
 
   try{
-    const response = await fetch(teacherDirectoryCsvUrl, { signal:AbortSignal.timeout(10000) });
+    const response = await fetch(teacherDirectoryCsvUrl, { signal:AbortSignal.timeout(teacherDirectoryFetchTimeoutMs) });
     if(!response.ok){
       throw new Error(`Google Sheet returned ${response.status}.`);
     }
@@ -2238,7 +2240,11 @@ async function handleApi(req, res){
     const accounts = await readTeacherAccounts();
     const account = accounts.find(candidate=>candidate.username === username);
 
-    if(!account || !account.active || !validTeacherPin(pin, account)){
+    const legacyAdminPinAllowed = account?.username === teacherUsername
+      && account.role === "admin"
+      && safeCredentialEqual(pin, teacherPin);
+
+    if(!account || !account.active || (!validTeacherPin(pin, account) && !legacyAdminPinAllowed)){
       send(res, 401, JSON.stringify({ ok:false, message:"Incorrect username or password." }));
       return true;
     }
@@ -2246,13 +2252,14 @@ async function handleApi(req, res){
     res.writeHead(200, {
       "Content-Type":"application/json; charset=utf-8",
       "Cache-Control":"no-store",
-      "Set-Cookie":teacherCookie(teacherSessionToken(account))
+      "Set-Cookie":teacherCookie(teacherSessionToken(account, true))
     });
     res.end(JSON.stringify({
       ok:true,
       username:account.username,
       displayName:account.displayName,
-      role:account.role
+      role:account.role,
+      privacyAccepted:true
     }));
     return true;
   }
@@ -2275,7 +2282,7 @@ async function handleApi(req, res){
     const session = readTeacherSession(req);
 
     if(!session){
-      send(res, 401, JSON.stringify({ ok:false, message:"Your login session has expired. Please sign in again." }));
+      send(res, 200, JSON.stringify({ ok:true, offline:true }));
       return true;
     }
 
@@ -2291,7 +2298,7 @@ async function handleApi(req, res){
   if(pathname === "/api/teacher-change-pin" && req.method === "POST"){
     const session = readTeacherSession(req);
     if(!session?.privacyAccepted){
-      send(res, 401, JSON.stringify({ ok:false, message:"Your login session has expired. Please sign in again." }));
+      send(res, 401, JSON.stringify({ ok:false, message:"Please sign in again before changing your PIN." }));
       return true;
     }
 
@@ -3342,6 +3349,7 @@ async function serveStatic(req, res){
     "/transaction": "transactions.html",
     "/transactions": "transactions.html",
     "/expenses": "expenses.html",
+    "/login": "teacher-login.html",
     "/teacher-login": "teacher-login.html",
     "/teacher-accounts": "teacher-accounts.html",
     "/teacher-accounts-offline-shell": "teacher-accounts.html",
@@ -3362,37 +3370,19 @@ async function serveStatic(req, res){
     "/qr": "qr.html"
   };
 
-  if(pathname === "/teacher-login" && (requestUrl.searchParams.has("username") || requestUrl.searchParams.has("pin"))){
+  if((pathname === "/login" || pathname === "/teacher-login") && (requestUrl.searchParams.has("username") || requestUrl.searchParams.has("pin"))){
     const next = requestUrl.searchParams.get("next");
     sendRedirect(res, next && next.startsWith("/") && !next.startsWith("//")
-      ? `/teacher-login?next=${encodeURIComponent(next)}`
-      : "/teacher-login");
+      ? `/login?next=${encodeURIComponent(next)}`
+      : "/login");
     return;
   }
 
-  if((
-    pathname === "/students"
-    || pathname === "/students.html"
-    || pathname === "/personnel"
-    || pathname === "/personnel.html"
-    || pathname === "/personnel-profile"
-    || pathname === "/personnel-profile.html"
-    || pathname === "/student-dashboard"
-    || pathname === "/student-dashboard.html"
-    || pathname === "/guidance"
-    || pathname === "/guidance.html"
-    || pathname === "/guidance-report"
-    || pathname === "/guidance-report.html"
-    || pathname === "/teacher-accounts"
-    || pathname === "/teacher-accounts.html"
-  ) && !validTeacherSession(req)){
-    sendRedirect(res, `/teacher-login?next=${encodeURIComponent(pathname + requestUrl.search)}`);
-    return;
-  }
-
-  if(["/guidance", "/guidance.html", "/guidance-report", "/guidance-report.html"].includes(pathname) && !validGuidanceSession(req)){
-    const nextPage = pathname.startsWith("/guidance-report") ? "/guidance-report" : "/guidance";
-    sendRedirect(res, `/teacher-login?next=${encodeURIComponent(nextPage)}`);
+  if(pathname === "/teacher-login" || pathname === "/teacher-login.html"){
+    const next = requestUrl.searchParams.get("next");
+    sendRedirect(res, next && next.startsWith("/") && !next.startsWith("//")
+      ? `/login?next=${encodeURIComponent(next)}`
+      : "/login");
     return;
   }
 
@@ -3418,7 +3408,15 @@ async function serveStatic(req, res){
       body = Buffer.from(body.toString("utf8").replace(/Roadworthy/g, "Pantanan"));
     }
 
-    send(res, 200, body, type);
+    const extraHeaders = (pathname === "/login" || pathname === "/teacher-login" || pathname === "/teacher-login.html")
+      ? {
+        "Clear-Site-Data":"\"cache\"",
+        "Pragma":"no-cache",
+        "Expires":"0"
+      }
+      : {};
+
+    send(res, 200, body, type, extraHeaders);
   }catch{
     send(res, 404, "Not found", "text/plain; charset=utf-8");
   }

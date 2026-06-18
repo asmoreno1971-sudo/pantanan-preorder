@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0c6842">
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/personnel-profile.css?v=20260617-prc-expiry-years">
+<link rel="stylesheet" href="/personnel-profile.css?v=20260618-shared-personnel-photo">
 <link rel="stylesheet" href="/teacher-session.css?v=20260615-guidance-pin-gate">
 </head>
 <body>
@@ -22,6 +22,15 @@
         <span>Individual personnel information sheet</span>
       </div>
     </div>
+    <section class="photo-frame-section" aria-label="Teacher photo frame">
+      <div class="photo-frame-tool">
+        <canvas id="teacherPhotoCanvas" width="300" height="300" aria-label="300 by 300 teacher photo frame preview"></canvas>
+        <label class="photo-upload-control">
+          <input id="teacherPhotoInput" type="file" accept="image/png,image/jpeg,image/webp">
+          <span>Choose File</span>
+        </label>
+      </div>
+    </section>
     <nav class="header-actions" aria-label="Personnel profile navigation">
       <a href="/personnel">Personnel Consol</a>
       <a href="/student-dashboard">Dashboard</a>
@@ -31,19 +40,14 @@
   </header>
 
   <section class="profile-panel">
-    <div class="panel-heading">
-      <div>
-        <p>Personnel data</p>
-        <h2>Personnel Profile</h2>
-      </div>
-      <strong id="profileSyncStatus">Saved profiles will appear immediately.</strong>
-    </div>
+    <strong id="profileSyncStatus" hidden>Saved profiles will appear immediately.</strong>
 
     <form id="personnelProfileForm" class="profile-form">
       <section class="form-section">
         <h3>Personnel Name</h3>
         <label>
-          <input id="personnelName" name="name" type="text" readonly required placeholder="Logged-in teacher name">
+          <input id="personnelName" name="name" type="text" list="personnelNameOptions" required placeholder="Select personnel name">
+          <datalist id="personnelNameOptions"></datalist>
         </label>
       </section>
       <div id="dynamicProfileFields" class="dynamic-profile-fields"></div>
@@ -57,8 +61,8 @@
   </section>
 </main>
 
-<script src="/learner-offline.js?v=20260617-offline-pages"></script>
-<script src="/teacher-session.js?v=20260616-current-teacher"></script>
-<script src="/personnel-profile.js?v=20260618-saved-profile-hydration"></script>
+<script src="/learner-offline.js?v=20260619-resolved-login"></script>
+<script src="/teacher-session.js?v=20260619-resolved-login"></script>
+<script src="/personnel-profile.js?v=20260618-reload-saved-photo"></script>
 </body>
 </html>

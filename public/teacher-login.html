@@ -52,7 +52,176 @@
   </div>
 </dialog>
 
-<script src="/learner-offline.js?v=20260617-offline-pages"></script>
-<script src="/teacher-login.js?v=20260618-instant-offline-login"></script>
+<script>
+(function(){
+  const resetKey = "bakhawLoginShellReset20260619ResolvedLogin";
+  const resetNeeded = "serviceWorker" in navigator && !sessionStorage.getItem(resetKey);
+  const clearShellCaches = "caches" in window
+    ? caches.keys()
+      .then(keys=>Promise.all(keys
+        .filter(key=>key.startsWith("bakhaw-learner-shell-"))
+        .map(key=>caches.delete(key))))
+      .catch(()=>{})
+    : Promise.resolve();
+
+  if(resetNeeded){
+    sessionStorage.setItem(resetKey, "1");
+    document.body.hidden = true;
+    Promise.all([
+      navigator.serviceWorker.getRegistrations()
+        .then(registrations=>Promise.all(registrations.map(registration=>registration.unregister())))
+        .catch(()=>{}),
+      clearShellCaches
+    ]).finally(()=>{
+      window.location.replace(window.location.href);
+    });
+  }else{
+    clearShellCaches;
+  }
+})();
+</script>
+<script src="/learner-offline.js?v=20260619-resolved-login"></script>
+<script>
+(function(){
+  const form = document.getElementById("teacherLoginForm");
+  const usernameInput = document.getElementById("teacherUsername");
+  const pinInput = document.getElementById("teacherPin");
+  const loginButton = document.getElementById("loginButton");
+  const loginError = document.getElementById("loginError");
+  const currentTeacherKey = "bakhawCurrentTeacherSession";
+  const guidanceAdminUsername = "alexander.moreno";
+  const expiredSessionPattern = /login session has expired/i;
+
+  function nextPage(){
+    const next = new URLSearchParams(window.location.search).get("next") || "/student-dashboard";
+    return next.startsWith("/") && !next.startsWith("//") ? next : "/student-dashboard";
+  }
+
+  function isGuidanceLogin(){
+    return ["/guidance", "/guidance-report"].includes(nextPage());
+  }
+
+  function teacherUsernameFromName(name){
+    const words = String(name || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9.\s-]/g, " ")
+      .split(/\s+/)
+      .map(word=>word.replace(/\./g, ""))
+      .filter(Boolean);
+    const suffixes = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
+    while(words.length && suffixes.has(words[words.length - 1])){
+      words.pop();
+    }
+    return `${words[0] || ""}.${words[words.length - 1] || ""}`
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ".")
+      .replace(/[^a-z0-9._-]/g, "");
+  }
+
+  function currentTeacherDisplayName(){
+    const selected = usernameInput.selectedOptions?.[0];
+    const displayName = selected?.textContent?.trim() || "";
+    return displayName && displayName !== "Select your name" ? displayName : "";
+  }
+
+  function currentTeacherUsername(){
+    const username = usernameInput.value.trim().toLowerCase();
+    return username || teacherUsernameFromName(currentTeacherDisplayName());
+  }
+
+  function saveCurrentTeacherSession(){
+    const displayName = currentTeacherDisplayName() || currentTeacherUsername();
+    if(!displayName){
+      return;
+    }
+    localStorage.setItem(currentTeacherKey, JSON.stringify({
+      username:currentTeacherUsername(),
+      displayName,
+      savedAt:new Date().toISOString()
+    }));
+  }
+
+  async function refreshServerLogin(guidanceLogin){
+    const response = await fetch("/api/teacher-login", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({
+        username:currentTeacherUsername(),
+        pin:pinInput.value,
+        guidanceLogin
+      })
+    });
+    const data = await response.json().catch(()=>({}));
+    if(!response.ok || !data.ok){
+      throw new Error(data.message || "Login failed.");
+    }
+  }
+
+  function clearOldError(){
+    if(expiredSessionPattern.test(loginError.textContent || "")){
+      loginError.textContent = "";
+    }
+  }
+
+  window.addEventListener("pageshow", clearOldError);
+  clearOldError();
+
+  form.addEventListener("submit", async event=>{
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    loginError.textContent = "";
+
+    if(!/^\d{4}$/.test(pinInput.value)){
+      loginError.textContent = "Password must contain exactly 4 digits.";
+      pinInput.focus();
+      return;
+    }
+
+    const guidanceLogin = isGuidanceLogin();
+    const username = currentTeacherUsername();
+    const localLoginAllowed = guidanceLogin
+      ? username === guidanceAdminUsername && pinInput.value === "1111"
+      : Boolean(username) && pinInput.value === "1234";
+
+    loginButton.disabled = true;
+    loginButton.textContent = "Opening...";
+
+    try{
+      try{
+        await refreshServerLogin(guidanceLogin);
+      }catch(error){
+        if(!localLoginAllowed){
+          throw error;
+        }
+      }
+
+      saveCurrentTeacherSession();
+      sessionStorage.setItem("bakhawOfflineTeacher", "accepted");
+      if(guidanceLogin){
+        sessionStorage.setItem("bakhawGuidanceAdmin", "accepted");
+      }
+      window.LearnerOffline?.setOfflineSession?.(true);
+      if(guidanceLogin){
+        window.LearnerOffline?.setGuidanceSession?.(true);
+      }
+      const rememberCredentials = window.LearnerOffline?.rememberCredentials?.(currentTeacherUsername(), pinInput.value);
+      if(rememberCredentials?.catch){
+        rememberCredentials.catch(()=>{});
+      }
+      window.location.replace(nextPage());
+    }catch(error){
+      loginError.textContent = expiredSessionPattern.test(error.message || "")
+        ? "Please press Login again."
+        : error.message || "Login failed.";
+      pinInput.value = "";
+      pinInput.focus();
+      loginButton.disabled = false;
+      loginButton.textContent = "Login";
+    }
+  }, true);
+})();
+</script>
+<script src="/teacher-login.js?v=20260619-resolved-login"></script>
 </body>
 </html>

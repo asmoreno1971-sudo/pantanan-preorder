@@ -100,11 +100,35 @@ button,input,select{ font:inherit; }
   align-items:center;
   gap:10px;
 }
+.personnel-card-photo{
+  width:78px;
+  height:78px;
+  flex:0 0 auto;
+  border:3px solid var(--green);
+  border-radius:8px;
+  object-fit:cover;
+  background:#edf7f1;
+}
+.personnel-card-heading > div{
+  min-width:0;
+  flex:1;
+}
 .personnel-card-heading p{
   margin:3px 0 0;
   color:var(--muted);
   font-size:13px;
   font-weight:750;
+}
+.personnel-profile-link{
+  flex:0 0 auto;
+  padding:8px 11px;
+  border:1px solid #b9d8c8;
+  border-radius:8px;
+  color:var(--green-dark);
+  background:#fff;
+  font-size:13px;
+  font-weight:850;
+  text-decoration:none;
 }
 .personnel-number{
   display:inline-grid;

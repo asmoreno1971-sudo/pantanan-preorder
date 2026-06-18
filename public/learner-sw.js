@@ -1,23 +1,24 @@
-const shellCache = "bakhaw-learner-shell-20260618-db-fallback-login";
+const shellCache = "bakhaw-learner-shell-20260619-resolved-login";
 const shellFiles = [
+  "/login",
   "/teacher-login",
   "/teacher-login.html",
   "/teacher-login.css?v=20260614-hide-guidance-name",
-  "/teacher-login.js?v=20260618-db-fallback-login",
-  "/learner-offline.js?v=20260617-offline-pages",
+  "/teacher-login.js?v=20260619-resolved-login",
+  "/learner-offline.js?v=20260619-resolved-login",
   "/learner-manifest.webmanifest",
   "/teacher-session.css?v=20260613-self-pin",
   "/teacher-session.css?v=20260615-guidance-pin-gate",
-  "/teacher-session.js?v=20260616-current-teacher",
+  "/teacher-session.js?v=20260619-resolved-login",
   "/students-offline-shell",
   "/students.css?v=20260617-header-polish",
   "/students.js?v=20260615-live-fresh-offline",
   "/personnel-offline-shell",
-  "/personnel.css?v=20260617-hide-default-list",
-  "/personnel.js?v=20260617-column-b-options",
+  "/personnel.css?v=20260618-larger-personnel-photo",
+  "/personnel.js?v=20260618-larger-personnel-photo",
   "/personnel-profile-offline-shell",
-  "/personnel-profile.css?v=20260617-prc-expiry-years",
-  "/personnel-profile.js?v=20260618-saved-profile-hydration",
+  "/personnel-profile.css?v=20260618-shared-personnel-photo",
+  "/personnel-profile.js?v=20260618-reload-saved-photo",
   "/student-dashboard-offline-shell",
   "/student-dashboard.css?v=20260616-personnel-consol",
   "/student-dashboard.js?v=20260617-console-password",
@@ -51,7 +52,7 @@ const protectedShells = {
 };
 
 const publicPages = {
-  "/teacher-login":"/teacher-login",
+  "/login":"/login",
   "/teacher-login.html":"/teacher-login.html"
 };
 
@@ -65,9 +66,11 @@ function isStaticAsset(pathname){
 
 async function cachedOrNetwork(request, cacheKey){
   const cache = await caches.open(shellCache);
+  const pathname = new URL(request.url).pathname;
   const cached = await cache.match(request, { ignoreSearch:true })
-    || await cache.match(cacheKey || new URL(request.url).pathname, { ignoreSearch:true });
+    || await cache.match(cacheKey || pathname, { ignoreSearch:true });
   if(cached){
+    refreshCache(request, cacheKey || pathname);
     return cached;
   }
   const response = await fetch(request);
@@ -75,6 +78,18 @@ async function cachedOrNetwork(request, cacheKey){
     await cache.put(request, response.clone());
   }
   return response;
+}
+
+async function refreshCache(request, cacheKey){
+  try{
+    const response = await fetch(request);
+    if(response.ok && !response.redirected){
+      const cache = await caches.open(shellCache);
+      await cache.put(cacheKey || new URL(request.url).pathname, response.clone());
+    }
+  }catch{
+    // Keep serving cached pages instantly when the network is missing or unreliable.
+  }
 }
 
 async function networkThenCache(request, cacheKey){
@@ -125,23 +140,38 @@ self.addEventListener("fetch", event=>{
   if(offlineShell){
     event.respondWith((async ()=>{
       const cache = await caches.open(shellCache);
+      const cachedPage = await cache.match(url.pathname,{ignoreSearch:true})
+        || await cache.match(offlineShell,{ignoreSearch:true});
+      if(cachedPage){
+        event.waitUntil(refreshCache(event.request, url.pathname));
+        return cachedPage;
+      }
       try{
         const response = await fetch(event.request);
         if(response.ok && !response.redirected){
           await cache.put(url.pathname,response.clone());
-          return response;
         }
+        return response;
       }catch{
-        const cachedShell = await cache.match(offlineShell,{ignoreSearch:true});
-        if(cachedShell){
-          return cachedShell;
-        }
-      }
-      return await cache.match(offlineShell,{ignoreSearch:true})
-        || new Response("Open and sign in to this app once with internet before using this page offline.", {
+        return new Response("Open and sign in to this app once with internet before using this page offline.", {
           status:503,
           headers:{ "Content-Type":"text/plain; charset=utf-8" }
         });
+      }
+    })());
+    return;
+  }
+
+  const offlineShellPage = Object.values(protectedShells).includes(url.pathname);
+  if(offlineShellPage){
+    event.respondWith((async ()=>{
+      const cache = await caches.open(shellCache);
+      const cachedPage = await cache.match(url.pathname,{ignoreSearch:true});
+      if(cachedPage){
+        event.waitUntil(refreshCache(event.request, url.pathname));
+        return cachedPage;
+      }
+      return await fetch(event.request);
     })());
     return;
   }
@@ -149,10 +179,16 @@ self.addEventListener("fetch", event=>{
   const publicPage = publicPages[url.pathname];
   if(publicPage){
     event.respondWith((async ()=>{
+      const cache = await caches.open(shellCache);
+      const cachedPage = await cache.match(publicPage,{ignoreSearch:true});
+      if(cachedPage && !navigator.onLine){
+        return cachedPage;
+      }
       try{
         return await networkThenCache(event.request, publicPage);
       }catch{
-        return new Response("Open this app once with internet before using this page offline.", {
+        return cachedPage
+        || new Response("Open and sign in to this app once with internet before using this page offline.", {
           status:503,
           headers:{ "Content-Type":"text/plain; charset=utf-8" }
         });

@@ -14,17 +14,37 @@
   const protectedPage = document.body.matches(".teacher-accounts-page")
     || ["/students", "/students.html", "/students-offline-shell", "/personnel", "/personnel.html", "/personnel-offline-shell", "/personnel-profile", "/personnel-profile.html", "/personnel-profile-offline-shell", "/student-dashboard", "/student-dashboard.html", "/student-dashboard-offline-shell", "/guidance", "/guidance.html", "/guidance-offline-shell", "/guidance-report", "/guidance-report.html", "/guidance-report-offline-shell", "/teacher-accounts", "/teacher-accounts.html", "/teacher-accounts-offline-shell"]
       .includes(window.location.pathname);
-  window.teacherEntryAllowed = !protectedPage || (
+  const localEntryAllowed = (
     Boolean(window.LearnerOffline?.hasOfflineSession())
     && (!guidancePage || Boolean(window.LearnerOffline?.hasGuidanceSession()))
   );
+  window.teacherEntryAllowed = !protectedPage || localEntryAllowed || navigator.onLine;
+
+  if(protectedPage){
+    window.LearnerOffline?.registerServiceWorker?.().catch(()=>{});
+  }
 
   if(!window.teacherEntryAllowed){
     window.LearnerOffline?.clearOfflineSession();
     const nextPage = canonicalPage + window.location.search;
-    window.location.replace(`/teacher-login?next=${encodeURIComponent(nextPage)}`);
+    window.location.replace(`/login?next=${encodeURIComponent(nextPage)}`);
     window.stop();
     return;
+  }
+
+  if(protectedPage && !localEntryAllowed && navigator.onLine){
+    fetch("/api/teacher-session", { cache:"no-store" })
+      .then(response=>response.ok ? response.json() : null)
+      .then(session=>{
+        if(!session?.ok || (guidancePage && !session.guidanceAccess)){
+          return;
+        }
+        window.LearnerOffline?.setOfflineSession(true);
+        if(session.guidanceAccess){
+          window.LearnerOffline?.setGuidanceSession(true);
+        }
+      })
+      .catch(()=>{});
   }
 
   function logout(){
@@ -40,7 +60,7 @@
         }
       }
     }finally{
-      window.location.replace("/teacher-login");
+      window.location.replace("/login");
     }
   }
 

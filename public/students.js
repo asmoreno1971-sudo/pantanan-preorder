@@ -198,7 +198,7 @@ async function syncPendingChanges(){
       const response = await studentFetch(endpoint, options);
       const data = await response.json();
       if(response.status === 401){
-        window.location.replace(`/teacher-login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+        window.location.replace(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
         throw new Error("Teacher login required before offline changes can sync.");
       }
       if(!response.ok && !(change.method === "DELETE" && response.status === 404)){
@@ -772,7 +772,7 @@ LearnerOffline.registerServiceWorker().catch(()=>{});
 if(window.teacherEntryAllowed === false){
   // The entry guard is redirecting to Teacher Login.
 }else if(!navigator.onLine && !LearnerOffline.hasOfflineSession()){
-  window.location.replace("/teacher-login?next=/students");
+  window.location.replace("/login?next=/students");
 }else{
   loadStudents();
 }

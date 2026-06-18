@@ -227,7 +227,7 @@ LearnerOffline.registerServiceWorker().catch(()=>{});
 if(window.teacherEntryAllowed === false){
   // The entry guard is redirecting to Teacher Login.
 }else if(!navigator.onLine && !LearnerOffline.hasOfflineSession()){
-  window.location.replace("/teacher-login?next=/student-dashboard");
+  window.location.replace("/login?next=/student-dashboard");
 }else{
   loadDashboard();
 }
