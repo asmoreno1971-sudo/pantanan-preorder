@@ -327,7 +327,7 @@ function currentTeacherCanSaveProfile(name){
   return samePersonName(name, currentTeacherName || personnelName.value);
 }
 
-function profileFetch(url, options = {}, timeoutMs = 3000){
+function profileFetch(url, options = {}, timeoutMs = 15000){
   const controller = new AbortController();
   const timeout = window.setTimeout(()=>controller.abort(), timeoutMs);
   return fetch(url,{...options,signal:controller.signal}).finally(()=>window.clearTimeout(timeout));
@@ -740,6 +740,7 @@ function upsertLocalProfile(profile){
     profiles.unshift(profile);
   }
   saveStorageList(personnelProfilesKey, profiles);
+  saveStorageList(personnelStorageKey, mergeProfileLists(storageList(personnelStorageKey), profiles));
 }
 
 function alignProfilesToOfficialPersonnel(){
