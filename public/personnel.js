@@ -28,11 +28,11 @@ function escapeHtml(value){
 function savedPersonnel(){
   try{
     const savedRecords = JSON.parse(localStorage.getItem(personnelRecordsKey) || "[]");
-    if(Array.isArray(savedRecords) && savedRecords.length){
-      return savedRecords;
-    }
     const saved = JSON.parse(localStorage.getItem(personnelStorageKey) || "[]");
-    return Array.isArray(saved) ? saved : [];
+    return mergePersonnelProfiles(
+      Array.isArray(savedRecords) ? savedRecords : [],
+      Array.isArray(saved) ? saved : []
+    );
   }catch{
     return [];
   }
@@ -202,7 +202,32 @@ function profileDetails(profile){
 }
 
 function hasSavedDetails(profile){
-  return profileDetails(profile).some(([,value])=>String(value || "").trim());
+  if(profileDetails(profile).some(([,value])=>String(value || "").trim())){
+    return true;
+  }
+  return Object.values(profile?.fields || {}).some(value=>String(value || "").trim());
+}
+
+function mergePersonnelProfiles(...lists){
+  const merged = new Map();
+  lists.flat().filter(profile=>profile?.name).forEach(profile=>{
+    const key = normalizeName(profile.name);
+    const existing = merged.get(key);
+    if(!existing){
+      merged.set(key, profile);
+      return;
+    }
+    const existingHasDetails = hasSavedDetails(existing);
+    const profileHasDetails = hasSavedDetails(profile);
+    if(profileHasDetails && !existingHasDetails){
+      merged.set(key, { ...existing, ...profile });
+      return;
+    }
+    if(profileHasDetails === existingHasDetails && String(profile.updatedAt || "") > String(existing.updatedAt || "")){
+      merged.set(key, { ...existing, ...profile });
+    }
+  });
+  return [...merged.values()];
 }
 
 function profileCard(profile,index,expanded = false){
@@ -284,7 +309,7 @@ function ensurePersonnelConsoleAccess(){
   return false;
 }
 
-async function personnelFetch(url, timeoutMs = 3000){
+async function personnelFetch(url, timeoutMs = 15000){
   const controller = new AbortController();
   const timeout = window.setTimeout(()=>controller.abort(),timeoutMs);
   try{
@@ -313,7 +338,8 @@ async function refreshPersonnel(){
       profileFields = normalizeProfileFields(data.fields);
       localStorage.setItem(personnelFieldsKey,JSON.stringify(profileFields));
     }
-    personnel = Array.isArray(data.profiles) ? data.profiles : (Array.isArray(data.personnel) ? data.personnel : []);
+    const serverProfiles = Array.isArray(data.profiles) ? data.profiles : (Array.isArray(data.personnel) ? data.personnel : []);
+    personnel = mergePersonnelProfiles(savedPersonnel(), serverProfiles);
     localStorage.setItem(personnelRecordsKey,JSON.stringify(personnel));
     localStorage.setItem(personnelStorageKey,JSON.stringify(personnel));
     renderTeacherDropdown();
@@ -354,9 +380,9 @@ async function refreshTeacherDirectory(){
 }
 
 function loadPersonnel(){
+  profileFields = normalizeProfileFields(savedProfileFields());
   personnel = savedPersonnel();
   teacherDirectory = savedTeacherDirectory();
-  profileFields = normalizeProfileFields(savedProfileFields());
   renderTeacherDropdown();
   renderPersonnel();
   personnelStatus.textContent = personnel.length

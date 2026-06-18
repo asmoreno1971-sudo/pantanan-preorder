@@ -15,7 +15,7 @@ const shellFiles = [
   "/students.js?v=20260615-live-fresh-offline",
   "/personnel-offline-shell",
   "/personnel.css?v=20260618-larger-personnel-photo",
-  "/personnel.js?v=20260618-larger-personnel-photo",
+  "/personnel.js?v=20260619-profile-data-merge",
   "/personnel-profile-offline-shell",
   "/personnel-profile.css?v=20260618-shared-personnel-photo",
   "/personnel-profile.js?v=20260618-reload-saved-photo",
