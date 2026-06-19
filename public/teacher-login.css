@@ -66,6 +66,7 @@ h1{
 }
 
 .login-intro{
+  position:relative;
   margin:20px 0;
   padding:14px 16px;
   border:1px solid #e1c160;
@@ -76,6 +77,25 @@ h1{
   font-size:18px;
   font-weight:900;
   line-height:1.35;
+  box-shadow:0 0 0 rgba(211, 154, 18, 0);
+  animation:privacyNoticePulse 2.4s ease-in-out infinite;
+}
+
+@keyframes privacyNoticePulse{
+  0%,100%{
+    border-color:#e1c160;
+    box-shadow:0 0 0 rgba(211, 154, 18, 0);
+    transform:translateY(0);
+  }
+  50%{
+    border-color:#d39a12;
+    box-shadow:0 10px 26px rgba(211, 154, 18, .22);
+    transform:translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .login-intro{ animation:none; }
 }
 
 form,
