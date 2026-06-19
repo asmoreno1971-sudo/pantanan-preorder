@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="/teacher-session.css?v=current">
 <script>
 (function(){
-  const resetKey = "bakhawGuidanceShellResetShowCases15";
+  const resetKey = "bakhawGuidanceShellResetShowCases16";
   if(!("serviceWorker" in navigator) || sessionStorage.getItem(resetKey)){
     return;
   }
@@ -327,9 +327,9 @@
   </section>
 </dialog>
 
-<script src="/learner-offline.js?v=show-saved-cases-15"></script>
+<script src="/learner-offline.js?v=show-saved-cases-16"></script>
 <script src="/teacher-session.js?v=current"></script>
-<script src="/guidance.js?v=show-saved-cases-15"></script>
+<script src="/guidance.js?v=show-saved-cases-16"></script>
 <script>
 (function(){
   const databaseErrorPattern = /getaddrinfo|ENOTFOUND|dpg-[a-z0-9-]+|database connection|database is temporarily unavailable/i;
@@ -375,6 +375,9 @@
       const response = await fetch(`/api/guidance-cases?fresh=${Date.now()}`, { cache:"no-store" });
       const data = await response.json();
       const savedCases = Array.isArray(data.cases) ? data.cases : [];
+      if(!savedCases.length && list.querySelector(".case-card")){
+        return;
+      }
       status.textContent = `${savedCases.length} of ${savedCases.length} guidance case${savedCases.length === 1 ? "" : "s"}`;
       list.innerHTML = savedCases.length ? savedCases.map(item=>`
         <article class="case-card">
@@ -399,6 +402,9 @@
     const status = document.getElementById("caseStatusMessage");
     const savedCases = window.__BAKHAW_GUIDANCE_CASES__;
     if(list && status){
+      if(!savedCases.length && list.querySelector(".case-card")){
+        return;
+      }
       status.textContent = `${savedCases.length} of ${savedCases.length} guidance case${savedCases.length === 1 ? "" : "s"}`;
       list.innerHTML = savedCases.length ? savedCases.map(item=>`
         <article class="case-card">

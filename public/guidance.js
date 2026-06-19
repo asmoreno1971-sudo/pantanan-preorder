@@ -28,6 +28,7 @@ const consolidationSummary = document.getElementById("consolidationSummary");
 
 let students = [];
 let cases = [];
+let lastNonEmptyCases = [];
 let advisories = [];
 let guidanceSyncInFlight = false;
 let guidanceLoadInFlight = false;
@@ -82,7 +83,11 @@ window.addEventListener("load", scrubDatabaseErrorMessage);
 
 function backupGuidanceCases(items){
   try{
-    localStorage.setItem(guidanceCaseBackupKey,JSON.stringify(Array.isArray(items) ? items : []));
+    const safeItems = Array.isArray(items) ? items : [];
+    if(!safeItems.length && loadGuidanceCaseBackup().length){
+      return;
+    }
+    localStorage.setItem(guidanceCaseBackupKey,JSON.stringify(safeItems));
   }catch{
     // IndexedDB is primary; this is only a visible-list recovery copy.
   }
@@ -95,6 +100,10 @@ function loadGuidanceCaseBackup(){
   }catch{
     return [];
   }
+}
+
+function serverGuidanceCases(){
+  return Array.isArray(window.__BAKHAW_GUIDANCE_CASES__) ? window.__BAKHAW_GUIDANCE_CASES__ : [];
 }
 
 const profileFields = [
@@ -784,6 +793,13 @@ function resetForm(){
 }
 
 function renderCases(){
+  if(!cases.length && lastNonEmptyCases.length){
+    cases = [...lastNonEmptyCases];
+  }
+  if(cases.length){
+    lastNonEmptyCases = mergeGuidanceCases(lastNonEmptyCases,cases);
+    backupGuidanceCases(lastNonEmptyCases);
+  }
   const query = caseSearch.value.trim().toLowerCase();
   const visible = cases.filter(item=>[
     item.caseNumber,item.primaryStudent?.name,item.primaryStudent?.gradeSection,
@@ -831,6 +847,11 @@ function mergeGuidanceCases(localCases = [], serverCases = []){
   );
 }
 
+function keepVisibleCases(nextCases = []){
+  const merged = mergeGuidanceCases(cases,mergeGuidanceCases(serverGuidanceCases(),mergeGuidanceCases(loadGuidanceCaseBackup(),nextCases)));
+  return merged.length ? merged : cases;
+}
+
 async function refreshCasesFromDevice(){
   let indexedCases = [];
   let pendingCases = [];
@@ -846,8 +867,10 @@ async function refreshCasesFromDevice(){
   }catch{
     pendingCases = [];
   }
-  cases = mergeGuidanceCases(loadGuidanceCaseBackup(),mergeGuidanceCases(indexedCases,pendingCases));
-  backupGuidanceCases(cases);
+  cases = keepVisibleCases(mergeGuidanceCases(indexedCases,pendingCases));
+  if(cases.length){
+    backupGuidanceCases(cases);
+  }
   renderCases();
 }
 
@@ -898,9 +921,9 @@ async function loadData(){
   try{
   let savedCaseError = null;
   try{
-    cases = mergeGuidanceCases(loadGuidanceCaseBackup(),await LearnerOffline.loadGuidanceCases());
+    cases = mergeGuidanceCases(serverGuidanceCases(),mergeGuidanceCases(loadGuidanceCaseBackup(),await LearnerOffline.loadGuidanceCases()));
   }catch(error){
-    cases = loadGuidanceCaseBackup();
+    cases = mergeGuidanceCases(serverGuidanceCases(),loadGuidanceCaseBackup());
     savedCaseError = error;
   }
   renderCases();
@@ -960,12 +983,11 @@ async function loadData(){
       }
       const pendingGuidanceChanges = await LearnerOffline.pendingGuidanceCount();
       const localCases = await LearnerOffline.loadGuidanceCases();
-      cases = mergeGuidanceCases(
-        loadGuidanceCaseBackup(),
-        mergeGuidanceCases(localCases,serverCases)
-      );
-      await LearnerOffline.replaceGuidanceCases(cases);
-      backupGuidanceCases(cases);
+      cases = keepVisibleCases(mergeGuidanceCases(localCases,serverCases));
+      if(cases.length){
+        await LearnerOffline.replaceGuidanceCases(cases);
+        backupGuidanceCases(cases);
+      }
       if(!pendingGuidanceChanges){
         await LearnerOffline.replaceGuidanceCases(cases);
       }
