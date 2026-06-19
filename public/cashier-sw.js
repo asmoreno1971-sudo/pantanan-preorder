@@ -19,6 +19,8 @@ const installShellUrls = [
   "/transactions.html",
   "/expenses",
   "/expenses.html",
+  "/offline-reset",
+  "/offline-reset.html",
   "/qr",
   "/qr.html",
   "/login",

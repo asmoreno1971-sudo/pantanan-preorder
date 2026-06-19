@@ -3433,6 +3433,7 @@ async function serveStatic(req, res){
     "/transaction": "transactions.html",
     "/transactions": "transactions.html",
     "/expenses": "expenses.html",
+    "/offline-reset": "offline-reset.html",
     "/login": "teacher-login.html",
     "/teacher-login": "teacher-login.html",
     "/teacher-accounts": "teacher-accounts.html",
@@ -3504,7 +3505,7 @@ async function serveStatic(req, res){
       body = Buffer.from(html);
     }
 
-    const extraHeaders = (pathname === "/login" || pathname === "/teacher-login" || pathname === "/teacher-login.html")
+    const extraHeaders = (pathname === "/login" || pathname === "/teacher-login" || pathname === "/teacher-login.html" || pathname === "/offline-reset")
       ? {
         "Pragma":"no-cache",
         "Expires":"0"

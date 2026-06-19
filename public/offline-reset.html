@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<title>Reset Offline Mode | Bakhaw Integrated School</title>
+<style>
+body{
+  margin:0;
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  background:#edf7f1;
+  color:#073f2b;
+  font-family:Arial,sans-serif;
+}
+main{
+  width:min(520px,calc(100% - 32px));
+  padding:28px;
+  border:1px solid #c5ddcf;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 18px 48px rgba(6,63,47,.1);
+}
+h1{margin:0 0 10px;font-size:30px}
+p{font-size:18px;line-height:1.45;color:#51675c}
+button,a{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:48px;
+  padding:0 18px;
+  border-radius:10px;
+  font-size:18px;
+  font-weight:700;
+  text-decoration:none;
+}
+button{border:0;background:#0c6842;color:#fff}
+a{margin-left:8px;color:#0c6842}
+.status{min-height:24px;font-weight:700;color:#0b5f3c}
+</style>
+</head>
+<body>
+<main>
+  <h1>Resetting Offline Mode</h1>
+  <p>This clears the old saved app shell on this browser, then opens the current BIS1 login page.</p>
+  <p id="status" class="status" role="status">Working...</p>
+  <button id="resetButton" type="button">Reset Again</button>
+  <a href="/login">Open Login</a>
+</main>
+<script>
+(async function(){
+  const status = document.getElementById("status");
+  const resetButton = document.getElementById("resetButton");
+
+  async function resetOfflineMode(){
+    status.textContent = "Removing old offline shell...";
+    resetButton.disabled = true;
+    try{
+      if("serviceWorker" in navigator){
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations
+          .filter(registration=>/\/(?:learner|cashier)-sw\.js(?:\?|$)/.test(String(
+            registration.active?.scriptURL || registration.waiting?.scriptURL || registration.installing?.scriptURL || ""
+          )))
+          .map(registration=>registration.unregister()));
+      }
+
+      if("caches" in window){
+        const keys = await caches.keys();
+        await Promise.all(keys
+          .filter(key=>
+            key.startsWith("bakhaw-learner-shell-")
+            || key.startsWith("roadworthy-cashier-shell-")
+            || key.startsWith("roadworthy-cashier-images-"))
+          .map(key=>caches.delete(key)));
+      }
+
+      status.textContent = "Done. Opening login...";
+      window.setTimeout(()=>window.location.replace("/login?offlineReset=1"), 500);
+    }catch(error){
+      status.textContent = error.message || "Reset failed. Open Login and try again.";
+    }finally{
+      resetButton.disabled = false;
+    }
+  }
+
+  resetButton.addEventListener("click", resetOfflineMode);
+  resetOfflineMode();
+})();
+</script>
+</body>
+</html>
