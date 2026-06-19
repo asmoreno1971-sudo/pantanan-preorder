@@ -1064,7 +1064,7 @@ async function activateCustomerOfflineShell(){
   }
 
   const appShellPaths = [
-    "/", "/customer", "/admin", "/cashier", "/kitchen", "/sales", "/transaction", "/transactions", "/expenses", "/qr",
+    "/", "/customer", "/admin", "/cashier", "/kitchen", "/sales", "/transaction", "/transactions", "/expenses", "/offline-reset", "/qr",
     "/login", "/teacher-login", "/student-dashboard", "/students", "/personnel", "/personnel-profile",
     "/guidance", "/guidance-report", "/teacher-accounts", "/teacher-profile", "/mineralex", "/mineralex/"
   ];

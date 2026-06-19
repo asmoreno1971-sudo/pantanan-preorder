@@ -1,4 +1,4 @@
-const cacheName = "roadworthy-cashier-shell-offline-login-v3";
+const cacheName = "roadworthy-cashier-shell-offline-login-v4";
 const imageCacheName = "roadworthy-cashier-images-current";
 const offlineHost = "bis1.onrender.com";
 const offlineEnabled = self.location.hostname.toLowerCase() === offlineHost;
@@ -99,6 +99,8 @@ const offlineFallbacks = {
   "/transactions.html":"/transactions",
   "/expenses":"/expenses",
   "/expenses.html":"/expenses",
+  "/offline-reset":"/offline-reset",
+  "/offline-reset.html":"/offline-reset",
   "/qr":"/qr",
   "/qr.html":"/qr",
   "/login":"/login",
@@ -124,6 +126,7 @@ const offlineFallbacks = {
   "/mineralex/":"/mineralex",
   "/mineralex/index.html":"/mineralex"
 };
+const appFallbackPaths = new Set(Object.keys(offlineFallbacks));
 const protectedFallbackPaths = new Set([
   "/students", "/students.html", "/students-offline-shell",
   "/personnel", "/personnel.html", "/personnel-offline-shell",
@@ -286,9 +289,47 @@ function offlineFallbackResponse(request, pathname){
   if(protectedFallbackPaths.has(pathname)){
     return offlineLoginResponse(request, pathname);
   }
+  if(appFallbackPaths.has(pathname)){
+    return offlineAppResponse();
+  }
   return new Response("Open this page once on BIS1 with internet, then it can open offline.", {
     status:503,
     headers:{ "Content-Type":"text/plain; charset=utf-8" }
+  });
+}
+
+function offlineAppResponse(){
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BIS1 Offline</title>
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#edf7f1;color:#073f2b;font-family:Arial,sans-serif}
+main{width:min(620px,calc(100% - 32px));padding:28px;border:1px solid #c5ddcf;border-radius:16px;background:#fff;box-shadow:0 18px 48px rgba(6,63,47,.1)}
+h1{margin:0 0 10px;font-size:30px}p{font-size:18px;line-height:1.45;color:#51675c}
+.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:18px}
+a{display:flex;align-items:center;justify-content:center;min-height:48px;padding:0 12px;border-radius:10px;background:#0c6842;color:#fff;text-decoration:none;font-weight:700}
+</style>
+</head>
+<body>
+<main>
+<h1>BIS1 Offline</h1>
+<p>The full page was not saved on this browser yet. Open BIS1 once with internet to refresh every page in the background.</p>
+<div class="links">
+<a href="/login">Login</a>
+<a href="/student-dashboard">Dashboard</a>
+<a href="/students">Learners</a>
+<a href="/guidance">Guidance</a>
+<a href="/offline-reset">Reset Offline</a>
+</div>
+</main>
+</body>
+</html>`;
+  return new Response(html, {
+    status:200,
+    headers:{ "Content-Type":"text/html; charset=utf-8" }
   });
 }
 
