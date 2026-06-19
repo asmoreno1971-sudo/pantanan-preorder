@@ -813,7 +813,20 @@ function mergeGuidanceCases(localCases = [], serverCases = []){
       merged.set(item.id,item);
     }
   });
-  return [...merged.values()].sort((a,b)=>
+  const allCases = [...merged.values()];
+  const realCaseLearners = new Set(allCases
+    .filter(item=>String(item.caseNumber || "").trim().toLowerCase() !== "pending sync")
+    .map(item=>String(item.primaryStudent?.id || item.primaryStudent?.name || "").trim().toLowerCase())
+    .filter(Boolean));
+  return allCases
+    .filter(item=>{
+      if(String(item.caseNumber || "").trim().toLowerCase() !== "pending sync"){
+        return true;
+      }
+      const learnerKey = String(item.primaryStudent?.id || item.primaryStudent?.name || "").trim().toLowerCase();
+      return !learnerKey || !realCaseLearners.has(learnerKey);
+    })
+    .sort((a,b)=>
     String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || ""))
   );
 }
