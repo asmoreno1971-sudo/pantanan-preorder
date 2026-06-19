@@ -183,7 +183,7 @@ async function loadTeacherDirectory(){
     usernameInput.closest("label").hidden = true;
     document.body.classList.add("guidance-login");
     document.querySelector(".login-brand h1").textContent = "Guidance Admin Login";
-    document.querySelector(".login-intro").textContent = "Restricted access for Alexander Moreno.";
+    document.querySelector(".login-intro").textContent = "This app is subject to Data Privacy Act of 2012. Full data confidentiality is strongly enforced.";
     document.querySelector(".default-pin-note").hidden = true;
     return;
   }
