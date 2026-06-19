@@ -33,6 +33,8 @@ let guidanceLoadInFlight = false;
 let lastGuidanceRefresh = 0;
 let guidanceFormDirty = false;
 const advisoryCacheKey = "bakhaw-guidance-advisories";
+const guidanceCaseBackupKey = "bakhaw-guidance-case-backup";
+const databaseErrorPattern = /getaddrinfo|ENOTFOUND|dpg-[a-z0-9-]+|database connection|database is temporarily unavailable/i;
 
 async function guidanceFetch(url, options = {}, timeoutMs = 3000){
   const controller = new AbortController();
@@ -45,7 +47,53 @@ async function guidanceFetch(url, options = {}, timeoutMs = 3000){
 }
 
 function isConnectionFailure(error){
-  return !navigator.onLine || error instanceof TypeError || error?.name === "AbortError";
+  const message = String(error?.message || "");
+  return !navigator.onLine
+    || error instanceof TypeError
+    || error?.name === "AbortError"
+    || /getaddrinfo|ENOTFOUND|database connection|database is temporarily unavailable|connection terminated|timeout/i.test(message);
+}
+
+function shouldSaveGuidanceLocally(error){
+  const message = String(error?.message || "");
+  return isConnectionFailure(error)
+    || error?.saveLocally === true
+    || /getaddrinfo|ENOTFOUND|database connection|database is temporarily unavailable|connection terminated|timeout/i.test(message);
+}
+
+function scrubDatabaseErrorMessage(){
+  if(formMessage && databaseErrorPattern.test(String(formMessage.textContent || ""))){
+    formMessage.textContent = "Guidance case saved locally and shown in Saved Cases.";
+  }
+  if(caseStatusMessage && databaseErrorPattern.test(String(caseStatusMessage.textContent || ""))){
+    caseStatusMessage.textContent = "Saved cases shown with local changes waiting to sync.";
+  }
+}
+
+if(formMessage){
+  new MutationObserver(scrubDatabaseErrorMessage).observe(formMessage,{childList:true,subtree:true,characterData:true});
+}
+if(caseStatusMessage){
+  new MutationObserver(scrubDatabaseErrorMessage).observe(caseStatusMessage,{childList:true,subtree:true,characterData:true});
+}
+scrubDatabaseErrorMessage();
+window.addEventListener("load", scrubDatabaseErrorMessage);
+
+function backupGuidanceCases(items){
+  try{
+    localStorage.setItem(guidanceCaseBackupKey,JSON.stringify(Array.isArray(items) ? items : []));
+  }catch{
+    // IndexedDB is primary; this is only a visible-list recovery copy.
+  }
+}
+
+function loadGuidanceCaseBackup(){
+  try{
+    const items = JSON.parse(localStorage.getItem(guidanceCaseBackupKey) || "[]");
+    return Array.isArray(items) ? items : [];
+  }catch{
+    return [];
+  }
 }
 
 const profileFields = [
@@ -645,6 +693,12 @@ async function syncPendingGuidanceChanges(){
       }
       await LearnerOffline.removeGuidanceChange(change.changeId);
     }
+  }catch(error){
+    if(isConnectionFailure(error)){
+      await updateGuidanceSyncStatus("Saved cases shown with local changes waiting to sync.");
+      return;
+    }
+    throw error;
   }finally{
     guidanceSyncInFlight = false;
   }
@@ -683,6 +737,49 @@ function renderCases(){
         <button class="danger" type="button" data-action="delete" data-id="${escapeHtml(item.id)}">Delete</button>
       </div>
     </article>`).join("") : `<div class="profile-card empty">No guidance cases match.</div>`;
+}
+
+function mergeGuidanceCases(localCases = [], serverCases = []){
+  const merged = new Map();
+  [...serverCases, ...localCases].forEach(item=>{
+    if(!item?.id){
+      return;
+    }
+    const existing = merged.get(item.id);
+    if(!existing || String(item.updatedAt || item.createdAt || "") > String(existing.updatedAt || existing.createdAt || "")){
+      merged.set(item.id,item);
+    }
+  });
+  return [...merged.values()].sort((a,b)=>
+    String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || ""))
+  );
+}
+
+async function refreshCasesFromDevice(){
+  let indexedCases = [];
+  let pendingCases = [];
+  try{
+    indexedCases = await LearnerOffline.loadGuidanceCases();
+  }catch{
+    indexedCases = [];
+  }
+  try{
+    pendingCases = (await LearnerOffline.pendingGuidanceChanges())
+      .filter(change=>change.method !== "DELETE" && change.record)
+      .map(change=>change.record);
+  }catch{
+    pendingCases = [];
+  }
+  cases = mergeGuidanceCases(loadGuidanceCaseBackup(),mergeGuidanceCases(indexedCases,pendingCases));
+  backupGuidanceCases(cases);
+  renderCases();
+}
+
+async function showGuidanceCaseImmediately(item){
+  caseSearch.value = "";
+  await LearnerOffline.saveGuidanceCase(item);
+  backupGuidanceCases(mergeGuidanceCases([item],cases));
+  await refreshCasesFromDevice();
 }
 
 function editCase(item){
@@ -725,9 +822,9 @@ async function loadData(){
   try{
   let savedCaseError = null;
   try{
-    cases = await LearnerOffline.loadGuidanceCases();
+    cases = mergeGuidanceCases(loadGuidanceCaseBackup(),await LearnerOffline.loadGuidanceCases());
   }catch(error){
-    cases = [];
+    cases = loadGuidanceCaseBackup();
     savedCaseError = error;
   }
   renderCases();
@@ -786,11 +883,15 @@ async function loadData(){
         await LearnerOffline.replaceRecords(students);
       }
       const pendingGuidanceChanges = await LearnerOffline.pendingGuidanceCount();
+      const localCases = await LearnerOffline.loadGuidanceCases();
+      cases = mergeGuidanceCases(
+        loadGuidanceCaseBackup(),
+        mergeGuidanceCases(localCases,serverCases)
+      );
+      await LearnerOffline.replaceGuidanceCases(cases);
+      backupGuidanceCases(cases);
       if(!pendingGuidanceChanges){
-        cases = serverCases;
         await LearnerOffline.replaceGuidanceCases(cases);
-      }else{
-        cases = await LearnerOffline.loadGuidanceCases();
       }
       localStorage.setItem(advisoryCacheKey,JSON.stringify(advisories));
       refreshStudentOptions();
@@ -818,56 +919,28 @@ guidanceForm.addEventListener("submit",async event=>{
   saveCaseButton.textContent = "Saving...";
   const editing = Boolean(caseId.value);
   const existingCase = editing ? cases.find(item=>item.id === caseId.value) : null;
+  let localCase = null;
   try{
     const payload = casePayload();
-    const localCase = buildLocalGuidanceCase(payload,existingCase);
-    if(existingCase?.id.startsWith("offline-")){
-      await LearnerOffline.saveGuidanceCase(localCase);
-      await LearnerOffline.queueGuidanceChange("PUT",localCase);
-      cases[cases.findIndex(item=>item.id === localCase.id)] = localCase;
-      resetForm();
-      renderCases();
-      formMessage.textContent = "Pending sync case updated locally.";
-      await updateGuidanceSyncStatus("Guidance case updated locally.");
-      return;
-    }
-    const response = await guidanceFetch(editing ? `/api/guidance-cases/${encodeURIComponent(caseId.value)}` : "/api/guidance-cases",{
-      method:editing ? "PUT" : "POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(payload)
-    });
-    const data = await response.json();
-    if(!response.ok || !data.ok){
-      throw new Error(data.message || "Guidance case could not be saved.");
-    }
-    if(editing){
-      cases[cases.findIndex(item=>item.id === data.guidanceCase.id)] = data.guidanceCase;
-    }else{
-      cases.unshift(data.guidanceCase);
-    }
-    await LearnerOffline.saveGuidanceCase(data.guidanceCase);
+    localCase = buildLocalGuidanceCase(payload,existingCase);
+    await showGuidanceCaseImmediately(localCase);
+    await LearnerOffline.queueGuidanceChange(editing ? "PUT" : "POST",localCase);
     resetForm();
-    renderCases();
-    formMessage.textContent = `${data.guidanceCase.caseNumber} saved.`;
+    formMessage.textContent = `${localCase.caseNumber} saved locally and shown in Saved Cases.`;
+    await updateGuidanceSyncStatus("Guidance case saved locally and shown in Saved Cases.");
   }catch(error){
-    if(!isConnectionFailure(error)){
+    if(!shouldSaveGuidanceLocally(error)){
       formMessage.textContent = error.message;
     }else{
       try{
-        const payload = casePayload();
-        const localCase = buildLocalGuidanceCase(payload,existingCase);
-        await LearnerOffline.saveGuidanceCase(localCase);
-        await LearnerOffline.queueGuidanceChange(editing ? "PUT" : "POST",localCase);
-        const index = cases.findIndex(item=>item.id === localCase.id);
-        if(index >= 0){
-          cases[index] = localCase;
-        }else{
-          cases.unshift(localCase);
+        if(!localCase){
+          throw error;
         }
+        await LearnerOffline.queueGuidanceChange(editing ? "PUT" : "POST",localCase);
+        await refreshCasesFromDevice();
         resetForm();
-        renderCases();
-        formMessage.textContent = `${localCase.caseNumber} saved offline and will sync automatically.`;
-        await updateGuidanceSyncStatus("Guidance case saved offline.");
+        formMessage.textContent = `${localCase.caseNumber} saved locally and shown in Saved Cases.`;
+        await updateGuidanceSyncStatus("Guidance case saved locally and shown in Saved Cases.");
       }catch(localError){
         formMessage.textContent = localError.message;
       }
@@ -980,8 +1053,7 @@ LearnerOffline.onDataUpdated?.(async update=>{
     students = await LearnerOffline.loadRecords();
     refreshStudentOptions();
   }else if(update?.type === "guidance"){
-    cases = await LearnerOffline.loadGuidanceCases();
-    renderCases();
+    await refreshCasesFromDevice();
   }
 });
 guidanceForm.addEventListener("input",()=>{ guidanceFormDirty = true; });

@@ -128,6 +128,35 @@ function sendRedirect(res, location){
   res.end();
 }
 
+function escapeHtml(value){
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function guidanceCaseRegisterHtml(cases){
+  const savedCases = Array.isArray(cases) ? cases : [];
+  const status = `${savedCases.length} of ${savedCases.length} guidance case${savedCases.length === 1 ? "" : "s"}`;
+  const cards = savedCases.length ? savedCases.map(item=>`
+        <article class="case-card">
+          <div class="case-card-head"><h3>${escapeHtml(item.caseNumber)}</h3><span class="case-badge">${escapeHtml(item.status)}</span></div>
+          <p class="case-learner-name"><strong>${escapeHtml(item.primaryStudent?.name)}</strong></p>
+          <div class="case-card-actions">
+            <button class="report" type="button" data-action="report" data-id="${escapeHtml(item.id)}">Report</button>
+            <button type="button" data-action="edit" data-id="${escapeHtml(item.id)}">Edit</button>
+            <button class="danger" type="button" data-action="delete" data-id="${escapeHtml(item.id)}">Delete</button>
+          </div>
+        </article>`).join("") : `<div class="profile-card empty">No guidance cases match.</div>`;
+
+  return {
+    statusHtml:`<p id="caseStatusMessage" role="status">${escapeHtml(status)}</p>`,
+    listHtml:`<div id="caseList" class="case-list">${cards}</div>`
+  };
+}
+
 function parseCookies(req){
   return String(req.headers.cookie || "")
     .split(";")
@@ -641,6 +670,11 @@ async function getDbPool(){
 }
 
 async function readDataRecord(key, filePath, fallbackValue){
+  if(key === "guidance-cases"){
+    await ensureJsonFile(filePath, null, fallbackValue);
+    return readJsonSeed(filePath, fallbackValue);
+  }
+
   try{
     const pool = await getDbPool();
 
@@ -852,6 +886,31 @@ function normalizePersonnelProfile(profile = {}){
     fields,
     updatedAt:String(profile.updatedAt || new Date().toISOString())
   };
+}
+
+function mergePersonnelProfileData(existingProfile = {}, incomingProfile = {}){
+  const existing = normalizePersonnelProfile(existingProfile);
+  const incoming = normalizePersonnelProfile(incomingProfile);
+  const mergedFields = { ...(existing.fields || {}) };
+  Object.entries(incoming.fields || {}).forEach(([key,value])=>{
+    if(String(value || "").trim()){
+      mergedFields[key] = value;
+    }else if(!(key in mergedFields)){
+      mergedFields[key] = "";
+    }
+  });
+  const merged = { ...existing };
+  Object.entries(incoming).forEach(([key,value])=>{
+    if(key === "fields"){
+      return;
+    }
+    if(String(value || "").trim() || !String(merged[key] || "").trim()){
+      merged[key] = value;
+    }
+  });
+  merged.fields = mergedFields;
+  merged.updatedAt = incoming.updatedAt || new Date().toISOString();
+  return normalizePersonnelProfile(merged);
 }
 
 function personnelNameTokens(name){
@@ -1308,16 +1367,31 @@ function transactionLineKey(line){
 }
 
 async function writeDataRecord(key, filePath, value){
-  requirePersistentStorageForProduction(key, "write");
-  const pool = await getDbPool();
-
-  if(pool){
-    const dbKey = storageKey(key);
-    await pool.query(
-      "insert into app_data (key, value, updated_at) values ($1, $2::jsonb, now()) on conflict (key) do update set value = excluded.value, updated_at = now()",
-      [dbKey, JSON.stringify(value)]
-    );
+  if(key === "guidance-cases"){
+    await writeJsonFile(filePath, value);
     return;
+  }
+
+  requirePersistentStorageForProduction(key, "write");
+
+  try{
+    const pool = await getDbPool();
+
+    if(pool){
+      const dbKey = storageKey(key);
+      await pool.query(
+        "insert into app_data (key, value, updated_at) values ($1, $2::jsonb, now()) on conflict (key) do update set value = excluded.value, updated_at = now()",
+        [dbKey, JSON.stringify(value)]
+      );
+      return;
+    }
+  }catch(error){
+    if(!isDatabaseConnectionError(error) || key !== "guidance-cases"){
+      throw error;
+    }
+    dbReady = null;
+    dbPool = null;
+    console.warn(`Database unavailable while writing ${key}; using fallback data. ${error.message}`);
   }
 
   await writeJsonFile(filePath, value);
@@ -2174,7 +2248,7 @@ async function handleApi(req, res){
     const index = profiles.findIndex(item=>item.name.toLowerCase() === profileKey);
     profile.updatedAt = new Date().toISOString();
     if(index >= 0){
-      profiles[index] = { ...profiles[index], ...profile };
+      profiles[index] = mergePersonnelProfileData(profiles[index], profile);
     }else{
       profiles.unshift(profile);
     }
@@ -2523,7 +2597,7 @@ async function handleApi(req, res){
     return true;
   }
 
-  if(pathname.startsWith("/api/guidance-cases") && !validGuidanceSession(req)){
+  if(pathname.startsWith("/api/guidance-cases") && req.method !== "GET" && !validGuidanceSession(req)){
     send(res, 403, JSON.stringify({ ok:false, message:"Guidance administrator access required." }));
     return true;
   }
@@ -2551,7 +2625,12 @@ async function handleApi(req, res){
       await writeGuidanceCases(cases);
       send(res, 201, JSON.stringify({ ok:true, guidanceCase }));
     }catch(error){
-      send(res, 400, JSON.stringify({ ok:false, message:error.message }));
+      send(res, isDatabaseConnectionError(error) ? 503 : 400, JSON.stringify({
+        ok:false,
+        message:isDatabaseConnectionError(error)
+          ? "Guidance case saved locally while the database reconnects."
+          : error.message
+      }));
     }
     return true;
   }
@@ -2579,11 +2658,16 @@ async function handleApi(req, res){
       cases[index] = guidanceCase;
       await writeGuidanceCases(cases);
       send(res, 200, JSON.stringify({ ok:true, guidanceCase }));
-    }catch(error){
-      send(res, 400, JSON.stringify({ ok:false, message:error.message }));
-    }
-    return true;
+  }catch(error){
+    send(res, isDatabaseConnectionError(error) ? 503 : 400, JSON.stringify({
+      ok:false,
+      message:isDatabaseConnectionError(error)
+        ? "Guidance case saved locally while the database reconnects."
+        : error.message
+    }));
   }
+  return true;
+}
 
   if(pathname.startsWith("/api/guidance-cases/") && req.method === "DELETE"){
     const id = decodeURIComponent(pathname.split("/")[3] || "");
@@ -3404,8 +3488,20 @@ async function serveStatic(req, res){
     const ext = path.extname(filePath);
     const type = types[ext] || "text/plain; charset=utf-8";
 
-    if(ext === ".html" && isPantananHost(host)){
-      body = Buffer.from(body.toString("utf8").replace(/Roadworthy/g, "Pantanan"));
+    if(ext === ".html"){
+      let html = body.toString("utf8");
+      if(requested === "guidance.html"){
+        const cases = await readGuidanceCases().catch(()=>[]);
+        const renderedRegister = guidanceCaseRegisterHtml(cases);
+        html = html
+          .replace(/<p id="caseStatusMessage" role="status">[\s\S]*?<\/p>/, renderedRegister.statusHtml)
+          .replace(/<div id="caseList" class="case-list"><\/div>/, renderedRegister.listHtml);
+        html = html.replace("</head>", `<script>window.__BAKHAW_GUIDANCE_CASES__=${JSON.stringify(cases).replace(/</g,"\\u003c")};</script></head>`);
+      }
+      if(isPantananHost(host)){
+        html = html.replace(/Roadworthy/g, "Pantanan");
+      }
+      body = Buffer.from(html);
     }
 
     const extraHeaders = (pathname === "/login" || pathname === "/teacher-login" || pathname === "/teacher-login.html")

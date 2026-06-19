@@ -271,7 +271,7 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=20260619-resolved-login", { scope:"/" });
+      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=show-saved-cases-11", { scope:"/" });
       await registration.update();
       const worker = registration.installing || registration.waiting || registration.active;
       if(worker && worker.state !== "activated"){
@@ -285,6 +285,17 @@
           });
         });
       }
+      const readyRegistration = await navigator.serviceWorker.ready;
+      const readyWorker = readyRegistration.active || readyRegistration.waiting || readyRegistration.installing;
+      readyWorker?.postMessage({
+        type:"CACHE_SHELL_URLS",
+        urls:[
+          window.location.href,
+          ...[...document.querySelectorAll("link[href], script[src], img[src]")]
+            .map(element=>element.href || element.src)
+            .filter(Boolean)
+        ]
+      });
       return registration;
     }
   }

@@ -1,40 +1,33 @@
-const shellCache = "bakhaw-learner-shell-20260619-resolved-login";
-const shellFiles = [
-  "/login",
-  "/teacher-login",
-  "/teacher-login.html",
-  "/teacher-login.css?v=20260614-hide-guidance-name",
-  "/teacher-login.js?v=20260619-resolved-login",
-  "/learner-offline.js?v=20260619-resolved-login",
-  "/learner-manifest.webmanifest",
-  "/teacher-session.css?v=20260613-self-pin",
-  "/teacher-session.css?v=20260615-guidance-pin-gate",
-  "/teacher-session.js?v=20260619-resolved-login",
-  "/students-offline-shell",
-  "/students.css?v=20260617-header-polish",
-  "/students.js?v=20260615-live-fresh-offline",
-  "/personnel-offline-shell",
-  "/personnel.css?v=20260618-larger-personnel-photo",
-  "/personnel.js?v=20260619-profile-data-merge",
-  "/personnel-profile-offline-shell",
-  "/personnel-profile.css?v=20260618-shared-personnel-photo",
-  "/personnel-profile.js?v=20260619-profile-save-status",
-  "/student-dashboard-offline-shell",
-  "/student-dashboard.css?v=20260616-personnel-consol",
-  "/student-dashboard.js?v=20260617-console-password",
-  "/guidance-offline-shell",
-  "/guidance.css?v=20260614-hover-actions",
-  "/guidance.js?v=20260617-typable-learners",
-  "/guidance-report-offline-shell",
-  "/guidance-report.css?v=20260615-report-level-colors",
-  "/guidance-report.js?v=20260615-live-fresh-offline",
-  "/teacher-accounts-offline-shell",
-  "/teacher-accounts.css?v=20260614-page-password",
-  "/teacher-accounts.js?v=20260615-no-loading-waits",
-  "/bakhaw-school-logo.png"
-];
+const shellCache = "bakhaw-learner-shell-show-saved-cases-11";
+const imageCacheName = "roadworthy-cashier-images-current";
 
-const protectedShells = {
+const offlineFallbacks = {
+  "/":"/",
+  "/customer":"/customer",
+  "/index.html":"/index.html",
+  "/admin":"/admin",
+  "/admin.html":"/admin.html",
+  "/cashier":"/cashier",
+  "/cashier.html":"/cashier.html",
+  "/kitchen":"/kitchen",
+  "/kitchen.html":"/kitchen.html",
+  "/sales":"/sales",
+  "/sales.html":"/sales.html",
+  "/transaction":"/transactions",
+  "/transactions":"/transactions",
+  "/transactions.html":"/transactions.html",
+  "/expenses":"/expenses",
+  "/expenses.html":"/expenses.html",
+  "/qr":"/qr",
+  "/qr.html":"/qr.html",
+  "/teacher-profile":"/teacher-profile",
+  "/teacher-profile.html":"/teacher-profile.html",
+  "/mineralex":"/mineralex",
+  "/mineralex/":"/mineralex",
+  "/mineralex/index.html":"/mineralex/index.html",
+  "/login":"/login",
+  "/teacher-login":"/teacher-login",
+  "/teacher-login.html":"/teacher-login.html",
   "/students":"/students-offline-shell",
   "/students.html":"/students-offline-shell",
   "/personnel":"/personnel-offline-shell",
@@ -51,79 +44,163 @@ const protectedShells = {
   "/teacher-accounts.html":"/teacher-accounts-offline-shell"
 };
 
-const publicPages = {
-  "/login":"/login",
-  "/teacher-login.html":"/teacher-login.html"
-};
-
-function isShellAsset(pathname){
-  return shellFiles.some(file=>new URL(file, self.location.origin).pathname === pathname);
-}
-
 function isStaticAsset(pathname){
   return /\.(?:css|js|png|jpg|jpeg|webp|svg|ico|json|webmanifest)$/i.test(pathname);
 }
 
-async function cachedOrNetwork(request, cacheKey){
+function isCacheableApi(pathname){
+  if(pathname.startsWith("/api/orders/") || pathname.startsWith("/api/expenses/")){
+    return true;
+  }
+
+  return [
+    "/api/config",
+    "/api/menu",
+    "/api/customers.csv",
+    "/api/kiosk-settings",
+    "/api/kiosk-status",
+    "/api/storage-status",
+    "/api/orders",
+    "/api/sales/daily",
+    "/api/sales/profit",
+    "/api/transactions",
+    "/api/expenses",
+    "/api/students",
+    "/api/students.csv",
+    "/api/teacher-directory",
+    "/api/grade-sections",
+    "/api/advisory-directory",
+    "/api/personnel",
+    "/api/teacher-session",
+    "/api/teacher-accounts",
+    "/api/personnel-profiles",
+    "/api/guidance-cases"
+  ].includes(pathname);
+}
+
+async function deleteOldShellCaches(){
+  const keys = await caches.keys();
+  await Promise.all(keys
+    .filter(key=>key.startsWith("bakhaw-learner-shell-") && key !== shellCache)
+    .map(key=>caches.delete(key)));
+}
+
+async function networkFirst(request, fallbackPath = ""){
   const cache = await caches.open(shellCache);
   const pathname = new URL(request.url).pathname;
-  const cached = await cache.match(request, { ignoreSearch:true })
-    || await cache.match(cacheKey || pathname, { ignoreSearch:true });
-  if(cached){
-    refreshCache(request, cacheKey || pathname);
-    return cached;
-  }
-  const response = await fetch(request);
-  if(response.ok && !response.redirected){
-    await cache.put(request, response.clone());
-  }
-  return response;
-}
-
-async function refreshCache(request, cacheKey){
   try{
-    const response = await fetch(request);
+    const response = await fetch(request, { cache:"no-store" });
     if(response.ok && !response.redirected){
-      const cache = await caches.open(shellCache);
-      await cache.put(cacheKey || new URL(request.url).pathname, response.clone());
-    }
-  }catch{
-    // Keep serving cached pages instantly when the network is missing or unreliable.
-  }
-}
-
-async function networkThenCache(request, cacheKey){
-  const cache = await caches.open(shellCache);
-  try{
-    const response = await fetch(request);
-    if(response.ok && !response.redirected){
-      await cache.put(cacheKey || new URL(request.url).pathname, response.clone());
+      const cleanResponse = await cleanPersonnelProfileResponse(pathname, response);
+      await cache.put(request, cleanResponse.clone());
+      await cache.put(pathname, cleanResponse.clone());
+      return cleanResponse;
     }
     return response;
   }catch{
-    const cached = await cache.match(cacheKey || request, { ignoreSearch:true })
-      || await cache.match(request, { ignoreSearch:true });
+    const cached = await cache.match(request)
+      || await cache.match(pathname, { ignoreSearch:true })
+      || (fallbackPath ? await cache.match(fallbackPath, { ignoreSearch:true }) : null);
     if(cached){
       return cached;
     }
-    throw new Error("No cached response is available.");
+    return new Response("Open and sign in to this app once with internet before using this page offline.", {
+      status:503,
+      headers:{ "Content-Type":"text/plain; charset=utf-8" }
+    });
   }
 }
 
+async function cleanPersonnelProfileResponse(pathname, response){
+  if(pathname !== "/personnel-profile" && pathname !== "/personnel-profile.html" && pathname !== "/personnel-profile-offline-shell"){
+    return response;
+  }
+  const type = response.headers.get("Content-Type") || "";
+  if(!type.includes("text/html")){
+    return response;
+  }
+  const html = await response.clone().text();
+  const cleanHtml = html.replace(/\s*<button[^>]*id=["']clearProfileButton["'][\s\S]*?<\/button>/gi, "");
+  return new Response(cleanHtml, {
+    status:response.status,
+    statusText:response.statusText,
+    headers:response.headers
+  });
+}
+
 self.addEventListener("install", event=>{
-  event.waitUntil(
-    caches.open(shellCache)
-      .then(cache=>Promise.allSettled(shellFiles.map(file=>cache.add(file))))
-      .then(()=>self.skipWaiting())
-  );
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", event=>{
   event.waitUntil(
-    caches.keys()
-      .then(keys=>Promise.all(keys.filter(key=>key.startsWith("bakhaw-learner-shell-") && key !== shellCache).map(key=>caches.delete(key))))
+    deleteOldShellCaches()
       .then(()=>self.clients.claim())
   );
+});
+
+self.addEventListener("message", event=>{
+  if(event.data && event.data.type === "CACHE_SHELL_URLS"){
+    const urls = (Array.isArray(event.data.urls) ? event.data.urls : [])
+      .map(value=>{
+        try{
+          return new URL(value, self.location.origin);
+        }catch{
+          return null;
+        }
+      })
+      .filter(url=>url && url.origin === self.location.origin);
+
+    event.waitUntil((async ()=>{
+      const cache = await caches.open(shellCache);
+      for(const url of urls){
+        try{
+          const response = await fetch(url.href, { cache:"no-store" });
+          if(response.ok && !response.redirected){
+            await cache.put(url.pathname, await cleanPersonnelProfileResponse(url.pathname, response));
+          }
+        }catch{
+          // Warming is best effort; normal navigation caching still applies.
+        }
+      }
+    })());
+    return;
+  }
+
+  if(!event.data || event.data.type !== "CACHE_MENU_IMAGES"){
+    return;
+  }
+
+  const urls = (Array.isArray(event.data.urls) ? event.data.urls : [])
+    .map(value=>{
+      try{
+        return new URL(value, self.location.origin);
+      }catch{
+        return null;
+      }
+    })
+    .filter(url=>url && url.origin === self.location.origin && url.pathname.startsWith("/api/menu-image/"))
+    .map(url=>url.href);
+
+  event.waitUntil((async ()=>{
+    const cache = await caches.open(imageCacheName);
+    const keep = new Set(urls);
+    const existing = await cache.keys();
+    await Promise.all(existing
+      .filter(request=>!keep.has(request.url))
+      .map(request=>cache.delete(request)));
+
+    for(const url of urls){
+      try{
+        const response = await fetch(url, { cache:"no-store" });
+        if(response.ok){
+          await cache.put(url, response);
+        }
+      }catch{
+        // Product images are optional offline polish; keep the shell available.
+      }
+    }
+  })());
 });
 
 self.addEventListener("fetch", event=>{
@@ -136,68 +213,24 @@ self.addEventListener("fetch", event=>{
     return;
   }
 
-  const offlineShell = protectedShells[url.pathname];
-  if(offlineShell){
+  const fallbackPath = offlineFallbacks[url.pathname];
+  if(url.pathname.startsWith("/api/menu-image/")){
     event.respondWith((async ()=>{
-      const cache = await caches.open(shellCache);
-      const cachedPage = await cache.match(url.pathname,{ignoreSearch:true})
-        || await cache.match(offlineShell,{ignoreSearch:true});
-      if(cachedPage){
-        event.waitUntil(refreshCache(event.request, url.pathname));
-        return cachedPage;
-      }
+      const cache = await caches.open(imageCacheName);
       try{
-        const response = await fetch(event.request);
-        if(response.ok && !response.redirected){
-          await cache.put(url.pathname,response.clone());
+        const response = await fetch(event.request, { cache:"no-store" });
+        if(response.ok){
+          await cache.put(event.request, response.clone());
         }
         return response;
       }catch{
-        return new Response("Open and sign in to this app once with internet before using this page offline.", {
-          status:503,
-          headers:{ "Content-Type":"text/plain; charset=utf-8" }
-        });
+        return await cache.match(event.request) || new Response("", { status:404 });
       }
     })());
     return;
   }
 
-  const offlineShellPage = Object.values(protectedShells).includes(url.pathname);
-  if(offlineShellPage){
-    event.respondWith((async ()=>{
-      const cache = await caches.open(shellCache);
-      const cachedPage = await cache.match(url.pathname,{ignoreSearch:true});
-      if(cachedPage){
-        event.waitUntil(refreshCache(event.request, url.pathname));
-        return cachedPage;
-      }
-      return await fetch(event.request);
-    })());
-    return;
-  }
-
-  const publicPage = publicPages[url.pathname];
-  if(publicPage){
-    event.respondWith((async ()=>{
-      const cache = await caches.open(shellCache);
-      const cachedPage = await cache.match(publicPage,{ignoreSearch:true});
-      if(cachedPage && !navigator.onLine){
-        return cachedPage;
-      }
-      try{
-        return await networkThenCache(event.request, publicPage);
-      }catch{
-        return cachedPage
-        || new Response("Open and sign in to this app once with internet before using this page offline.", {
-          status:503,
-          headers:{ "Content-Type":"text/plain; charset=utf-8" }
-        });
-      }
-    })());
-    return;
-  }
-
-  if(isShellAsset(url.pathname) || isStaticAsset(url.pathname)){
-    event.respondWith(cachedOrNetwork(event.request, url.pathname));
+  if(fallbackPath || isStaticAsset(url.pathname) || isCacheableApi(url.pathname)){
+    event.respondWith(networkFirst(event.request, fallbackPath));
   }
 });

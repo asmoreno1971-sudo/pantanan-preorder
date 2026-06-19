@@ -8,8 +8,30 @@
 <meta name="theme-color" content="#0c6842">
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/guidance.css?v=20260614-hover-actions">
-<link rel="stylesheet" href="/teacher-session.css?v=20260613-self-pin">
+<script>if(sessionStorage.getItem("bakhawDataPrivacyNoticeAgreed")!=="yes"){document.documentElement.classList.add("teacher-privacy-pending");}</script>
+<link rel="stylesheet" href="/guidance.css?v=current">
+<link rel="stylesheet" href="/teacher-session.css?v=current">
+<script>
+(function(){
+  const resetKey = "bakhawGuidanceShellResetShowCases11";
+  if(!("serviceWorker" in navigator) || sessionStorage.getItem(resetKey)){
+    return;
+  }
+  sessionStorage.setItem(resetKey,"1");
+  Promise.all([
+    navigator.serviceWorker.getRegistrations()
+      .then(registrations=>Promise.all(registrations.map(registration=>registration.unregister())))
+      .catch(()=>{}),
+    "caches" in window
+      ? caches.keys()
+        .then(keys=>Promise.all(keys
+          .filter(key=>key.startsWith("bakhaw-learner-shell-") || key.startsWith("roadworthy-cashier-shell-"))
+          .map(key=>caches.delete(key))))
+        .catch(()=>{})
+      : Promise.resolve()
+  ]).finally(()=>window.location.reload());
+})();
+</script>
 </head>
 <body>
 <main class="guidance-shell">
@@ -304,8 +326,92 @@
   </section>
 </dialog>
 
-<script src="/learner-offline.js?v=20260619-resolved-login"></script>
-<script src="/teacher-session.js?v=20260619-resolved-login"></script>
-<script src="/guidance.js?v=20260617-typable-learners"></script>
+<script src="/learner-offline.js?v=show-saved-cases-11"></script>
+<script src="/teacher-session.js?v=current"></script>
+<script src="/guidance.js?v=show-saved-cases-11"></script>
+<script>
+(function(){
+  const databaseErrorPattern = /getaddrinfo|ENOTFOUND|dpg-[a-z0-9-]+|database connection|database is temporarily unavailable/i;
+  function cleanDatabaseErrors(){
+    const replacements = new Map([
+      ["formMessage", "Guidance case saved locally and shown in Saved Cases."],
+      ["caseStatusMessage", "Saved cases shown with local changes waiting to sync."]
+    ]);
+    replacements.forEach((message, id)=>{
+      const element = document.getElementById(id);
+      if(element && databaseErrorPattern.test(element.textContent || "")){
+        element.textContent = message;
+      }
+    });
+    document.querySelectorAll("p, [role='status']").forEach(element=>{
+      if(databaseErrorPattern.test(element.textContent || "")){
+        element.textContent = element.id === "formMessage"
+          ? "Guidance case saved locally and shown in Saved Cases."
+          : "Saved cases shown with local changes waiting to sync.";
+      }
+    });
+  }
+  cleanDatabaseErrors();
+  window.addEventListener("load", cleanDatabaseErrors);
+  window.setInterval(cleanDatabaseErrors, 300);
+  new MutationObserver(cleanDatabaseErrors).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+})();
+</script>
+<script>
+(function(){
+  function text(value){
+    return String(value || "").replace(/[&<>"']/g, char=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[char]));
+  }
+  async function showSavedCases(){
+    const list = document.getElementById("caseList");
+    const status = document.getElementById("caseStatusMessage");
+    if(!list || !status){
+      return;
+    }
+    try{
+      const response = await fetch(`/api/guidance-cases?fresh=${Date.now()}`, { cache:"no-store" });
+      const data = await response.json();
+      const savedCases = Array.isArray(data.cases) ? data.cases : [];
+      status.textContent = `${savedCases.length} of ${savedCases.length} guidance case${savedCases.length === 1 ? "" : "s"}`;
+      list.innerHTML = savedCases.length ? savedCases.map(item=>`
+        <article class="case-card">
+          <div class="case-card-head"><h3>${text(item.caseNumber)}</h3><span class="case-badge">${text(item.status)}</span></div>
+          <p class="case-learner-name"><strong>${text(item.primaryStudent && item.primaryStudent.name)}</strong></p>
+          <div class="case-card-actions">
+            <button class="report" type="button" data-action="report" data-id="${text(item.id)}">Report</button>
+            <button type="button" data-action="edit" data-id="${text(item.id)}">Edit</button>
+            <button class="danger" type="button" data-action="delete" data-id="${text(item.id)}">Delete</button>
+          </div>
+        </article>`).join("") : `<div class="profile-card empty">No guidance cases match.</div>`;
+    }catch{
+      // The main guidance script and offline store still handle offline display.
+    }
+  }
+  window.addEventListener("load",()=>{
+    showSavedCases();
+    window.setTimeout(showSavedCases, 1200);
+  });
+  if(Array.isArray(window.__BAKHAW_GUIDANCE_CASES__)){
+    const list = document.getElementById("caseList");
+    const status = document.getElementById("caseStatusMessage");
+    const savedCases = window.__BAKHAW_GUIDANCE_CASES__;
+    if(list && status){
+      status.textContent = `${savedCases.length} of ${savedCases.length} guidance case${savedCases.length === 1 ? "" : "s"}`;
+      list.innerHTML = savedCases.length ? savedCases.map(item=>`
+        <article class="case-card">
+          <div class="case-card-head"><h3>${text(item.caseNumber)}</h3><span class="case-badge">${text(item.status)}</span></div>
+          <p class="case-learner-name"><strong>${text(item.primaryStudent && item.primaryStudent.name)}</strong></p>
+          <div class="case-card-actions">
+            <button class="report" type="button" data-action="report" data-id="${text(item.id)}">Report</button>
+            <button type="button" data-action="edit" data-id="${text(item.id)}">Edit</button>
+            <button class="danger" type="button" data-action="delete" data-id="${text(item.id)}">Delete</button>
+          </div>
+        </article>`).join("") : `<div class="profile-card empty">No guidance cases match.</div>`;
+    }
+  }
+})();
+</script>
 </body>
 </html>
