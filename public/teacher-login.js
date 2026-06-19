@@ -176,6 +176,12 @@ function selectedTeacherExists(){
 
 async function canUseOfflineLogin(){
   const username = currentTeacherUsername();
+  if(guidanceLogin && username === guidanceAdmin.username && (pinInput.value === "1111" || pinInput.value === defaultTeacherPin)){
+    return true;
+  }
+  if(!guidanceLogin && pinInput.value === defaultTeacherPin && selectedTeacherExists()){
+    return true;
+  }
   try{
     if(await LearnerOffline.verifyCredentials(username, pinInput.value)){
       return true;
@@ -183,10 +189,7 @@ async function canUseOfflineLogin(){
   }catch{
     // Browser storage can be unavailable or blocked; the default PIN path can still work.
   }
-  if(guidanceLogin){
-    return username === guidanceAdmin.username && (pinInput.value === "1111" || pinInput.value === defaultTeacherPin);
-  }
-  return pinInput.value === defaultTeacherPin && selectedTeacherExists();
+  return false;
 }
 
 function isNetworkLoginError(error){
