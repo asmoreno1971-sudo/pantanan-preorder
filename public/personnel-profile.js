@@ -3,7 +3,6 @@ const personnelName = document.getElementById("personnelName");
 const profileSyncStatus = document.getElementById("profileSyncStatus");
 const profileFormMessage = document.getElementById("profileFormMessage");
 const saveProfileButton = document.getElementById("saveProfileButton");
-const clearProfileButton = document.getElementById("clearProfileButton");
 const dynamicProfileFields = document.getElementById("dynamicProfileFields");
 const personnelNameOptions = document.getElementById("personnelNameOptions");
 const teacherPhotoInput = document.getElementById("teacherPhotoInput");
@@ -28,6 +27,7 @@ let currentTeacherName = "";
 let syncInFlight = false;
 let teacherPhotoImage = null;
 let schoolLogoImage = null;
+let lastProfileSyncError = "";
 
 function escapeHtml(value){
   return String(value || "")
@@ -408,9 +408,18 @@ function setPersonnelProfileName(name){
   if(!cleanName){
     return;
   }
+  profiles = mergeProfileLists(profiles, storedPersonnelProfiles());
   personnelName.value = cleanName;
   setFormProfile(currentProfileForName(cleanName));
   loadSavedPersonnelPhoto(cleanName);
+}
+
+function showSelectedPersonnelSavedData(){
+  const name = selectedPersonnelName();
+  if(!name){
+    return;
+  }
+  setPersonnelProfileName(name);
 }
 
 function setCurrentTeacherName(name){
@@ -463,6 +472,25 @@ function profileHasSavedDetails(profile){
   return profileFields.some(field=>String(profileFieldValue(profile, field) || "").trim());
 }
 
+function mergeProfileData(existing = {}, incoming = {}){
+  const mergedFields = { ...(existing.fields || {}) };
+  Object.entries(incoming.fields || {}).forEach(([key,value])=>{
+    if(String(value || "").trim() || !(key in mergedFields)){
+      mergedFields[key] = value;
+    }
+  });
+  const merged = { ...existing };
+  Object.entries(incoming).forEach(([key,value])=>{
+    if(key === "fields"){
+      return;
+    }
+    if(String(value || "").trim() || !String(merged[key] || "").trim()){
+      merged[key] = value;
+    }
+  });
+  return { ...merged, fields:mergedFields };
+}
+
 function mergeProfileLists(...lists){
   const merged = new Map();
   lists.flat().filter(profile=>profile?.name).forEach(profile=>{
@@ -475,11 +503,15 @@ function mergeProfileLists(...lists){
     const existingHasDetails = profileHasSavedDetails(existing);
     const profileHasDetails = profileHasSavedDetails(profile);
     if(profileHasDetails && !existingHasDetails){
-      merged.set(key, { ...existing, ...profile });
+      merged.set(key, mergeProfileData(existing, profile));
       return;
     }
     if(profileHasDetails === existingHasDetails && String(profile.updatedAt || "") > String(existing.updatedAt || "")){
-      merged.set(key, { ...existing, ...profile });
+      merged.set(key, mergeProfileData(existing, profile));
+      return;
+    }
+    if(profileHasDetails){
+      merged.set(key, mergeProfileData(profile, existing));
     }
   });
   return [...merged.values()];
@@ -754,7 +786,7 @@ function upsertLocalProfile(profile){
   const key = profileKey(officialName);
   const index = profiles.findIndex(item=>profileKey(item.name) === key || samePersonName(item.name, officialName));
   if(index >= 0){
-    profiles[index] = { ...profiles[index], ...profile };
+    profiles[index] = mergeProfileData(profiles[index], profile);
   }else{
     profiles.unshift(profile);
   }
@@ -904,6 +936,7 @@ async function loadCurrentTeacher(){
 async function loadProfiles(){
   profiles = storedPersonnelProfiles();
   alignProfilesToOfficialPersonnel();
+  showSelectedPersonnelSavedData();
   updateSyncStatus(profiles.length ? "Saved personnel profiles shown." : "No saved personnel profiles yet.");
   if(!navigator.onLine){
     updateSyncStatus(profiles.length ? "Offline mode: saved profiles shown." : "No offline personnel profiles are saved yet.");
@@ -933,37 +966,41 @@ async function loadProfiles(){
     alignProfilesToOfficialPersonnel();
     saveStorageList(personnelProfilesKey, profiles);
     updateSyncStatus(`${profiles.length.toLocaleString()} personnel profile${profiles.length === 1 ? "" : "s"} loaded.`);
-    if(selectedPersonnelName()){
-      setPersonnelProfileName(selectedPersonnelName());
-    }
+    showSelectedPersonnelSavedData();
   }catch(error){
+    showSelectedPersonnelSavedData();
     updateSyncStatus(profiles.length ? "Saved profiles shown. Reconnect to refresh." : (error.message || "Personnel profiles could not be loaded."));
   }
 }
 
 async function syncPendingProfiles(){
   if(syncInFlight || !navigator.onLine){
-    return;
+    return { synced:false, remaining:pendingCount(), error:lastProfileSyncError };
   }
   const pending = storageList(pendingProfilesKey);
   if(!pending.length){
-    return;
+    lastProfileSyncError = "";
+    return { synced:true, remaining:0, error:"" };
   }
   syncInFlight = true;
+  let lastError = "";
   try{
     const remaining = [];
     for(const profile of pending){
       try{
         const savedProfile = await saveProfileOnline(profile);
         if(!savedProfile){
-          return;
+          return { synced:false, remaining:pending.length, error:lastProfileSyncError };
         }
         upsertLocalProfile(savedProfile);
-      }catch{
+      }catch(error){
+        lastError = error.message || "Profile could not be synchronized.";
         remaining.push(profile);
       }
     }
     saveStorageList(pendingProfilesKey, remaining);
+    lastProfileSyncError = remaining.length ? lastError : "";
+    return { synced:!remaining.length, remaining:remaining.length, error:lastProfileSyncError };
   }finally{
     syncInFlight = false;
   }
@@ -1003,6 +1040,7 @@ profileForm.addEventListener("submit",async event=>{
       profileFormMessage.textContent = error.message;
       return;
     }
+    lastProfileSyncError = error.message || "Profile could not be synchronized.";
     queueProfile(profile);
     setFormProfile(profile);
     profileFormMessage.textContent = navigator.onLine
@@ -1010,9 +1048,10 @@ profileForm.addEventListener("submit",async event=>{
       : `${profile.name} profile saved offline and will sync automatically.`;
     if(navigator.onLine){
       syncPendingProfiles()
-        .then(()=>{
+        .then(result=>{
+          const syncError = result?.error || lastProfileSyncError;
           profileFormMessage.textContent = pendingCount()
-            ? `${profile.name} profile saved locally. ${pendingCount()} profile${pendingCount() === 1 ? "" : "s"} waiting to sync.`
+            ? `${profile.name} profile saved locally. ${pendingCount()} profile${pendingCount() === 1 ? "" : "s"} waiting to sync.${syncError ? ` Server says: ${syncError}` : ""}`
             : `${profile.name} profile saved.`;
           updateSyncStatus(pendingCount() ? "Saved personnel profiles shown." : "All personnel profiles synced.");
         })
@@ -1023,13 +1062,6 @@ profileForm.addEventListener("submit",async event=>{
     saveProfileButton.textContent = "Save Profile";
     updateSyncStatus("Saved personnel profiles shown.");
   }
-});
-
-clearProfileButton.addEventListener("click",()=>{
-  const name = selectedPersonnelName();
-  profileForm.reset();
-  setFormProfile(blankProfile(name));
-  profileFormMessage.textContent = "Form cleared.";
 });
 
 ["change","blur"].forEach(eventName=>{

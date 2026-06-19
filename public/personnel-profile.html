@@ -8,8 +8,9 @@
 <meta name="theme-color" content="#0c6842">
 <link rel="manifest" href="/learner-manifest.webmanifest">
 <link rel="icon" href="/bakhaw-school-logo.png">
-<link rel="stylesheet" href="/personnel-profile.css?v=20260619-profile-save-status">
-<link rel="stylesheet" href="/teacher-session.css?v=20260615-guidance-pin-gate">
+<script>if(sessionStorage.getItem("bakhawDataPrivacyNoticeAgreed")!=="yes"){document.documentElement.classList.add("teacher-privacy-pending");}</script>
+<link rel="stylesheet" href="/personnel-profile.css?v=current">
+<link rel="stylesheet" href="/teacher-session.css?v=current">
 </head>
 <body>
 <main class="profile-shell">
@@ -50,19 +51,89 @@
           <datalist id="personnelNameOptions"></datalist>
         </label>
       </section>
-      <div id="dynamicProfileFields" class="dynamic-profile-fields"></div>
+      <div id="dynamicProfileFields" class="dynamic-profile-fields">
+        <section class="form-section dynamic-field-section">
+          <h3>Sex</h3>
+          <label>
+            <select name="field:sex">
+              <option value="">Select Sex</option>
+              <option>Male</option>
+              <option>Female</option>
+            </select>
+          </label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>Birthday</h3>
+          <label><textarea name="field:birthday" rows="1" placeholder="Enter Birthday"></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>Position</h3>
+          <label><textarea name="field:position" rows="1" placeholder="Enter Position"></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>Department</h3>
+          <label><textarea name="field:department" rows="1" placeholder="Enter Department"></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>Advisory / Assignment</h3>
+          <label><textarea name="field:advisory-assignment" rows="1" placeholder="Enter Advisory / Assignment"></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>Contact Number</h3>
+          <label><textarea name="field:contact-number" rows="1" placeholder="Enter Contact Number"></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>DepEd Email</h3>
+          <label><textarea name="field:deped-email" rows="1" placeholder="Enter DepEd Email"></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>Address</h3>
+          <label><textarea name="field:address" rows="1" placeholder="Enter Address"></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>Emergency Contact</h3>
+          <label><textarea name="field:emergency-contact" rows="1" placeholder="Enter Emergency Contact"></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>Employee No.</h3>
+          <label><textarea name="field:employee-no" rows="1" placeholder="Enter Employee No."></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>GSIS</h3>
+          <label><textarea name="field:gsis" rows="1" placeholder="Enter GSIS"></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>PhilHealth</h3>
+          <label><textarea name="field:philhealth" rows="1" placeholder="Enter PhilHealth"></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>TIN</h3>
+          <label><textarea name="field:tin" rows="1" placeholder="Enter TIN"></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>PAG-IBIG</h3>
+          <label><textarea name="field:pag-ibig" rows="1" placeholder="Enter PAG-IBIG"></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>PRC License No.</h3>
+          <label><textarea name="field:prc-license-no" rows="1" placeholder="Enter PRC License No."></textarea></label>
+        </section>
+        <section class="form-section dynamic-field-section">
+          <h3>Notes</h3>
+          <label><textarea name="field:notes" rows="1" placeholder="Enter Notes"></textarea></label>
+        </section>
+      </div>
 
       <div class="form-actions">
         <button type="submit" id="saveProfileButton">Save Profile</button>
-        <button type="button" id="clearProfileButton" class="secondary">Clear Form</button>
       </div>
       <p id="profileFormMessage" class="form-message" role="status"></p>
     </form>
   </section>
 </main>
 
-<script src="/learner-offline.js?v=20260619-resolved-login"></script>
-<script src="/teacher-session.js?v=20260619-resolved-login"></script>
-<script src="/personnel-profile.js?v=20260619-profile-save-status"></script>
+<script src="/learner-offline.js?v=current"></script>
+<script src="/teacher-session.js?v=current"></script>
+<script src="/personnel-profile.js?v=current"></script>
 </body>
 </html>
