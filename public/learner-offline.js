@@ -271,7 +271,7 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
-      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=show-saved-cases-11", { scope:"/" });
+      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=show-saved-cases-12", { scope:"/" });
       await registration.update();
       const worker = registration.installing || registration.waiting || registration.active;
       if(worker && worker.state !== "activated"){

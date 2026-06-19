@@ -492,7 +492,7 @@ function addInvolvedRow(data = {}){
   const row = document.createElement("div");
   row.className = "involved-row";
   row.innerHTML = `
-    <label><span>Learner</span><input class="involved-student" list="studentOptions" value="${escapeHtml(selectedValue)}" placeholder="Type learner name" autocomplete="off"></label>
+    <label><span>Learner</span><input class="involved-student" value="${escapeHtml(selectedValue)}" placeholder="Type learner name" autocomplete="off"></label>
     <label><span>Role</span><select class="involved-role">${roles.map(role=>`<option ${role === data.role ? "selected" : ""}>${role}</option>`).join("")}</select></label>
     <label><span>Notes</span><input class="involved-notes" value="${escapeHtml(data.notes || "")}" placeholder="Participation or observation"></label>
     <button class="remove-involved" type="button">Remove</button>`;
