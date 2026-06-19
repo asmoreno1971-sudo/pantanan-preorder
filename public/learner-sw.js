@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-offline-login-v2";
+const shellCache = "bakhaw-learner-shell-offline-login-v3";
 const imageCacheName = "roadworthy-cashier-images-current";
 const offlineHost = "bis1.onrender.com";
 const offlineEnabled = self.location.hostname.toLowerCase() === offlineHost;
@@ -123,6 +123,15 @@ const offlineFallbacks = {
   "/teacher-accounts":"/teacher-accounts-offline-shell",
   "/teacher-accounts.html":"/teacher-accounts"
 };
+const protectedFallbackPaths = new Set([
+  "/students", "/students.html", "/students-offline-shell",
+  "/personnel", "/personnel.html", "/personnel-offline-shell",
+  "/personnel-profile", "/personnel-profile.html", "/personnel-profile-offline-shell",
+  "/student-dashboard", "/student-dashboard.html", "/student-dashboard-offline-shell",
+  "/guidance", "/guidance.html", "/guidance-offline-shell",
+  "/guidance-report", "/guidance-report.html", "/guidance-report-offline-shell",
+  "/teacher-accounts", "/teacher-accounts.html", "/teacher-accounts-offline-shell"
+]);
 
 function isStaticAsset(pathname){
   return /\.(?:css|js|png|jpg|jpeg|webp|svg|ico|json|webmanifest)$/i.test(pathname);
@@ -193,6 +202,9 @@ function offlineFallbackResponse(request, pathname){
   if(pathname === "/login" || pathname === "/teacher-login" || pathname === "/teacher-login.html"){
     return offlineLoginResponse(request);
   }
+  if(protectedFallbackPaths.has(pathname)){
+    return offlineLoginResponse(request, pathname);
+  }
   return new Response("Open this page once on BIS1 with internet, then it can open offline.", {
     status:503,
     headers:{ "Content-Type":"text/plain; charset=utf-8" }
@@ -247,9 +259,9 @@ async function cleanPersonnelProfileResponse(pathname, response){
   });
 }
 
-function offlineLoginResponse(request){
+function offlineLoginResponse(request, fallbackNext = ""){
   const url = new URL(request.url);
-  const next = url.searchParams.get("next") || "/student-dashboard";
+  const next = url.searchParams.get("next") || fallbackNext || "/student-dashboard";
   const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/student-dashboard";
   const guidanceLogin = safeNext === "/guidance" || safeNext === "/guidance-report";
   const teacherOptions = guidanceLogin
