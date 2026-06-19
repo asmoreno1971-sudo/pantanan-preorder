@@ -3506,7 +3506,6 @@ async function serveStatic(req, res){
 
     const extraHeaders = (pathname === "/login" || pathname === "/teacher-login" || pathname === "/teacher-login.html")
       ? {
-        "Clear-Site-Data":"\"cache\"",
         "Pragma":"no-cache",
         "Expires":"0"
       }

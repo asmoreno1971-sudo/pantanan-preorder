@@ -403,4 +403,5 @@ disagreeButton.addEventListener("click", async ()=>{
   }
 });
 
+LearnerOffline.registerServiceWorker().catch(()=>{});
 loadTeacherDirectory();

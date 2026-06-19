@@ -14,11 +14,12 @@
   const protectedPage = document.body.matches(".teacher-accounts-page")
     || ["/students", "/students.html", "/students-offline-shell", "/personnel", "/personnel.html", "/personnel-offline-shell", "/personnel-profile", "/personnel-profile.html", "/personnel-profile-offline-shell", "/student-dashboard", "/student-dashboard.html", "/student-dashboard-offline-shell", "/guidance", "/guidance.html", "/guidance-offline-shell", "/guidance-report", "/guidance-report.html", "/guidance-report-offline-shell", "/teacher-accounts", "/teacher-accounts.html", "/teacher-accounts-offline-shell"]
       .includes(window.location.pathname);
+  const privacyAgreementKey = "bakhawDataPrivacyNoticeAgreed";
   const localEntryAllowed = (
     Boolean(window.LearnerOffline?.hasOfflineSession())
     && (!guidancePage || Boolean(window.LearnerOffline?.hasGuidanceSession()))
   );
-  window.teacherEntryAllowed = !protectedPage || localEntryAllowed || navigator.onLine;
+  window.teacherEntryAllowed = !protectedPage || localEntryAllowed;
 
   if(protectedPage){
     window.LearnerOffline?.registerServiceWorker?.().catch(()=>{});
@@ -99,7 +100,57 @@
     return dialog;
   }
 
+  function createPrivacyDialog(){
+    const dialog = document.createElement("dialog");
+    dialog.className = "teacher-privacy-dialog";
+    dialog.innerHTML = `
+      <div class="teacher-privacy-icon" aria-hidden="true">!</div>
+      <h2>Data Privacy Notice</h2>
+      <p>This app is protected by the Data Privacy Act of 2012. Hence, you are required to keep the data security in full confidentiality.</p>
+      <p class="teacher-privacy-question">Do you agree?</p>
+      <div class="teacher-privacy-actions">
+        <button class="teacher-privacy-disagree" type="button">Disagree</button>
+        <button class="teacher-privacy-agree" type="button">Agree</button>
+      </div>`;
+    document.body.appendChild(dialog);
+    return dialog;
+  }
+
+  function showPrivacyNoticeIfNeeded(){
+    if(!protectedPage || sessionStorage.getItem(privacyAgreementKey) === "yes"){
+      document.documentElement.classList.remove("teacher-privacy-pending");
+      return;
+    }
+    const dialog = createPrivacyDialog();
+    const agreeButton = dialog.querySelector(".teacher-privacy-agree");
+    const disagreeButton = dialog.querySelector(".teacher-privacy-disagree");
+    dialog.addEventListener("cancel", event=>event.preventDefault());
+    agreeButton.addEventListener("click", async ()=>{
+      agreeButton.disabled = true;
+      disagreeButton.disabled = true;
+      agreeButton.textContent = "Continuing...";
+      try{
+        sessionStorage.setItem(privacyAgreementKey, "yes");
+        if(navigator.onLine){
+          await fetch("/api/teacher-consent", { method:"POST" }).catch(()=>{});
+        }
+        document.documentElement.classList.remove("teacher-privacy-pending");
+        dialog.close();
+      }finally{
+        agreeButton.disabled = false;
+        disagreeButton.disabled = false;
+        agreeButton.textContent = "Agree";
+      }
+    });
+    disagreeButton.addEventListener("click", ()=>{
+      sessionStorage.removeItem(privacyAgreementKey);
+      logout();
+    });
+    dialog.showModal();
+  }
+
   document.addEventListener("DOMContentLoaded", ()=>{
+    showPrivacyNoticeIfNeeded();
     const resetDialog = createResetPinDialog();
     const resetForm = resetDialog.querySelector("form");
     const status = resetDialog.querySelector(".teacher-pin-status");
