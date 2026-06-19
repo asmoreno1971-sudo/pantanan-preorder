@@ -41,6 +41,45 @@ function openPrivacyNotice(){
   privacyDialog.showModal();
 }
 
+function backgroundServerLogin(){
+  if(!navigator.onLine){
+    return;
+  }
+  fetchWithTimeout("/api/teacher-login", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      username:currentTeacherUsername(),
+      pin:pinInput.value,
+      guidanceLogin
+    })
+  }, 8000)
+    .then(response=>{
+      serverSessionReady = response.ok;
+    })
+    .catch(()=>{
+      serverSessionReady = false;
+    });
+}
+
+function openNextPage(){
+  LearnerOffline.setOfflineSession(true);
+  if(guidanceLogin){
+    LearnerOffline.setGuidanceSession(true);
+  }
+  sessionStorage.setItem(privacyAgreementKey, "yes");
+  LearnerOffline.registerServiceWorker().catch(()=>{});
+  window.location.replace(nextPage());
+}
+
+function openPrivacyOrContinue(){
+  if(sessionStorage.getItem(privacyAgreementKey) === "yes"){
+    openNextPage();
+    return;
+  }
+  openPrivacyNotice();
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = 8000){
   const controller = new AbortController();
   const timeout = window.setTimeout(()=>controller.abort(),timeoutMs);
@@ -242,24 +281,8 @@ loginForm.addEventListener("submit", async event=>{
     if(localLoginAllowed){
       saveCurrentTeacherSession();
       LearnerOffline.rememberCredentials(currentTeacherUsername(), pinInput.value).catch(()=>{});
-      if(navigator.onLine){
-        try{
-          const response = await fetchWithTimeout("/api/teacher-login", {
-            method:"POST",
-            headers:{ "Content-Type":"application/json" },
-            body:JSON.stringify({
-              username:currentTeacherUsername(),
-              pin:pinInput.value,
-              guidanceLogin
-            })
-          }, 8000);
-          serverSessionReady = response.ok;
-        }catch{
-          // Local session is already set; keep opening the app even if the cookie refresh is slow.
-        }
-        LearnerOffline.registerServiceWorker().catch(()=>{});
-      }
-      openPrivacyNotice();
+      backgroundServerLogin();
+      openPrivacyOrContinue();
       return;
     }
 
@@ -316,10 +339,10 @@ loginForm.addEventListener("submit", async event=>{
     saveCurrentTeacherSession();
 
     if(guidanceLogin){
-      openPrivacyNotice();
+      openPrivacyOrContinue();
       return;
     }
-    openPrivacyNotice();
+    openPrivacyOrContinue();
   }catch(error){
     loginError.textContent = error.message;
     pinInput.value = "";
@@ -341,33 +364,9 @@ agreeButton.addEventListener("click", async ()=>{
 
   try{
     if(navigator.onLine && serverSessionReady){
-      try{
-        const response = await fetchWithTimeout("/api/teacher-consent", { method:"POST" });
-        const data = await readJsonResponse(response, "Your agreement could not be recorded.");
-
-        if(!response.ok || !data.ok){
-          const error = new Error(data.message || "Your agreement could not be recorded.");
-          error.status = response.status;
-          throw error;
-        }
-      }catch(error){
-        if(error.status === 401 || error.status === 403){
-          serverSessionReady = false;
-        }else if(!(error instanceof TypeError) && error.name !== "AbortError"){
-          throw error;
-        }
-      }
+      fetchWithTimeout("/api/teacher-consent", { method:"POST" }).catch(()=>{});
     }
-
-    LearnerOffline.setOfflineSession(true);
-    if(guidanceLogin){
-      LearnerOffline.setGuidanceSession(true);
-    }
-    sessionStorage.setItem(privacyAgreementKey, "yes");
-    if(navigator.onLine){
-      await LearnerOffline.registerServiceWorker();
-    }
-    window.location.replace(nextPage());
+    openNextPage();
   }catch(error){
     privacyDialog.close();
     loginError.textContent = error.message;
