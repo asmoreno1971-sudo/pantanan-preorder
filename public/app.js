@@ -1075,6 +1075,13 @@ async function activateCustomerOfflineShell(){
   worker?.postMessage({ type:"CACHE_SHELL_URLS", urls:[...urls] });
 }
 
+function refreshCustomerOfflineShell(){
+  if(!navigator.onLine){
+    return;
+  }
+  activateCustomerOfflineShell().catch(()=>{});
+}
+
 setInterval(updateNowTime, 60000);
 setInterval(loadStorageStatus, 60000);
 setInterval(loadKioskStatus, 60000);
@@ -1085,17 +1092,20 @@ window.addEventListener("focus", ()=>{
   refreshMenuIfIdle();
   loadStorageStatus();
   loadKioskStatus();
+  refreshCustomerOfflineShell();
 });
 window.addEventListener("pageshow", ()=>{
   refreshMenuIfIdle();
   loadStorageStatus();
   loadKioskStatus();
+  refreshCustomerOfflineShell();
 });
 window.addEventListener("online", ()=>{
   refreshMenuIfIdle();
   loadKioskStatus();
   syncPendingCashierSales();
   updateCashierOfflineUi();
+  refreshCustomerOfflineShell();
 });
 window.addEventListener("offline", ()=>updateCashierOfflineUi());
 document.addEventListener("visibilitychange", ()=>{

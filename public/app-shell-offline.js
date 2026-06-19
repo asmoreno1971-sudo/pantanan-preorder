@@ -17,6 +17,12 @@
     return [...urls];
   }
 
+  async function postShellUrls(registration){
+    const readyRegistration = registration || await navigator.serviceWorker.ready;
+    const worker = readyRegistration.active || readyRegistration.waiting || readyRegistration.installing;
+    worker?.postMessage({ type:"CACHE_SHELL_URLS", urls:shellUrls() });
+  }
+
   async function registerAppShell(){
     if(!("serviceWorker" in navigator)){
       return;
@@ -24,10 +30,18 @@
 
     const registration = await navigator.serviceWorker.register("/learner-sw.js?v=current", { scope:"/" });
     await registration.update().catch(()=>{});
-    const readyRegistration = await navigator.serviceWorker.ready;
-    const worker = readyRegistration.active || readyRegistration.waiting || readyRegistration.installing;
-    worker?.postMessage({ type:"CACHE_SHELL_URLS", urls:shellUrls() });
+    await postShellUrls();
+  }
+
+  function refreshAppShell(){
+    if(!navigator.onLine){
+      return;
+    }
+    postShellUrls().catch(()=>{});
   }
 
   registerAppShell().catch(()=>{});
+  window.addEventListener("online", refreshAppShell);
+  window.addEventListener("focus", refreshAppShell);
+  window.addEventListener("pageshow", refreshAppShell);
 })();

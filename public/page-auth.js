@@ -17,18 +17,32 @@
     return [...urls];
   }
 
+  async function postAppShellUrls(registration){
+    const readyRegistration = registration || await navigator.serviceWorker.ready;
+    const worker = readyRegistration.active || readyRegistration.waiting || readyRegistration.installing;
+    worker?.postMessage({ type:"CACHE_SHELL_URLS", urls:appShellUrls() });
+  }
+
   async function activateOfflineShell(){
     if(!("serviceWorker" in navigator)){
       return;
     }
     const registration = await navigator.serviceWorker.register("/learner-sw.js?v=current", { scope:"/" });
     await registration.update().catch(()=>{});
-    const readyRegistration = await navigator.serviceWorker.ready;
-    const worker = readyRegistration.active || readyRegistration.waiting || readyRegistration.installing;
-    worker?.postMessage({ type:"CACHE_SHELL_URLS", urls:appShellUrls() });
+    await postAppShellUrls();
+  }
+
+  function refreshOfflineShell(){
+    if(!navigator.onLine){
+      return;
+    }
+    postAppShellUrls().catch(()=>{});
   }
 
   activateOfflineShell().catch(()=>{});
+  window.addEventListener("online", refreshOfflineShell);
+  window.addEventListener("focus", refreshOfflineShell);
+  window.addEventListener("pageshow", refreshOfflineShell);
 
   const openPaths = new Set(["/", "/index.html"]);
   const currentPath = window.location.pathname.replace(/\/$/, "") || "/";

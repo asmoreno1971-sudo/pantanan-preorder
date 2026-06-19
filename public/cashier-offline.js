@@ -100,6 +100,17 @@
     });
   }
 
+  function refreshServiceWorkerCache(){
+    if(!navigator.onLine || !("serviceWorker" in navigator)){
+      return;
+    }
+    registerServiceWorker().catch(()=>{});
+  }
+
+  window.addEventListener("online", refreshServiceWorkerCache);
+  window.addEventListener("focus", refreshServiceWorkerCache);
+  window.addEventListener("pageshow", refreshServiceWorkerCache);
+
   async function cacheMenuImages(menu){
     if(!("serviceWorker" in navigator)){
       return;
