@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-show-saved-cases-14";
+const shellCache = "bakhaw-learner-shell-show-saved-cases-15";
 const imageCacheName = "roadworthy-cashier-images-current";
 
 const offlineFallbacks = {

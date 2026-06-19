@@ -142,7 +142,7 @@ function guidanceCaseRegisterHtml(cases){
   const status = `${savedCases.length} of ${savedCases.length} guidance case${savedCases.length === 1 ? "" : "s"}`;
   const cards = savedCases.length ? savedCases.map(item=>`
         <article class="case-card">
-          <div class="case-card-head"><h3>${escapeHtml(item.caseNumber)}</h3><span class="case-badge">${escapeHtml(item.status)}</span></div>
+          <div class="case-card-head"><h3>${escapeHtml(item.caseNumber)}</h3></div>
           <p class="case-learner-name"><strong>${escapeHtml(item.primaryStudent?.name)}</strong></p>
           <div class="case-card-actions">
             <button class="report" type="button" data-action="report" data-id="${escapeHtml(item.id)}">Report</button>

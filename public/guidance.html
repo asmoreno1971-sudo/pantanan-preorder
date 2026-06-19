@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="/teacher-session.css?v=current">
 <script>
 (function(){
-  const resetKey = "bakhawGuidanceShellResetShowCases14";
+  const resetKey = "bakhawGuidanceShellResetShowCases15";
   if(!("serviceWorker" in navigator) || sessionStorage.getItem(resetKey)){
     return;
   }
@@ -327,9 +327,9 @@
   </section>
 </dialog>
 
-<script src="/learner-offline.js?v=show-saved-cases-14"></script>
+<script src="/learner-offline.js?v=show-saved-cases-15"></script>
 <script src="/teacher-session.js?v=current"></script>
-<script src="/guidance.js?v=show-saved-cases-14"></script>
+<script src="/guidance.js?v=show-saved-cases-15"></script>
 <script>
 (function(){
   const databaseErrorPattern = /getaddrinfo|ENOTFOUND|dpg-[a-z0-9-]+|database connection|database is temporarily unavailable/i;
@@ -378,7 +378,7 @@
       status.textContent = `${savedCases.length} of ${savedCases.length} guidance case${savedCases.length === 1 ? "" : "s"}`;
       list.innerHTML = savedCases.length ? savedCases.map(item=>`
         <article class="case-card">
-          <div class="case-card-head"><h3>${text(item.caseNumber)}</h3><span class="case-badge">${text(item.status)}</span></div>
+          <div class="case-card-head"><h3>${text(item.caseNumber)}</h3></div>
           <p class="case-learner-name"><strong>${text(item.primaryStudent && item.primaryStudent.name)}</strong></p>
           <div class="case-card-actions">
             <button class="report" type="button" data-action="report" data-id="${text(item.id)}">Report</button>
@@ -402,7 +402,7 @@
       status.textContent = `${savedCases.length} of ${savedCases.length} guidance case${savedCases.length === 1 ? "" : "s"}`;
       list.innerHTML = savedCases.length ? savedCases.map(item=>`
         <article class="case-card">
-          <div class="case-card-head"><h3>${text(item.caseNumber)}</h3><span class="case-badge">${text(item.status)}</span></div>
+          <div class="case-card-head"><h3>${text(item.caseNumber)}</h3></div>
           <p class="case-learner-name"><strong>${text(item.primaryStudent && item.primaryStudent.name)}</strong></p>
           <div class="case-card-actions">
             <button class="report" type="button" data-action="report" data-id="${text(item.id)}">Report</button>
