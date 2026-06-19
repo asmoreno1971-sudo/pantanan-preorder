@@ -71,20 +71,6 @@ button,a{ font:inherit; }
   font-weight:750;
 }
 .report-filters strong{ margin:0 0 10px auto; color:var(--green); font-size:18px; }
-.summary-cards{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin:10px 0; }
-.summary-card{
-  min-height:92px;
-  padding:13px 16px;
-  border:1px solid var(--line);
-  border-radius:14px;
-  background:rgba(255,255,255,.88);
-  text-align:center;
-}
-.summary-card:nth-child(1){ background:var(--cream); }
-.summary-card:nth-child(3){ background:var(--blue); }
-.summary-card:nth-child(4){ background:var(--pink); }
-.summary-card span{ display:block; color:var(--muted); font-size:14px; font-weight:800; }
-.summary-card strong{ display:block; margin-top:6px; color:var(--green); font-size:34px; }
 .report-panel{
   margin-top:12px;
   overflow:hidden;
@@ -138,16 +124,12 @@ tfoot td{ color:#fff; background:var(--green); font-weight:900; }
   .report-actions{ justify-content:flex-start; }
   .report-filters{ align-items:stretch; flex-wrap:wrap; }
   .report-filters strong{ width:100%; margin:2px 0 0; }
-  .summary-cards{ grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media(max-width:560px){
   .report-shell{ width:calc(100% - 14px); padding-top:7px; }
   .report-header{ padding:13px; border-radius:13px; }
   .report-brand img{ width:60px; height:60px; }
   .report-brand h1{ font-size:30px; }
-  .summary-cards{ grid-template-columns:1fr 1fr; gap:7px; }
-  .summary-card{ min-height:78px; padding:10px; }
-  .summary-card strong{ font-size:28px; }
   .panel-heading{ align-items:flex-start; flex-direction:column; }
   th,td{ padding:9px 10px; }
 }
@@ -161,9 +143,6 @@ tfoot td{ color:#fff; background:var(--green); font-weight:900; }
   .report-actions,.report-status,.report-filters label{ display:none !important; }
   .report-filters{ justify-content:center; margin:5px 0; padding:5px; border:0; }
   .report-filters strong{ width:auto; margin:0; }
-  .summary-cards{ margin:7px 0; gap:6px; }
-  .summary-card{ min-height:62px; padding:7px; }
-  .summary-card strong{ font-size:25px; }
   .report-panel{ break-inside:avoid; margin-top:7px; border-radius:0; box-shadow:none; }
   .panel-heading{ padding:7px 10px; }
   .panel-heading h2{ font-size:18px; }

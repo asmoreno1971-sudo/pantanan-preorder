@@ -1,5 +1,4 @@
 const reportStatus = document.getElementById("reportStatus");
-const summaryCards = document.getElementById("summaryCards");
 const levelTallyBody = document.getElementById("levelTallyBody");
 const levelTallyFoot = document.getElementById("levelTallyFoot");
 const incidentTallyBody = document.getElementById("incidentTallyBody");
@@ -134,13 +133,6 @@ function renderReport(cases){
   });
 
   const overall = sumCounts(levels.Elementary,levels.JHS);
-  summaryCards.innerHTML = [
-    ["Overall Cases",overall.total],
-    ["Elementary",levels.Elementary.total],
-    ["JHS",levels.JHS.total],
-    ["Boys",overall.boys],
-    ["Girls",overall.girls]
-  ].map(([label,value])=>`<article class="summary-card"><span>${label}</span><strong>${displayCount(value)}</strong></article>`).join("");
 
   levelTallyBody.innerHTML = ["Elementary","JHS"].map(level=>`
     <tr>
