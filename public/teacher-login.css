@@ -91,17 +91,17 @@ h1{
   22%{
     border-color:#d39a12;
     box-shadow:0 18px 32px rgba(211, 154, 18, .28);
-    transform:translateY(-18px) rotate(-2.5deg) skewX(-2deg);
+    transform:translateY(-18px) rotate(120deg) skewX(-2deg);
   }
   50%{
     border-color:#d39a12;
     box-shadow:0 24px 40px rgba(211, 154, 18, .34);
-    transform:translateY(-28px) rotate(2.5deg) skewX(2deg);
+    transform:translateY(-28px) rotate(240deg) skewX(2deg);
   }
   76%{
     border-color:#d39a12;
     box-shadow:0 14px 28px rgba(211, 154, 18, .24);
-    transform:translateY(-10px) rotate(-1.5deg) skewX(-1deg);
+    transform:translateY(-10px) rotate(330deg) skewX(-1deg);
   }
 }
 
