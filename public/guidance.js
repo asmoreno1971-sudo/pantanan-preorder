@@ -1,6 +1,7 @@
 const guidanceForm = document.getElementById("guidanceForm");
 const primaryStudent = document.getElementById("primaryStudent");
 const studentOptions = document.getElementById("studentOptions");
+const primaryStudentMenu = document.getElementById("primaryStudentMenu");
 const primaryProfile = document.getElementById("primaryProfile");
 const involvedList = document.getElementById("involvedList");
 const adviserSummary = document.getElementById("adviserSummary");
@@ -452,6 +453,67 @@ function selectedStudentFromInput(input){
     || students.find(student=>studentName(student).toLowerCase().includes(value.toLowerCase()));
 }
 
+function learnerMatches(query){
+  const cleanQuery = String(query || "").trim().toLowerCase();
+  return orderedStudents()
+    .filter(student=>{
+      const name = studentName(student).toLowerCase();
+      const section = String(student.gradeSection || "").toLowerCase();
+      return !cleanQuery || name.includes(cleanQuery) || section.includes(cleanQuery);
+    })
+    .slice(0,8);
+}
+
+function attachLearnerDropdown(input, menu){
+  if(!input || !menu){
+    return;
+  }
+
+  const close = ()=>{
+    menu.hidden = true;
+    menu.innerHTML = "";
+  };
+
+  const open = ()=>{
+    const matches = learnerMatches(input.value);
+    menu.innerHTML = matches.length ? matches.map(student=>`
+      <button class="learner-suggestion" type="button" data-student-id="${escapeHtml(student.id)}">
+        ${escapeHtml(studentName(student))}
+        <span>${escapeHtml(student.gradeSection || "No section")}</span>
+      </button>
+    `).join("") : `<div class="profile-card empty">No matching learner.</div>`;
+    menu.hidden = false;
+  };
+
+  input.addEventListener("input", ()=>{
+    open();
+    updateAutomaticDetails();
+  });
+  input.addEventListener("focus", open);
+  input.addEventListener("keydown", event=>{
+    if(event.key === "Escape"){
+      close();
+    }
+  });
+  input.addEventListener("blur", ()=>{
+    window.setTimeout(close, 150);
+  });
+  menu.addEventListener("mousedown", event=>{
+    const button = event.target.closest(".learner-suggestion");
+    if(!button){
+      return;
+    }
+    event.preventDefault();
+    const student = students.find(item=>item.id === button.dataset.studentId);
+    if(student){
+      input.value = studentName(student);
+      close();
+      input.dispatchEvent(new Event("change",{bubbles:true}));
+      input.focus();
+    }
+  });
+}
+
 function studentInputValue(studentId, fallbackName = ""){
   const student = students.find(item=>item.id === studentId);
   return student ? studentName(student) : String(fallbackName || "").trim();
@@ -492,7 +554,7 @@ function addInvolvedRow(data = {}){
   const row = document.createElement("div");
   row.className = "involved-row";
   row.innerHTML = `
-    <label><span>Learner</span><input class="involved-student" value="${escapeHtml(selectedValue)}" placeholder="Type learner name" autocomplete="off"></label>
+    <label class="learner-picker"><span>Learner</span><input class="involved-student" value="${escapeHtml(selectedValue)}" placeholder="Type learner name" autocomplete="off"><div class="learner-suggestions" hidden></div></label>
     <label><span>Role</span><select class="involved-role">${roles.map(role=>`<option ${role === data.role ? "selected" : ""}>${role}</option>`).join("")}</select></label>
     <label><span>Notes</span><input class="involved-notes" value="${escapeHtml(data.notes || "")}" placeholder="Participation or observation"></label>
     <button class="remove-involved" type="button">Remove</button>`;
@@ -500,8 +562,9 @@ function addInvolvedRow(data = {}){
     row.remove();
     updateAutomaticDetails();
   });
-  row.querySelector(".involved-student").addEventListener("input", updateAutomaticDetails);
-  row.querySelector(".involved-student").addEventListener("change", updateAutomaticDetails);
+  const involvedInput = row.querySelector(".involved-student");
+  attachLearnerDropdown(involvedInput,row.querySelector(".learner-suggestions"));
+  involvedInput.addEventListener("change", updateAutomaticDetails);
   involvedList.appendChild(row);
 }
 
@@ -953,6 +1016,7 @@ guidanceForm.addEventListener("submit",async event=>{
 
 primaryStudent.addEventListener("input",renderPrimaryProfile);
 primaryStudent.addEventListener("change",renderPrimaryProfile);
+attachLearnerDropdown(primaryStudent,primaryStudentMenu);
 document.getElementById("addInvolvedButton").addEventListener("click",()=>addInvolvedRow());
 document.getElementById("clearCaseButton").addEventListener("click",resetForm);
 adviserInformed.addEventListener("change",()=>{

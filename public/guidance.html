@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="/teacher-session.css?v=current">
 <script>
 (function(){
-  const resetKey = "bakhawGuidanceShellResetShowCases11";
+  const resetKey = "bakhawGuidanceShellResetShowCases13";
   if(!("serviceWorker" in navigator) || sessionStorage.getItem(resetKey)){
     return;
   }
@@ -110,10 +110,11 @@
           <div><p>Main learner</p><h3>Child Profile</h3></div>
         </div>
         <div class="form-grid two">
-          <label>
+          <label class="learner-picker">
             <span>Learner Name *</span>
             <input id="primaryStudent" required placeholder="Type learner name" autocomplete="off">
             <datalist id="studentOptions"></datalist>
+            <div id="primaryStudentMenu" class="learner-suggestions" hidden></div>
           </label>
           <label>
             <span>Involvement to the Incident *</span>
@@ -326,9 +327,9 @@
   </section>
 </dialog>
 
-<script src="/learner-offline.js?v=show-saved-cases-12"></script>
+<script src="/learner-offline.js?v=show-saved-cases-13"></script>
 <script src="/teacher-session.js?v=current"></script>
-<script src="/guidance.js?v=show-saved-cases-12"></script>
+<script src="/guidance.js?v=show-saved-cases-13"></script>
 <script>
 (function(){
   const databaseErrorPattern = /getaddrinfo|ENOTFOUND|dpg-[a-z0-9-]+|database connection|database is temporarily unavailable/i;
