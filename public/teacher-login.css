@@ -79,7 +79,7 @@ h1{
   line-height:1.35;
   box-shadow:0 0 0 rgba(211, 154, 18, 0);
   transform-origin:center;
-  animation:privacyNoticeJumpTwist 1.45s ease-in-out infinite;
+  animation:privacyNoticeJumpTwist 2.2s ease-in-out infinite;
 }
 
 @keyframes privacyNoticeJumpTwist{
@@ -91,17 +91,17 @@ h1{
   22%{
     border-color:#d39a12;
     box-shadow:0 18px 32px rgba(211, 154, 18, .28);
-    transform:translateY(-18px) rotate(-2.5deg) skewX(-2deg);
+    transform:translateY(-7px) rotate(-1deg) skewX(-1deg);
   }
   50%{
     border-color:#d39a12;
     box-shadow:0 24px 40px rgba(211, 154, 18, .34);
-    transform:translateY(-28px) rotate(2.5deg) skewX(2deg);
+    transform:translateY(-11px) rotate(1deg) skewX(1deg);
   }
   76%{
     border-color:#d39a12;
     box-shadow:0 14px 28px rgba(211, 154, 18, .24);
-    transform:translateY(-10px) rotate(-1.5deg) skewX(-1deg);
+    transform:translateY(-5px) rotate(-.6deg) skewX(-.5deg);
   }
 }
 
