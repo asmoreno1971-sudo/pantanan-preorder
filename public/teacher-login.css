@@ -78,19 +78,30 @@ h1{
   font-weight:900;
   line-height:1.35;
   box-shadow:0 0 0 rgba(211, 154, 18, 0);
-  animation:privacyNoticePulse 2.4s ease-in-out infinite;
+  transform-origin:center;
+  animation:privacyNoticeJumpTwist 1.45s ease-in-out infinite;
 }
 
-@keyframes privacyNoticePulse{
+@keyframes privacyNoticeJumpTwist{
   0%,100%{
     border-color:#e1c160;
     box-shadow:0 0 0 rgba(211, 154, 18, 0);
-    transform:translateY(0);
+    transform:translateY(0) rotate(0deg) skewX(0deg);
+  }
+  22%{
+    border-color:#d39a12;
+    box-shadow:0 18px 32px rgba(211, 154, 18, .28);
+    transform:translateY(-18px) rotate(-2.5deg) skewX(-2deg);
   }
   50%{
     border-color:#d39a12;
-    box-shadow:0 10px 26px rgba(211, 154, 18, .22);
-    transform:translateY(-1px);
+    box-shadow:0 24px 40px rgba(211, 154, 18, .34);
+    transform:translateY(-28px) rotate(2.5deg) skewX(2deg);
+  }
+  76%{
+    border-color:#d39a12;
+    box-shadow:0 14px 28px rgba(211, 154, 18, .24);
+    transform:translateY(-10px) rotate(-1.5deg) skewX(-1deg);
   }
 }
 
