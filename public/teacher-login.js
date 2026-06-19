@@ -8,6 +8,7 @@ const agreeButton = document.getElementById("agreeButton");
 const disagreeButton = document.getElementById("disagreeButton");
 const teacherDirectoryKey = "bakhawTeacherDirectory";
 const currentTeacherKey = "bakhawCurrentTeacherSession";
+const privacyAgreementKey = "bakhawDataPrivacyNoticeAgreed";
 const guidanceLogin = ["/guidance","/guidance-report"].includes(nextPage());
 const guidanceAdmin = {
   username:"alexander.moreno",
@@ -30,6 +31,15 @@ const fallbackTeacherDirectory = fallbackTeacherNames.map(displayName=>({
 })).filter(teacher=>teacher.username.includes("."));
 const defaultTeacherPin = "1234";
 let serverSessionReady = false;
+
+function openPrivacyNotice(){
+  agreeButton.disabled = false;
+  disagreeButton.disabled = false;
+  agreeButton.textContent = "Agree";
+  disagreeButton.textContent = "Disagree";
+  loginButton.textContent = "Opening...";
+  privacyDialog.showModal();
+}
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 8000){
   const controller = new AbortController();
@@ -126,17 +136,30 @@ function selectedTeacherExists(){
 }
 
 async function canUseOfflineLogin(){
+  const username = currentTeacherUsername();
   try{
-    if(await LearnerOffline.verifyCredentials(currentTeacherUsername(), pinInput.value)){
+    if(await LearnerOffline.verifyCredentials(username, pinInput.value)){
       return true;
     }
   }catch{
     // Browser storage can be unavailable or blocked; the default PIN path can still work.
   }
   if(guidanceLogin){
-    return currentTeacherUsername() === guidanceAdmin.username && pinInput.value === "1111";
+    return username === guidanceAdmin.username && (pinInput.value === "1111" || pinInput.value === defaultTeacherPin);
   }
   return pinInput.value === defaultTeacherPin && selectedTeacherExists();
+}
+
+function isNetworkLoginError(error){
+  return error instanceof TypeError
+    || error?.name === "AbortError"
+    || /failed to fetch|networkerror|load failed/i.test(String(error?.message || ""));
+}
+
+function offlineLoginMessage(){
+  return guidanceLogin
+    ? "Use the saved password, 1111, or first-time PIN 1234 while offline."
+    : "Use the saved password or first-time PIN 1234 while offline.";
 }
 
 function renderTeacherDirectory(teachers){
@@ -218,14 +241,10 @@ loginForm.addEventListener("submit", async event=>{
     const localLoginAllowed = await canUseOfflineLogin();
     if(localLoginAllowed){
       saveCurrentTeacherSession();
-      LearnerOffline.setOfflineSession(true);
-      if(guidanceLogin){
-        LearnerOffline.setGuidanceSession(true);
-      }
       LearnerOffline.rememberCredentials(currentTeacherUsername(), pinInput.value).catch(()=>{});
       if(navigator.onLine){
         try{
-          await fetchWithTimeout("/api/teacher-login", {
+          const response = await fetchWithTimeout("/api/teacher-login", {
             method:"POST",
             headers:{ "Content-Type":"application/json" },
             body:JSON.stringify({
@@ -234,13 +253,13 @@ loginForm.addEventListener("submit", async event=>{
               guidanceLogin
             })
           }, 8000);
+          serverSessionReady = response.ok;
         }catch{
           // Local session is already set; keep opening the app even if the cookie refresh is slow.
         }
         LearnerOffline.registerServiceWorker().catch(()=>{});
       }
-      loginButton.textContent = guidanceLogin ? "Opening Guidance..." : "Opening...";
-      window.location.replace(nextPage());
+      openPrivacyNotice();
       return;
     }
 
@@ -275,10 +294,13 @@ loginForm.addEventListener("submit", async event=>{
 
     if(!onlineLoginComplete && !await canUseOfflineLogin()){
       if(onlineLoginError){
+        if(isNetworkLoginError(onlineLoginError)){
+          throw new Error(offlineLoginMessage());
+        }
         if(onlineLoginError.status && onlineLoginError.status < 500){
           throw onlineLoginError;
         }
-        throw new Error("Login is available offline with the saved password or first-time PIN.");
+        throw new Error(offlineLoginMessage());
       }
       throw new Error("Offline login is unavailable. Connect once and sign in successfully on this device first.");
     }
@@ -293,21 +315,11 @@ loginForm.addEventListener("submit", async event=>{
     }
     saveCurrentTeacherSession();
 
-    LearnerOffline.setOfflineSession(true);
     if(guidanceLogin){
-      LearnerOffline.setGuidanceSession(true);
-      loginButton.textContent = "Opening Guidance...";
-      if(navigator.onLine){
-        LearnerOffline.registerServiceWorker().catch(()=>{});
-      }
-      window.location.replace(nextPage());
+      openPrivacyNotice();
       return;
     }
-    loginButton.textContent = "Opening...";
-    if(navigator.onLine){
-      LearnerOffline.registerServiceWorker().catch(()=>{});
-    }
-    window.location.replace(nextPage());
+    openPrivacyNotice();
   }catch(error){
     loginError.textContent = error.message;
     pinInput.value = "";
@@ -348,6 +360,10 @@ agreeButton.addEventListener("click", async ()=>{
     }
 
     LearnerOffline.setOfflineSession(true);
+    if(guidanceLogin){
+      LearnerOffline.setGuidanceSession(true);
+    }
+    sessionStorage.setItem(privacyAgreementKey, "yes");
     if(navigator.onLine){
       await LearnerOffline.registerServiceWorker();
     }
@@ -370,6 +386,7 @@ disagreeButton.addEventListener("click", async ()=>{
 
   try{
     LearnerOffline.clearOfflineSession();
+    sessionStorage.removeItem(privacyAgreementKey);
     if(navigator.onLine){
       await fetch("/api/teacher-logout", { method:"POST" });
     }
