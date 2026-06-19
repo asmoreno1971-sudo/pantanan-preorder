@@ -328,7 +328,7 @@ async function refreshPersonnel(){
     const response = await personnelFetch("/api/personnel-profiles");
     const data = await response.json();
     if(response.status === 401){
-      window.location.replace(`/login?next=${encodeURIComponent("/personnel")}`);
+      personnelStatus.textContent = "Online session needs refresh. Saved personnel remain available here.";
       return;
     }
     if(!response.ok || !data.ok){
