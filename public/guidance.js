@@ -587,9 +587,7 @@ function updateAutomaticDetails(){
   adviserSummary.textContent = adviserLines.length ? adviserLines.join(" | ") : "Select learners to identify their class adviser(s).";
   const hasJhs = selected.some(isJhs);
   signatoryPreview.textContent = hasJhs ? "Alexander S. Moreno" : "Monalisa G. Lebuna";
-  signatoryReason.textContent = hasJhs
-    ? "JHS Guidance Designate selected because at least one involved learner is in Junior High School."
-    : "Elementary Guidance Designate selected because all involved learners are Elementary / SPD.";
+  signatoryReason.textContent = "";
 }
 
 function casePayload(){
