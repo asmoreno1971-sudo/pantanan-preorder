@@ -820,7 +820,7 @@ function renderCases(){
     <article class="case-card">
       <div class="case-card-head">
         <h3>${escapeHtml(item.caseNumber)}</h3>
-        <span class="case-card-status">Case Status: ${escapeHtml(item.status || "Open")}</span>
+        <span class="case-card-status">Status: ${escapeHtml(item.status || "Open")}</span>
       </div>
       <p class="case-learner-name"><strong>${escapeHtml(item.primaryStudent?.name)}</strong></p>
       <div class="case-card-actions">
