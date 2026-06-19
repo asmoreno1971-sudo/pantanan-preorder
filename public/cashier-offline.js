@@ -1,4 +1,6 @@
 (function(){
+  const offlineHost = "bis1.onrender.com";
+  const offlineEnabled = window.location.hostname.toLowerCase() === offlineHost;
   const databaseName = "roadworthy-cashier-offline-v1";
   const databaseVersion = 1;
   const salesStore = "pending-sales";
@@ -80,6 +82,13 @@
     if(!("serviceWorker" in navigator)){
       return;
     }
+    if(!offlineEnabled){
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations
+        .filter(registration=>/\/(?:learner|cashier)-sw\.js(?:\?|$)/.test(String(registration.active?.scriptURL || registration.waiting?.scriptURL || registration.installing?.scriptURL || "")))
+        .map(registration=>registration.unregister()));
+      return;
+    }
     await navigator.serviceWorker.register("/cashier-sw.js?v=current", { scope:"/" });
     const registration = await navigator.serviceWorker.ready;
     const worker = registration.active || registration.waiting || registration.installing;
@@ -101,15 +110,17 @@
   }
 
   function refreshServiceWorkerCache(){
-    if(!navigator.onLine || !("serviceWorker" in navigator)){
+    if(!offlineEnabled || !navigator.onLine || !("serviceWorker" in navigator)){
       return;
     }
     registerServiceWorker().catch(()=>{});
   }
 
-  window.addEventListener("online", refreshServiceWorkerCache);
-  window.addEventListener("focus", refreshServiceWorkerCache);
-  window.addEventListener("pageshow", refreshServiceWorkerCache);
+  if(offlineEnabled){
+    window.addEventListener("online", refreshServiceWorkerCache);
+    window.addEventListener("focus", refreshServiceWorkerCache);
+    window.addEventListener("pageshow", refreshServiceWorkerCache);
+  }
 
   async function cacheMenuImages(menu){
     if(!("serviceWorker" in navigator)){

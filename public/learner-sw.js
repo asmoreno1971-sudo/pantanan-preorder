@@ -1,5 +1,7 @@
 const shellCache = "bakhaw-learner-shell-offline-login";
 const imageCacheName = "roadworthy-cashier-images-current";
+const offlineHost = "bis1.onrender.com";
+const offlineEnabled = self.location.hostname.toLowerCase() === offlineHost;
 const installShellUrls = [
   "/login",
   "/teacher-login",
@@ -250,6 +252,10 @@ select,input{border:1px solid #b9d1c2;padding:12px 16px;background:#fff}button{m
 }
 
 self.addEventListener("install", event=>{
+  if(!offlineEnabled){
+    event.waitUntil(self.skipWaiting());
+    return;
+  }
   event.waitUntil(
     warmShellUrls(installShellUrls)
       .then(()=>self.skipWaiting())
@@ -257,6 +263,10 @@ self.addEventListener("install", event=>{
 });
 
 self.addEventListener("activate", event=>{
+  if(!offlineEnabled){
+    event.waitUntil(self.registration.unregister());
+    return;
+  }
   event.waitUntil(
     deleteOldShellCaches()
       .then(()=>self.clients.claim())
@@ -264,6 +274,9 @@ self.addEventListener("activate", event=>{
 });
 
 self.addEventListener("message", event=>{
+  if(!offlineEnabled){
+    return;
+  }
   if(event.data && event.data.type === "CACHE_SHELL_URLS"){
     const urls = (Array.isArray(event.data.urls) ? event.data.urls : [])
       .map(value=>{
@@ -316,6 +329,9 @@ self.addEventListener("message", event=>{
 });
 
 self.addEventListener("fetch", event=>{
+  if(!offlineEnabled){
+    return;
+  }
   if(event.request.method !== "GET"){
     return;
   }

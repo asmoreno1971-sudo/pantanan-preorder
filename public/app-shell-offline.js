@@ -1,4 +1,6 @@
 (function(){
+  const offlineHost = "bis1.onrender.com";
+  const offlineEnabled = window.location.hostname.toLowerCase() === offlineHost;
   const appShellPaths = [
     "/", "/customer", "/admin", "/cashier", "/kitchen", "/sales", "/transaction", "/transactions", "/expenses", "/qr",
     "/login", "/teacher-login", "/student-dashboard", "/students", "/personnel", "/personnel-profile",
@@ -27,6 +29,13 @@
     if(!("serviceWorker" in navigator)){
       return;
     }
+    if(!offlineEnabled){
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations
+        .filter(registration=>/\/(?:learner|cashier)-sw\.js(?:\?|$)/.test(String(registration.active?.scriptURL || registration.waiting?.scriptURL || registration.installing?.scriptURL || "")))
+        .map(registration=>registration.unregister()));
+      return;
+    }
 
     const registration = await navigator.serviceWorker.register("/learner-sw.js?v=current", { scope:"/" });
     await registration.update().catch(()=>{});
@@ -34,14 +43,16 @@
   }
 
   function refreshAppShell(){
-    if(!navigator.onLine){
+    if(!offlineEnabled || !navigator.onLine){
       return;
     }
     postShellUrls().catch(()=>{});
   }
 
   registerAppShell().catch(()=>{});
-  window.addEventListener("online", refreshAppShell);
-  window.addEventListener("focus", refreshAppShell);
-  window.addEventListener("pageshow", refreshAppShell);
+  if(offlineEnabled){
+    window.addEventListener("online", refreshAppShell);
+    window.addEventListener("focus", refreshAppShell);
+    window.addEventListener("pageshow", refreshAppShell);
+  }
 })();

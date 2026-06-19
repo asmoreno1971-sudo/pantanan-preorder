@@ -1,4 +1,6 @@
 (function(){
+  const offlineHost = "bis1.onrender.com";
+  const offlineEnabled = window.location.hostname.toLowerCase() === offlineHost;
   const databaseName = "bakhaw-learner-offline-v1";
   const databaseVersion = 2;
   const recordsStore = "records";
@@ -271,6 +273,13 @@
 
   async function registerServiceWorker(){
     if("serviceWorker" in navigator){
+      if(!offlineEnabled){
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations
+          .filter(registration=>/\/(?:learner|cashier)-sw\.js(?:\?|$)/.test(String(registration.active?.scriptURL || registration.waiting?.scriptURL || registration.installing?.scriptURL || "")))
+          .map(registration=>registration.unregister()));
+        return;
+      }
       const registration = await navigator.serviceWorker.register("/learner-sw.js?v=current", { scope:"/" });
       await registration.update();
       const worker = registration.installing || registration.waiting || registration.active;
@@ -307,15 +316,17 @@
   }
 
   function refreshServiceWorkerCache(){
-    if(!navigator.onLine || !("serviceWorker" in navigator)){
+    if(!offlineEnabled || !navigator.onLine || !("serviceWorker" in navigator)){
       return;
     }
     registerServiceWorker().catch(()=>{});
   }
 
-  window.addEventListener("online", refreshServiceWorkerCache);
-  window.addEventListener("focus", refreshServiceWorkerCache);
-  window.addEventListener("pageshow", refreshServiceWorkerCache);
+  if(offlineEnabled){
+    window.addEventListener("online", refreshServiceWorkerCache);
+    window.addEventListener("focus", refreshServiceWorkerCache);
+    window.addEventListener("pageshow", refreshServiceWorkerCache);
+  }
 
   window.LearnerOffline = {
     uuid,

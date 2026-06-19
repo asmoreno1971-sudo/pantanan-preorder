@@ -1,5 +1,7 @@
 const cacheName = "roadworthy-cashier-shell-offline-login";
 const imageCacheName = "roadworthy-cashier-images-current";
+const offlineHost = "bis1.onrender.com";
+const offlineEnabled = self.location.hostname.toLowerCase() === offlineHost;
 const installShellUrls = [
   "/login",
   "/teacher-login",
@@ -129,6 +131,10 @@ async function warmShellUrls(values){
 }
 
 self.addEventListener("install", event=>{
+  if(!offlineEnabled){
+    event.waitUntil(self.skipWaiting());
+    return;
+  }
   event.waitUntil(
     warmShellUrls(installShellUrls)
       .then(()=>self.skipWaiting())
@@ -136,6 +142,10 @@ self.addEventListener("install", event=>{
 });
 
 self.addEventListener("activate", event=>{
+  if(!offlineEnabled){
+    event.waitUntil(self.registration.unregister());
+    return;
+  }
   event.waitUntil(
     deleteOldCaches()
       .then(()=>self.clients.claim())
@@ -143,6 +153,9 @@ self.addEventListener("activate", event=>{
 });
 
 self.addEventListener("message", event=>{
+  if(!offlineEnabled){
+    return;
+  }
   if(event.data && event.data.type === "CACHE_SHELL_URLS"){
     const urls = (Array.isArray(event.data.urls) ? event.data.urls : [])
       .map(value=>{
@@ -325,6 +338,9 @@ async function cleanPersonnelProfileResponse(pathname, response){
 }
 
 self.addEventListener("fetch", event=>{
+  if(!offlineEnabled){
+    return;
+  }
   const url = new URL(event.request.url);
 
   if(event.request.method !== "GET" || url.origin !== self.location.origin){
