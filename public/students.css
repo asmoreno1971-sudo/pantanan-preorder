@@ -363,10 +363,10 @@ select:disabled{
 }
 
 .table-wrap{
-  max-height:calc(100vh - 24px);
-  overflow:auto;
+  overflow-x:auto;
+  overflow-y:visible;
   position:relative;
-  overscroll-behavior:contain;
+  overscroll-behavior-x:contain;
 }
 
 table{
