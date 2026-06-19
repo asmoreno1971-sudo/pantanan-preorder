@@ -17,6 +17,17 @@ const adminUnlockButton = document.getElementById("adminUnlockButton");
 const adminUnlockError = document.getElementById("adminUnlockError");
 let accounts = [];
 let teacherDirectory = [];
+const fallbackTeacherNames = [
+  "ALEXANDER S. MORENO", "ANALYN L. PORRAS", "BENITA T. LIZADA", "CHARLEY A. EMPESTAN",
+  "CRISTY R. DENIEGA", "DARLYN JOY C. HERRERA", "EDEN P. BARCEBAS", "GELINE JR. L. ARELLANO",
+  "GINA M. MUYUELA", "GIRLY G. ALBUYA", "GRACE C. NISMAL", "JANICE G. REMANDABAN",
+  "JOAN S. QUITOS", "JONA T. TABALDO", "JOSE JOSEPH RICAPLAZA DE LA FUENTE", "JOSIE V. DEVIZA",
+  "NOE V. BALAJIDIONG JR.", "JULIE ANN T. VASQUEZ", "JYLEN P. ADUANA", "LORENCE A. TAGACAY",
+  "LORRAINE GRACE S. PETROLA", "LOVELLA S. FUENTES", "MA. DIVINA G. ANDRES", "MARIA KARMILA S. FAYO",
+  "MARVY P. BONDAD", "MONALISA G. LEBUNA", "ROSELYN D. SANTILLAN", "ROXAN C. FIGUEROA",
+  "SANDRA M. DIONIO", "SHANE DAVE C. ALMELDA", "SHANE F. NATONTON", "ZARAH C. CAPINIG",
+  "ANGEL HELLARES ZAFRA", "RISHELLE G. HURTADA", "CJ D. CORTEZ", "MARIDEL N. ONATO"
+];
 
 function escapeHtml(value){
   return String(value || "")
@@ -29,7 +40,7 @@ function escapeHtml(value){
 
 async function apiRequest(url, options = {}){
   const controller = new AbortController();
-  const timeout = window.setTimeout(()=>controller.abort(),3000);
+  const timeout = window.setTimeout(()=>controller.abort(),15000);
   try{
     const response = await fetch(url, {
       ...options,
@@ -50,9 +61,49 @@ function isConnectionFailure(error){
   return !navigator.onLine || error instanceof TypeError || error?.name === "AbortError";
 }
 
+function teacherUsernameFromName(name){
+  const words = String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9.\s-]/g, " ")
+    .split(/\s+/)
+    .map(word=>word.replace(/\./g, ""))
+    .filter(Boolean);
+  const suffixes = new Set(["jr", "sr", "ii", "iii", "iv", "v"]);
+  while(words.length && suffixes.has(words[words.length - 1])){
+    words.pop();
+  }
+  return `${words[0] || ""}.${words[words.length - 1] || ""}`
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ".")
+    .replace(/[^a-z0-9._-]/g, "");
+}
+
+function fallbackAccounts(){
+  return fallbackTeacherNames.map(displayName=>({
+    displayName,
+    username:teacherUsernameFromName(displayName),
+    role:displayName === "ALEXANDER S. MORENO" ? "admin" : "teacher",
+    active:true
+  })).filter(account=>account.username);
+}
+
 function showOfflineAccountMessage(){
-  accountStatus.textContent = "Teacher account administration requires internet. The rest of the learner app remains available offline.";
-  accountRows.innerHTML = `<tr><td colspan="5">Reconnect to manage teacher logins and PINs.</td></tr>`;
+  if(!accounts.length){
+    accounts = fallbackAccounts();
+  }
+  renderAccounts();
+  accountStatus.textContent = `${accounts.length} registered teacher account${accounts.length === 1 ? "" : "s"} shown. Reconnect to manage teacher logins and PINs.`;
+  document.getElementById("addTeacherButton").disabled = true;
+}
+
+function showAccountLoadError(error){
+  if(isConnectionFailure(error)){
+    showOfflineAccountMessage();
+    return;
+  }
+  accountStatus.textContent = error.message || "Teacher accounts could not be loaded.";
+  accountRows.innerHTML = `<tr><td colspan="5">Teacher accounts could not be loaded.</td></tr>`;
   document.getElementById("addTeacherButton").disabled = true;
 }
 
@@ -64,8 +115,12 @@ async function loadAccounts(){
     renderAccounts();
     accountStatus.textContent = `${accounts.length} registered teacher account${accounts.length === 1 ? "" : "s"}`;
   }catch(error){
-    accountStatus.textContent = error.message;
-    accountRows.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message)}</td></tr>`;
+    if(isConnectionFailure(error) && accounts.length){
+      renderAccounts();
+      accountStatus.textContent = `${accounts.length} registered teacher account${accounts.length === 1 ? "" : "s"} shown. Refresh was interrupted.`;
+      return;
+    }
+    showAccountLoadError(error);
   }
 }
 
@@ -75,7 +130,15 @@ async function loadTeacherDirectory(){
     teacherDirectory = data.teachers || [];
     renderTeacherOptions();
   }catch(error){
-    accountStatus.textContent = error.message;
+    if(isConnectionFailure(error)){
+      teacherDirectory = teacherDirectory.length ? teacherDirectory : fallbackAccounts().map(account=>({
+        displayName:account.displayName,
+        username:account.username
+      }));
+      renderTeacherOptions();
+    }else{
+      accountStatus.textContent = error.message;
+    }
   }
 }
 
@@ -93,7 +156,7 @@ function renderTeacherOptions(selected = ""){
 }
 
 function renderAccounts(){
-  accountRows.innerHTML = accounts.map(account=>`
+  accountRows.innerHTML = accounts.length ? accounts.map(account=>`
     <tr>
       <td><strong>${escapeHtml(account.displayName)}</strong></td>
       <td>${escapeHtml(account.username)}</td>
@@ -107,7 +170,7 @@ function renderAccounts(){
         </div>
       </td>
     </tr>
-  `).join("");
+  `).join("") : `<tr><td colspan="5">No registered teacher accounts yet.</td></tr>`;
 }
 
 function openCreateDialog(){
