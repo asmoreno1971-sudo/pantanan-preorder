@@ -109,6 +109,10 @@ function sumCounts(...items){
   },blankCounts());
 }
 
+function displayCount(value){
+  return Number(value) === 0 ? "" : value;
+}
+
 function renderReport(cases){
   const levels = {
     Elementary:blankCounts(),
@@ -136,23 +140,23 @@ function renderReport(cases){
     ["JHS",levels.JHS.total],
     ["Boys",overall.boys],
     ["Girls",overall.girls]
-  ].map(([label,value])=>`<article class="summary-card"><span>${label}</span><strong>${value}</strong></article>`).join("");
+  ].map(([label,value])=>`<article class="summary-card"><span>${label}</span><strong>${displayCount(value)}</strong></article>`).join("");
 
   levelTallyBody.innerHTML = ["Elementary","JHS"].map(level=>`
     <tr>
       <td>${level}</td>
-      <td>${levels[level].boys}</td>
-      <td>${levels[level].girls}</td>
-      <td>${levels[level].unspecified}</td>
-      <td>${levels[level].total}</td>
+      <td>${displayCount(levels[level].boys)}</td>
+      <td>${displayCount(levels[level].girls)}</td>
+      <td>${displayCount(levels[level].unspecified)}</td>
+      <td>${displayCount(levels[level].total)}</td>
     </tr>`).join("");
   levelTallyFoot.innerHTML = `
     <tr>
       <td>Overall</td>
-      <td>${overall.boys}</td>
-      <td>${overall.girls}</td>
-      <td>${overall.unspecified}</td>
-      <td>${overall.total}</td>
+      <td>${displayCount(overall.boys)}</td>
+      <td>${displayCount(overall.girls)}</td>
+      <td>${displayCount(overall.unspecified)}</td>
+      <td>${displayCount(overall.total)}</td>
     </tr>`;
 
   incidentTallyBody.innerHTML = incidentTypes.map((type,index)=>{
@@ -161,13 +165,13 @@ function renderReport(cases){
     return `
       <tr>
         <td>${type.label}</td>
-        <td>${elementary.boys}</td>
-        <td>${elementary.girls}</td>
-        <td>${elementary.total}</td>
-        <td>${jhs.boys}</td>
-        <td>${jhs.girls}</td>
-        <td>${jhs.total}</td>
-        <td>${elementary.total + jhs.total}</td>
+        <td>${displayCount(elementary.boys)}</td>
+        <td>${displayCount(elementary.girls)}</td>
+        <td>${displayCount(elementary.total)}</td>
+        <td>${displayCount(jhs.boys)}</td>
+        <td>${displayCount(jhs.girls)}</td>
+        <td>${displayCount(jhs.total)}</td>
+        <td>${displayCount(elementary.total + jhs.total)}</td>
       </tr>`;
   }).join("");
 
@@ -176,13 +180,13 @@ function renderReport(cases){
   incidentTallyFoot.innerHTML = `
     <tr>
       <td>Total Listed Incidents</td>
-      <td>${incidentElementary.boys}</td>
-      <td>${incidentElementary.girls}</td>
-      <td>${incidentElementary.total}</td>
-      <td>${incidentJhs.boys}</td>
-      <td>${incidentJhs.girls}</td>
-      <td>${incidentJhs.total}</td>
-      <td>${incidentElementary.total + incidentJhs.total}</td>
+      <td>${displayCount(incidentElementary.boys)}</td>
+      <td>${displayCount(incidentElementary.girls)}</td>
+      <td>${displayCount(incidentElementary.total)}</td>
+      <td>${displayCount(incidentJhs.boys)}</td>
+      <td>${displayCount(incidentJhs.girls)}</td>
+      <td>${displayCount(incidentJhs.total)}</td>
+      <td>${displayCount(incidentElementary.total + incidentJhs.total)}</td>
     </tr>`;
 
   document.getElementById("generatedDate").textContent = selectedPeriod.textContent;
