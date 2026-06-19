@@ -818,7 +818,10 @@ function renderCases(){
   caseStatusMessage.textContent = `${visible.length} of ${cases.length} guidance case${cases.length === 1 ? "" : "s"}`;
   caseList.innerHTML = visible.length ? visible.map(item=>`
     <article class="case-card">
-      <div class="case-card-head"><h3>${escapeHtml(item.caseNumber)}</h3></div>
+      <div class="case-card-head">
+        <h3>${escapeHtml(item.caseNumber)}</h3>
+        <span class="case-card-status">Case Status: ${escapeHtml(item.status || "Open")}</span>
+      </div>
       <p class="case-learner-name"><strong>${escapeHtml(item.primaryStudent?.name)}</strong></p>
       <div class="case-card-actions">
         <button class="report" type="button" data-action="report" data-id="${escapeHtml(item.id)}">Report</button>
