@@ -220,7 +220,7 @@ async function loadReport(){
     }
     const data = await response.json();
     if(response.status === 401 || response.status === 403){
-      window.location.replace("/login?next=%2Fguidance-report");
+      reportStatus.textContent += " Online session needs refresh; saved report data remains available here.";
       return;
     }
     if(!response.ok || !data.ok){

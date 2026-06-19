@@ -63,6 +63,15 @@ function shouldSaveGuidanceLocally(error){
     || /getaddrinfo|ENOTFOUND|database connection|database is temporarily unavailable|connection terminated|timeout/i.test(message);
 }
 
+function isGuidanceAuthResponse(response){
+  return response && (response.status === 401 || response.status === 403);
+}
+
+async function keepGuidancePageOpen(message = "Guidance session needs refresh. Saved cases remain available here."){
+  await refreshCasesFromDevice();
+  await updateGuidanceSyncStatus(message);
+}
+
 function scrubDatabaseErrorMessage(){
   if(formMessage && databaseErrorPattern.test(String(formMessage.textContent || ""))){
     formMessage.textContent = "Guidance case saved locally and shown in Saved Cases.";
@@ -756,9 +765,9 @@ async function syncPendingGuidanceChanges(){
       }
       const response = await guidanceFetch(endpoint,options);
       const data = await response.json();
-      if(response.status === 401 || response.status === 403){
-        window.location.replace(`/login?next=${encodeURIComponent("/guidance")}`);
-        throw new Error("Guidance login is required before saved changes can sync.");
+      if(isGuidanceAuthResponse(response)){
+        await keepGuidancePageOpen("Guidance session expired online. Saved changes remain here and will sync after signing in again.");
+        return;
       }
       if(!response.ok && !(change.method === "DELETE" && response.status === 404)){
         throw new Error(data.message || "An offline guidance change could not be synchronized.");
@@ -973,8 +982,8 @@ async function loadData(){
         guidanceFetch("/api/guidance-cases",{cache:"no-store"}),
         guidanceFetch("/api/advisory-directory",{cache:"no-store"})
       ]);
-      if(caseResponse.status === 401 || caseResponse.status === 403){
-        window.location.replace(`/login?next=${encodeURIComponent("/guidance")}`);
+      if(isGuidanceAuthResponse(caseResponse)){
+        await keepGuidancePageOpen("Guidance session expired online. Saved cases remain available here.");
         return;
       }
       const [studentData,caseData,adviserData] = await Promise.all([
