@@ -121,10 +121,25 @@ async function warmShellUrls(values){
   }
 }
 
-async function networkFirst(request, fallbackPath = ""){
+function offlineFallbackResponse(request, pathname){
+  if(pathname === "/login" || pathname === "/teacher-login" || pathname === "/teacher-login.html"){
+    return offlineLoginResponse(request);
+  }
+  return new Response("Open this page once on BIS1 with internet, then it can open offline.", {
+    status:503,
+    headers:{ "Content-Type":"text/plain; charset=utf-8" }
+  });
+}
+
+async function cacheFirstThenUpdate(event, fallbackPath = ""){
+  const request = event.request;
   const cache = await caches.open(shellCache);
   const pathname = new URL(request.url).pathname;
-  try{
+  const cached = await cache.match(request)
+    || await cache.match(pathname, { ignoreSearch:true })
+    || (fallbackPath ? await cache.match(fallbackPath, { ignoreSearch:true }) : null);
+
+  const update = (async ()=>{
     const response = await fetch(request, { cache:"no-store" });
     if(response.ok && !response.redirected){
       const cleanResponse = await cleanPersonnelProfileResponse(pathname, response);
@@ -133,20 +148,17 @@ async function networkFirst(request, fallbackPath = ""){
       return cleanResponse;
     }
     return response;
+  })();
+
+  if(cached){
+    event.waitUntil(update.catch(()=>{}));
+    return cached;
+  }
+
+  try{
+    return await update;
   }catch{
-    const cached = await cache.match(request)
-      || await cache.match(pathname, { ignoreSearch:true })
-      || (fallbackPath ? await cache.match(fallbackPath, { ignoreSearch:true }) : null);
-    if(cached){
-      return cached;
-    }
-    if(pathname === "/login" || pathname === "/teacher-login" || pathname === "/teacher-login.html"){
-      return offlineLoginResponse(request);
-    }
-    return new Response("Open and sign in to this app once with internet before using this page offline.", {
-      status:503,
-      headers:{ "Content-Type":"text/plain; charset=utf-8" }
-    });
+    return offlineFallbackResponse(request, pathname);
   }
 }
 
@@ -359,6 +371,6 @@ self.addEventListener("fetch", event=>{
   }
 
   if(fallbackPath || isStaticAsset(url.pathname) || isCacheableApi(url.pathname)){
-    event.respondWith(networkFirst(event.request, fallbackPath));
+    event.respondWith(cacheFirstThenUpdate(event, fallbackPath));
   }
 });
