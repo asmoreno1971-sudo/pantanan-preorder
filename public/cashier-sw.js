@@ -1,5 +1,22 @@
-const cacheName = "roadworthy-cashier-shell-current";
+const cacheName = "roadworthy-cashier-shell-offline-login";
 const imageCacheName = "roadworthy-cashier-images-current";
+const installShellUrls = [
+  "/login",
+  "/teacher-login",
+  "/teacher-login.html",
+  "/teacher-login.css?v=current",
+  "/teacher-login.js?v=current",
+  "/learner-offline.js?v=current",
+  "/cashier",
+  "/cashier.html",
+  "/styles.css?v=current",
+  "/page-auth.js?v=current",
+  "/cashier-offline.js?v=current",
+  "/app.js?v=current",
+  "/cashier-fast.js?v=current",
+  "/learner-manifest.webmanifest",
+  "/bakhaw-school-logo.png"
+];
 const offlineFallbacks = {
   "/":"/",
   "/customer":"/customer",
@@ -87,8 +104,35 @@ async function deleteOldCaches(){
     .map(key=>caches.delete(key)));
 }
 
+async function warmShellUrls(values){
+  const cache = await caches.open(cacheName);
+  const urls = (Array.isArray(values) ? values : [])
+    .map(value=>{
+      try{
+        return new URL(value, self.location.origin);
+      }catch{
+        return null;
+      }
+    })
+    .filter(url=>url && url.origin === self.location.origin);
+
+  for(const url of urls){
+    try{
+      const response = await fetch(url.href, { cache:"no-store" });
+      if(response.ok && !response.redirected){
+        await cache.put(url.pathname, await cleanPersonnelProfileResponse(url.pathname, response));
+      }
+    }catch{
+      // Pre-caching is best effort; anything already cached remains available.
+    }
+  }
+}
+
 self.addEventListener("install", event=>{
-  event.waitUntil(self.skipWaiting());
+  event.waitUntil(
+    warmShellUrls(installShellUrls)
+      .then(()=>self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", event=>{
@@ -110,19 +154,7 @@ self.addEventListener("message", event=>{
       })
       .filter(url=>url && url.origin === self.location.origin);
 
-    event.waitUntil((async ()=>{
-      const cache = await caches.open(cacheName);
-      for(const url of urls){
-        try{
-          const response = await fetch(url.href, { cache:"no-store" });
-          if(response.ok && !response.redirected){
-            await cache.put(url.pathname, await cleanPersonnelProfileResponse(url.pathname, response));
-          }
-        }catch{
-          // Warming is best effort; normal navigation caching still applies.
-        }
-      }
-    })());
+    event.waitUntil(warmShellUrls(urls));
     return;
   }
 
@@ -181,11 +213,98 @@ async function networkFirst(request, fallbackPath = ""){
     if(cached){
       return cached;
     }
+    if(pathname === "/login" || pathname === "/teacher-login" || pathname === "/teacher-login.html"){
+      return offlineLoginResponse(request);
+    }
     return new Response("Open the cashier once with internet before using it offline.", {
       status:503,
       headers:{ "Content-Type":"text/plain; charset=utf-8" }
     });
   }
+}
+
+function offlineLoginResponse(request){
+  const url = new URL(request.url);
+  const next = url.searchParams.get("next") || "/student-dashboard";
+  const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/student-dashboard";
+  const guidanceLogin = safeNext === "/guidance" || safeNext === "/guidance-report";
+  const teacherOptions = guidanceLogin
+    ? `<option value="alexander.moreno">ALEXANDER S. MORENO</option>`
+    : `<option value="alexander.moreno">ALEXANDER S. MORENO</option>
+      <option value="analyn.porras">ANALYN L. PORRAS</option>
+      <option value="benita.lizada">BENITA T. LIZADA</option>
+      <option value="charley.empestan">CHARLEY A. EMPESTAN</option>
+      <option value="monalisa.lebuna">MONALISA G. LEBUNA</option>
+      <option value="roxan.figueroa">ROXAN C. FIGUEROA</option>`;
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offline Teacher Login</title>
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#edf4e8;font-family:Arial,sans-serif;color:#063f2f}
+main{width:min(560px,calc(100% - 32px));background:#fff;border:1px solid #c8ddcf;border-radius:18px;padding:28px;box-shadow:0 18px 50px rgba(0,0,0,.08)}
+h1{margin:0 0 8px;font-size:34px}p{font-size:18px;line-height:1.45;color:#5d7067}label{display:block;margin:18px 0 8px;font-weight:700;font-size:18px}
+select,input,button{width:100%;box-sizing:border-box;border-radius:12px;font-size:22px;min-height:64px}
+select,input{border:1px solid #b9d1c2;padding:12px 16px;background:#fff}button{margin-top:20px;border:0;background:#087445;color:#fff;font-weight:800}
+.notice{background:#fff7df;border:1px solid #e3c66d;border-radius:12px;padding:12px 14px}.error{color:#a6342d;font-weight:800;min-height:24px}
+</style>
+</head>
+<body>
+<main>
+<h1>${guidanceLogin ? "Guidance Admin Login" : "Teacher Login"}</h1>
+<p>This offline login is built into the app shell for times when the saved login page is missing.</p>
+<form id="loginForm">
+<label for="teacher">Teacher Name</label>
+<select id="teacher">${teacherOptions}</select>
+<label for="pin">4-Digit Password</label>
+<input id="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="current-password" autofocus>
+<p class="notice">Data Privacy Notice: keep learner and personnel data confidential. Press Login only if you agree.</p>
+<button type="submit">Login</button>
+<p id="error" class="error" role="alert"></p>
+</form>
+</main>
+<script>
+(function(){
+  const next = ${JSON.stringify(safeNext)};
+  const guidance = ${JSON.stringify(guidanceLogin)};
+  const form = document.getElementById("loginForm");
+  const teacher = document.getElementById("teacher");
+  const pin = document.getElementById("pin");
+  const error = document.getElementById("error");
+  form.addEventListener("submit", function(event){
+    event.preventDefault();
+    const username = teacher.value;
+    const valid = guidance
+      ? username === "alexander.moreno" && (pin.value === "1111" || pin.value === "1234")
+      : pin.value === "1234" || pin.value === "1111";
+    if(!valid){
+      error.textContent = "Use the saved password or first-time PIN 1234 while offline.";
+      pin.value = "";
+      pin.focus();
+      return;
+    }
+    sessionStorage.setItem("bakhawOfflineTeacher", "accepted");
+    sessionStorage.setItem("bakhawDataPrivacyNoticeAgreed", "yes");
+    if(guidance){
+      sessionStorage.setItem("bakhawGuidanceAdmin", "accepted");
+    }
+    localStorage.setItem("bakhawCurrentTeacherSession", JSON.stringify({
+      username:username,
+      displayName:teacher.options[teacher.selectedIndex].textContent,
+      savedAt:new Date().toISOString()
+    }));
+    window.location.replace(next);
+  });
+})();
+</script>
+</body>
+</html>`;
+  return new Response(html, {
+    status:200,
+    headers:{ "Content-Type":"text/html; charset=utf-8" }
+  });
 }
 
 async function cleanPersonnelProfileResponse(pathname, response){
