@@ -287,10 +287,16 @@
       }
       const readyRegistration = await navigator.serviceWorker.ready;
       const readyWorker = readyRegistration.active || readyRegistration.waiting || readyRegistration.installing;
+      const appShellPaths = [
+        "/", "/customer", "/admin", "/cashier", "/kitchen", "/sales", "/transaction", "/transactions", "/expenses", "/qr",
+        "/login", "/teacher-login", "/student-dashboard", "/students", "/personnel", "/personnel-profile",
+        "/guidance", "/guidance-report", "/teacher-accounts", "/teacher-profile", "/mineralex", "/mineralex/"
+      ];
       readyWorker?.postMessage({
         type:"CACHE_SHELL_URLS",
         urls:[
           window.location.href,
+          ...appShellPaths.map(path=>new URL(path, window.location.origin).href),
           ...[...document.querySelectorAll("link[href], script[src], img[src]")]
             .map(element=>element.href || element.src)
             .filter(Boolean)

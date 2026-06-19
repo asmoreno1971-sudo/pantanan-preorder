@@ -1,48 +1,131 @@
-const cacheName = "roadworthy-cashier-shell-20260607-sync-wake";
-const imageCacheName = "roadworthy-cashier-images-v1";
-const shellFiles = [
-  "/cashier",
-  "/cashier.html",
-  "/styles.css?v=20260607-sync-wake",
-  "/page-auth.js?v=20260522-password-1111",
-  "/cashier-offline.js?v=20260607-sync-wake",
-  "/app.js?v=20260607-sync-wake",
-  "/cashier-fast.js?v=20260607-sync-wake"
-];
+const cacheName = "roadworthy-cashier-shell-current";
+const imageCacheName = "roadworthy-cashier-images-current";
+const offlineFallbacks = {
+  "/":"/",
+  "/customer":"/customer",
+  "/index.html":"/",
+  "/admin":"/admin",
+  "/admin.html":"/admin",
+  "/cashier":"/cashier",
+  "/cashier.html":"/cashier",
+  "/kitchen":"/kitchen",
+  "/kitchen.html":"/kitchen",
+  "/sales":"/sales",
+  "/sales.html":"/sales",
+  "/transaction":"/transactions",
+  "/transactions":"/transactions",
+  "/transactions.html":"/transactions",
+  "/expenses":"/expenses",
+  "/expenses.html":"/expenses",
+  "/qr":"/qr",
+  "/qr.html":"/qr",
+  "/login":"/login",
+  "/teacher-login":"/teacher-login",
+  "/teacher-login.html":"/login",
+  "/teacher-accounts":"/teacher-accounts-offline-shell",
+  "/teacher-accounts.html":"/teacher-accounts",
+  "/personnel":"/personnel-offline-shell",
+  "/personnel.html":"/personnel",
+  "/personnel-profile":"/personnel-profile-offline-shell",
+  "/personnel-profile.html":"/personnel-profile",
+  "/student-dashboard":"/student-dashboard-offline-shell",
+  "/student-dashboard.html":"/student-dashboard",
+  "/students":"/students-offline-shell",
+  "/students.html":"/students",
+  "/guidance":"/guidance-offline-shell",
+  "/guidance.html":"/guidance",
+  "/guidance-report":"/guidance-report-offline-shell",
+  "/guidance-report.html":"/guidance-report",
+  "/teacher-profile":"/teacher-profile",
+  "/teacher-profile.html":"/teacher-profile",
+  "/mineralex":"/mineralex",
+  "/mineralex/":"/mineralex",
+  "/mineralex/index.html":"/mineralex"
+};
+
+function isStaticAsset(pathname){
+  return /\.(?:css|js|png|jpg|jpeg|webp|svg|ico|json|webmanifest)$/i.test(pathname);
+}
+
+function isCacheableApi(pathname){
+  if(pathname.startsWith("/api/orders/") || pathname.startsWith("/api/expenses/")){
+    return true;
+  }
+
+  return [
+    "/api/config",
+    "/api/menu",
+    "/api/customers.csv",
+    "/api/kiosk-settings",
+    "/api/kiosk-status",
+    "/api/storage-status",
+    "/api/orders",
+    "/api/sales/daily",
+    "/api/sales/profit",
+    "/api/transactions",
+    "/api/expenses",
+    "/api/students",
+    "/api/students.csv",
+    "/api/teacher-directory",
+    "/api/grade-sections",
+    "/api/advisory-directory",
+    "/api/personnel",
+    "/api/teacher-session",
+    "/api/teacher-accounts",
+    "/api/personnel-profiles",
+    "/api/guidance-cases"
+  ].includes(pathname);
+}
+
+async function deleteOldCaches(){
+  const keys = await caches.keys();
+  await Promise.all(keys
+    .filter(key=>
+      (key.startsWith("roadworthy-cashier-shell-") || key.startsWith("roadworthy-cashier-images-"))
+      && key !== cacheName
+      && key !== imageCacheName)
+    .map(key=>caches.delete(key)));
+}
 
 self.addEventListener("install", event=>{
-  event.waitUntil(
-    caches.open(cacheName)
-      .then(cache=>cache.addAll(shellFiles))
-      .then(()=>self.skipWaiting())
-  );
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", event=>{
   event.waitUntil(
-    caches.keys().then(async keys=>{
-      const imageCache = await caches.open(imageCacheName);
-      const oldShells = keys.filter(key=>key.startsWith("roadworthy-cashier-shell-") && key !== cacheName);
-
-      for(const key of oldShells){
-        const oldCache = await caches.open(key);
-        const requests = await oldCache.keys();
-        for(const request of requests){
-          if(new URL(request.url).pathname.startsWith("/api/menu-image/")){
-            const response = await oldCache.match(request);
-            if(response){
-              await imageCache.put(request, response);
-            }
-          }
-        }
-        await caches.delete(key);
-      }
-    })
+    deleteOldCaches()
       .then(()=>self.clients.claim())
   );
 });
 
 self.addEventListener("message", event=>{
+  if(event.data && event.data.type === "CACHE_SHELL_URLS"){
+    const urls = (Array.isArray(event.data.urls) ? event.data.urls : [])
+      .map(value=>{
+        try{
+          return new URL(value, self.location.origin);
+        }catch{
+          return null;
+        }
+      })
+      .filter(url=>url && url.origin === self.location.origin);
+
+    event.waitUntil((async ()=>{
+      const cache = await caches.open(cacheName);
+      for(const url of urls){
+        try{
+          const response = await fetch(url.href, { cache:"no-store" });
+          if(response.ok && !response.redirected){
+            await cache.put(url.pathname, await cleanPersonnelProfileResponse(url.pathname, response));
+          }
+        }catch{
+          // Warming is best effort; normal navigation caching still applies.
+        }
+      }
+    })());
+    return;
+  }
+
   if(!event.data || event.data.type !== "CACHE_MENU_IMAGES"){
     return;
   }
@@ -67,51 +150,59 @@ self.addEventListener("message", event=>{
       .map(request=>cache.delete(request)));
 
     for(const url of urls){
-      if(await cache.match(url)){
-        continue;
-      }
       try{
-        const response = await fetch(url);
+        const response = await fetch(url, { cache:"no-store" });
         if(response.ok){
           await cache.put(url, response);
         }
       }catch{
-        // Keep the rest of the menu usable when an image is temporarily unavailable.
+        // Menu images are an offline convenience; leave the rest of the app usable.
       }
     }
   })());
 });
 
-async function staleWhileRevalidate(event, fallbackUrl){
+async function networkFirst(request, fallbackPath = ""){
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(event.request, { ignoreSearch:true })
-    || (fallbackUrl ? await cache.match(fallbackUrl, { ignoreSearch:true }) : null);
-  const update = fetch(event.request).then(response=>{
-    if(response.ok){
-      cache.put(event.request, response.clone());
-    }
-    return response;
-  }).catch(()=>cached);
-
-  if(cached){
-    event.waitUntil(update);
-    return cached;
-  }
-
-  return update;
-}
-
-async function networkFirst(request){
-  const cache = await caches.open(cacheName);
+  const pathname = new URL(request.url).pathname;
   try{
-    const response = await fetch(request);
-    if(response.ok){
-      cache.put(request, response.clone());
+    const response = await fetch(request, { cache:"no-store" });
+    if(response.ok && !response.redirected){
+      const cleanResponse = await cleanPersonnelProfileResponse(pathname, response);
+      await cache.put(request, cleanResponse.clone());
+      await cache.put(pathname, cleanResponse.clone());
+      return cleanResponse;
     }
     return response;
   }catch{
-    return cache.match(request, { ignoreSearch:true });
+    const cached = await cache.match(request)
+      || await cache.match(pathname, { ignoreSearch:true })
+      || (fallbackPath ? await cache.match(fallbackPath, { ignoreSearch:true }) : null);
+    if(cached){
+      return cached;
+    }
+    return new Response("Open the cashier once with internet before using it offline.", {
+      status:503,
+      headers:{ "Content-Type":"text/plain; charset=utf-8" }
+    });
   }
+}
+
+async function cleanPersonnelProfileResponse(pathname, response){
+  if(pathname !== "/personnel-profile" && pathname !== "/personnel-profile.html" && pathname !== "/personnel-profile-offline-shell"){
+    return response;
+  }
+  const type = response.headers.get("Content-Type") || "";
+  if(!type.includes("text/html")){
+    return response;
+  }
+  const html = await response.clone().text();
+  const cleanHtml = html.replace(/\s*<button[^>]*id=["']clearProfileButton["'][\s\S]*?<\/button>/gi, "");
+  return new Response(cleanHtml, {
+    status:response.status,
+    statusText:response.statusText,
+    headers:response.headers
+  });
 }
 
 self.addEventListener("fetch", event=>{
@@ -121,34 +212,28 @@ self.addEventListener("fetch", event=>{
     return;
   }
 
-  if(url.pathname === "/cashier" || url.pathname === "/cashier.html"){
-    event.respondWith(staleWhileRevalidate(event, "/cashier"));
-    return;
-  }
-
-  if(url.pathname === "/app.js" || url.pathname === "/styles.css" || url.pathname === "/page-auth.js" || url.pathname === "/cashier-offline.js" || url.pathname === "/cashier-fast.js"){
-    event.respondWith(staleWhileRevalidate(event));
-    return;
-  }
-
-  if(url.pathname === "/api/menu"){
-    event.respondWith(networkFirst(event.request));
-    return;
-  }
-
   if(url.pathname.startsWith("/api/menu-image/")){
-    event.respondWith(
-      caches.open(imageCacheName).then(async cache=>{
+    event.respondWith((async ()=>{
+      const cache = await caches.open(imageCacheName);
+      try{
+        const response = await fetch(event.request, { cache:"no-store" });
+        if(response.ok){
+          await cache.put(event.request, response.clone());
+        }
+        return response;
+      }catch{
         const cached = await cache.match(event.request);
         if(cached){
           return cached;
         }
-        const response = await fetch(event.request);
-        if(response.ok){
-          cache.put(event.request, response.clone());
-        }
-        return response;
-      })
-    );
+        return new Response("", { status:404 });
+      }
+    })());
+    return;
+  }
+
+  const fallbackPath = offlineFallbacks[url.pathname];
+  if(fallbackPath || isStaticAsset(url.pathname) || isCacheableApi(url.pathname)){
+    event.respondWith(networkFirst(event.request, fallbackPath));
   }
 });

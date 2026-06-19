@@ -44,7 +44,7 @@ let kioskStatus = {
   open:true,
   message:""
 };
-const requiredMenuVersion = "20260518-admin-canonical-menu";
+const requiredMenuVersion = "current-admin-canonical-menu";
 
 function kioskBranchName(){
   const host = window.location.hostname.toLowerCase();
@@ -1049,6 +1049,32 @@ async function checkActiveOrder(){
   }
 }
 
+async function activateCustomerOfflineShell(){
+  if(!("serviceWorker" in navigator)){
+    return;
+  }
+
+  const appShellPaths = [
+    "/", "/customer", "/admin", "/cashier", "/kitchen", "/sales", "/transaction", "/transactions", "/expenses", "/qr",
+    "/login", "/teacher-login", "/student-dashboard", "/students", "/personnel", "/personnel-profile",
+    "/guidance", "/guidance-report", "/teacher-accounts", "/teacher-profile", "/mineralex", "/mineralex/"
+  ];
+  const urls = new Set([window.location.href]);
+  appShellPaths.forEach(path=>urls.add(new URL(path, window.location.origin).href));
+  document.querySelectorAll("link[href], script[src], img[src]").forEach(element=>{
+    const value = element.href || element.src;
+    if(value){
+      urls.add(value);
+    }
+  });
+
+  const registration = await navigator.serviceWorker.register("/learner-sw.js?v=current", { scope:"/" });
+  await registration.update().catch(()=>{});
+  const readyRegistration = await navigator.serviceWorker.ready;
+  const worker = readyRegistration.active || readyRegistration.waiting || readyRegistration.installing;
+  worker?.postMessage({ type:"CACHE_SHELL_URLS", urls:[...urls] });
+}
+
 setInterval(updateNowTime, 60000);
 setInterval(loadStorageStatus, 60000);
 setInterval(loadKioskStatus, 60000);
@@ -1091,4 +1117,5 @@ loadMenu();
 setTimeout(loadStorageStatus, 1200);
 loadKioskStatus();
 checkActiveOrder();
+activateCustomerOfflineShell().catch(()=>{});
 validate();

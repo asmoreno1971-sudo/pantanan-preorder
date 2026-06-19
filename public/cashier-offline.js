@@ -80,7 +80,24 @@
     if(!("serviceWorker" in navigator)){
       return;
     }
-    await navigator.serviceWorker.register("/cashier-sw.js?v=20260607-sync-wake", { scope:"/" });
+    await navigator.serviceWorker.register("/cashier-sw.js?v=current", { scope:"/" });
+    const registration = await navigator.serviceWorker.ready;
+    const worker = registration.active || registration.waiting || registration.installing;
+    const appShellPaths = [
+      "/", "/customer", "/admin", "/cashier", "/kitchen", "/sales", "/transaction", "/transactions", "/expenses", "/qr",
+      "/login", "/teacher-login", "/student-dashboard", "/students", "/personnel", "/personnel-profile",
+      "/guidance", "/guidance-report", "/teacher-accounts", "/teacher-profile", "/mineralex", "/mineralex/"
+    ];
+    worker?.postMessage({
+      type:"CACHE_SHELL_URLS",
+      urls:[
+        window.location.href,
+        ...appShellPaths.map(path=>new URL(path, window.location.origin).href),
+        ...[...document.querySelectorAll("link[href], script[src], img[src]")]
+          .map(element=>element.href || element.src)
+          .filter(Boolean)
+      ]
+    });
   }
 
   async function cacheMenuImages(menu){
