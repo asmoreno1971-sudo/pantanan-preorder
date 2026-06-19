@@ -418,8 +418,8 @@ select,input{border:1px solid #b9d1c2;padding:12px 16px;background:#fff}button{m
     event.preventDefault();
     const username = teacher.value;
     const valid = guidance
-      ? username === "alexander.moreno" && (pin.value === "1111" || pin.value === "1234")
-      : pin.value === "1234" || pin.value === "1111";
+      ? username === "alexander.moreno" && pin.value === "1111"
+      : username === "alexander.moreno" ? pin.value === "1111" : pin.value === "1234";
     if(!valid){
       error.textContent = "Use the saved password or first-time PIN 1234 while offline.";
       pin.value = "";

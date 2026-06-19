@@ -176,10 +176,10 @@ function selectedTeacherExists(){
 
 async function canUseOfflineLogin(){
   const username = currentTeacherUsername();
-  if(guidanceLogin && username === guidanceAdmin.username && (pinInput.value === "1111" || pinInput.value === defaultTeacherPin)){
+  if(username === guidanceAdmin.username && pinInput.value === "1111"){
     return true;
   }
-  if(!guidanceLogin && pinInput.value === defaultTeacherPin && selectedTeacherExists()){
+  if(!guidanceLogin && username !== guidanceAdmin.username && pinInput.value === defaultTeacherPin && selectedTeacherExists()){
     return true;
   }
   try{
@@ -200,7 +200,7 @@ function isNetworkLoginError(error){
 
 function offlineLoginMessage(){
   return guidanceLogin
-    ? "Use the saved password, 1111, or first-time PIN 1234 while offline."
+    ? "Use the administrator password 1111 while offline."
     : "Use the saved password or first-time PIN 1234 while offline.";
 }
 

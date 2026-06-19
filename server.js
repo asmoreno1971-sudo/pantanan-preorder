@@ -2317,8 +2317,11 @@ async function handleApi(req, res){
     const legacyAdminPinAllowed = account?.username === teacherUsername
       && account.role === "admin"
       && safeCredentialEqual(pin, teacherPin);
+    const adminDefaultPinBlocked = account?.username === teacherUsername
+      && account.role === "admin"
+      && safeCredentialEqual(pin, teacherDefaultPin);
 
-    if(!account || !account.active || (!validTeacherPin(pin, account) && !legacyAdminPinAllowed)){
+    if(!account || !account.active || adminDefaultPinBlocked || (!validTeacherPin(pin, account) && !legacyAdminPinAllowed)){
       send(res, 401, JSON.stringify({ ok:false, message:"Incorrect username or password." }));
       return true;
     }
