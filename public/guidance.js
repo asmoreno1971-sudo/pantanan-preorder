@@ -638,6 +638,16 @@ function guidanceStudentSnapshot(student){
   };
 }
 
+function nextLocalGuidanceCaseNumber(){
+  const year = new Date().getFullYear();
+  const existingNumbers = mergeGuidanceCases(cases,loadGuidanceCaseBackup())
+    .map(item=>String(item.caseNumber || "").match(new RegExp(`^GDC-${year}-(\\d{4})$`))?.[1])
+    .filter(Boolean)
+    .map(value=>Number(value));
+  const nextNumber = Math.max(0,...existingNumbers) + 1;
+  return `GDC-${year}-${String(nextNumber).padStart(4,"0")}`;
+}
+
 function buildLocalGuidanceCase(payload, existingCase = null){
   const primary = students.find(student=>student.id === payload.primaryStudentId);
   if(!primary){
@@ -660,7 +670,7 @@ function buildLocalGuidanceCase(payload, existingCase = null){
 
   return {
     id:existingCase?.id || `offline-${LearnerOffline.uuid()}`,
-    caseNumber:existingCase?.caseNumber || "Pending sync",
+    caseNumber:existingCase?.caseNumber || nextLocalGuidanceCaseNumber(),
     reportDate:payload.reportDate,
     incidentDate:payload.incidentDate,
     incidentTime:payload.incidentTime,
@@ -1098,7 +1108,7 @@ caseList.addEventListener("click",async event=>{
       await LearnerOffline.queueGuidanceChange("DELETE",item);
       cases = cases.filter(entry=>entry.id !== item.id);
       renderCases();
-      await updateGuidanceSyncStatus("Pending sync case deleted locally.");
+      await updateGuidanceSyncStatus("Local guidance case deleted.");
       return;
     }
     try{
