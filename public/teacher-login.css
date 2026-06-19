@@ -67,7 +67,15 @@ h1{
 
 .login-intro{
   margin:20px 0;
-  color:var(--muted);
+  padding:14px 16px;
+  border:1px solid #e1c160;
+  border-left:6px solid #d39a12;
+  border-radius:10px;
+  background:#fff6d8;
+  color:#123f2f;
+  font-size:18px;
+  font-weight:900;
+  line-height:1.35;
 }
 
 form,
