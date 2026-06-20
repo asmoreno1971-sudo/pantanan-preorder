@@ -2604,11 +2604,6 @@ async function handleApi(req, res){
     return true;
   }
 
-  if(pathname.startsWith("/api/guidance-cases") && req.method !== "GET" && !validGuidanceSession(req)){
-    send(res, 403, JSON.stringify({ ok:false, message:"Guidance administrator access required." }));
-    return true;
-  }
-
   if(pathname === "/api/guidance-cases" && req.method === "GET"){
     const cases = await readGuidanceCases();
     send(res, 200, JSON.stringify({ ok:true, cases }));
