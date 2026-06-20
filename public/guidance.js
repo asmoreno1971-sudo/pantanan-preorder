@@ -1003,20 +1003,19 @@ async function loadData(){
       }
       const pendingGuidanceChanges = await LearnerOffline.pendingGuidanceCount();
       const localCases = await LearnerOffline.loadGuidanceCases();
-      cases = keepVisibleCases(mergeGuidanceCases(localCases,serverCases));
-      if(cases.length){
-        await LearnerOffline.replaceGuidanceCases(cases);
-        backupGuidanceCases(cases);
-      }
-      if(!pendingGuidanceChanges){
-        await LearnerOffline.replaceGuidanceCases(cases);
-      }
+      cases = pendingGuidanceChanges
+        ? keepVisibleCases(mergeGuidanceCases(localCases,serverCases))
+        : mergeGuidanceCases([],serverCases);
+      await LearnerOffline.replaceGuidanceCases(cases);
+      backupGuidanceCases(cases);
       localStorage.setItem(advisoryCacheKey,JSON.stringify(advisories));
       refreshStudentOptions();
       resetForm();
       renderCases();
       if(pendingGuidanceChanges){
         await updateGuidanceSyncStatus("Saved cases shown with local changes waiting to sync.");
+      }else{
+        await updateGuidanceSyncStatus(`${cases.length} online guidance case${cases.length === 1 ? "" : "s"} loaded.`);
       }
     }catch(error){
       if(!isConnectionFailure(error)){
