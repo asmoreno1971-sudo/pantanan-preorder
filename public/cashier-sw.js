@@ -1,4 +1,4 @@
-const cacheName = "roadworthy-cashier-shell-offline-login-v7";
+const cacheName = "roadworthy-cashier-shell-offline-login-v8";
 const imageCacheName = "roadworthy-cashier-images-current";
 const offlineHost = "bis1.onrender.com";
 const offlineEnabled = self.location.hostname.toLowerCase() === offlineHost;

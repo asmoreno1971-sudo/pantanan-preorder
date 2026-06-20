@@ -1001,18 +1001,18 @@ async function loadData(){
       if(!pendingLearnerChanges){
         await LearnerOffline.replaceRecords(students);
       }
-      const pendingGuidanceChanges = await LearnerOffline.pendingGuidanceCount();
-      const localCases = await LearnerOffline.loadGuidanceCases();
-      cases = pendingGuidanceChanges
-        ? keepVisibleCases(mergeGuidanceCases(localCases,serverCases))
-        : mergeGuidanceCases([],serverCases);
+      const pendingGuidanceChanges = await LearnerOffline.pendingGuidanceChanges();
+      const pendingLocalCases = pendingGuidanceChanges
+        .filter(change=>change.method !== "DELETE" && change.record)
+        .map(change=>change.record);
+      cases = mergeGuidanceCases(pendingLocalCases,serverCases);
       await LearnerOffline.replaceGuidanceCases(cases);
       backupGuidanceCases(cases);
       localStorage.setItem(advisoryCacheKey,JSON.stringify(advisories));
       refreshStudentOptions();
       resetForm();
       renderCases();
-      if(pendingGuidanceChanges){
+      if(pendingGuidanceChanges.length){
         await updateGuidanceSyncStatus("Saved cases shown with local changes waiting to sync.");
       }else{
         await updateGuidanceSyncStatus(`${cases.length} online guidance case${cases.length === 1 ? "" : "s"} loaded.`);
