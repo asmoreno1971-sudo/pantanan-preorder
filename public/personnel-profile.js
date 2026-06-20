@@ -15,7 +15,6 @@ const personnelFieldsKey = "bakhawPersonnelProfileFields";
 const gradeSectionsKey = "bakhawGradeSections";
 const pendingProfilesKey = "bakhawPersonnelProfilePending";
 const currentTeacherKey = "bakhawCurrentTeacherSession";
-const personnelPhotosKey = "bakhawPersonnelProfilePhotos";
 const specialAssignmentOptions = ["Special Teacher - Elementary", "Special Teacher - JHS"];
 
 let teacherDirectory = [];
@@ -26,6 +25,7 @@ let gradeSections = storageList(gradeSectionsKey);
 let currentTeacherName = "";
 let syncInFlight = false;
 let teacherPhotoImage = null;
+let currentPhotoDataUrl = "";
 let schoolLogoImage = null;
 let lastProfileSyncError = "";
 
@@ -51,47 +51,20 @@ function saveStorageList(key, value){
   localStorage.setItem(key, JSON.stringify(Array.isArray(value) ? value : []));
 }
 
-function storageObject(key){
-  try{
-    const saved = JSON.parse(localStorage.getItem(key) || "{}");
-    return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
-  }catch{
-    return {};
-  }
-}
-
-function savePersonnelPhoto(name, dataUrl){
-  const cleanName = matchingOfficialName(name) || normalizeName(name);
-  if(!cleanName || !dataUrl){
-    return;
-  }
-  const photos = storageObject(personnelPhotosKey);
-  photos[profileKey(cleanName)] = {
-    name:cleanName,
-    dataUrl,
-    savedAt:new Date().toISOString()
-  };
-  localStorage.setItem(personnelPhotosKey, JSON.stringify(photos));
-}
-
-function savedPersonnelPhoto(name){
-  const cleanName = matchingOfficialName(name) || normalizeName(name);
-  const photos = storageObject(personnelPhotosKey);
-  const key = profileKey(cleanName);
-  return photos[key]?.dataUrl
-    || Object.values(photos).find(photo=>samePersonName(photo?.name, cleanName))?.dataUrl
-    || "";
+function clearLegacyPhotoCache(){
+  localStorage.removeItem("bakhawPersonnelProfilePhotos");
 }
 
 function loadSavedPersonnelPhoto(name){
   const profile = currentProfileForName(name);
-  const dataUrl = profile.photoDataUrl || savedPersonnelPhoto(name);
+  const dataUrl = profile.photoDataUrl || "";
   if(!dataUrl){
+    currentPhotoDataUrl = "";
     teacherPhotoImage = null;
     renderTeacherPhotoFrame();
     return;
   }
-  savePersonnelPhoto(name, dataUrl);
+  currentPhotoDataUrl = dataUrl;
   loadImage(dataUrl)
     .then(image=>{
       teacherPhotoImage = image;
@@ -560,9 +533,7 @@ function legacyProfileValue(profile, id){
 
 function setFormProfile(profile){
   personnelName.value = profile.name || "";
-  if(profile.photoDataUrl){
-    savePersonnelPhoto(profile.name, profile.photoDataUrl);
-  }
+  currentPhotoDataUrl = profile.photoDataUrl || "";
   profileFields.forEach(field=>{
     const input = profileForm.elements[`field:${field.id}`];
     if(input){
@@ -604,7 +575,7 @@ function profileFromForm(){
   profile.pagibig = profile.fields["pag-ibig"] || "";
   profile.prcLicense = profile.fields["prc-license-no"] || "";
   profile.notes = profile.fields.notes || "";
-  profile.photoDataUrl = savedPersonnelPhoto(profile.name);
+  profile.photoDataUrl = currentPhotoDataUrl;
   profile.updatedAt = new Date().toISOString();
   return profile;
 }
@@ -802,11 +773,11 @@ function upsertLocalProfile(profile){
   saveStorageList(personnelStorageKey, mergeProfileLists(storageList(personnelStorageKey), profiles));
 }
 
-function alignProfilesToOfficialPersonnel(){
+function alignProfilesToOfficialPersonnel(includeStored = true){
   if(!officialPersonnel.length){
     return;
   }
-  profiles = mergeProfileLists(profiles, storedPersonnelProfiles());
+  profiles = includeStored ? mergeProfileLists(profiles, storedPersonnelProfiles()) : mergeProfileLists(profiles);
   const profilesByName = new Map(profiles.map(profile=>[profileKey(profile.name), profile]));
   const officialProfiles = officialPersonnelNames().map(name=>{
     const savedProfile = profilesByName.get(profileKey(name))
@@ -969,8 +940,11 @@ async function loadProfiles(){
       saveStorageList(personnelFieldsKey, profileFields);
       renderProfileFields();
     }
-    profiles = mergeProfileLists(Array.isArray(data.profiles) ? data.profiles : [], storedPersonnelProfiles());
-    alignProfilesToOfficialPersonnel();
+    profiles = mergeProfileLists(
+      Array.isArray(data.profiles) ? data.profiles : [],
+      storageList(pendingProfilesKey)
+    );
+    alignProfilesToOfficialPersonnel(false);
     saveStorageList(personnelProfilesKey, profiles);
     updateSyncStatus(`${profiles.length.toLocaleString()} personnel profile${profiles.length === 1 ? "" : "s"} loaded.`);
     showSelectedPersonnelSavedData();
@@ -1093,7 +1067,7 @@ teacherPhotoInput?.addEventListener("change",()=>{
     loadImage(dataUrl)
       .then(image=>{
         teacherPhotoImage = image;
-        savePersonnelPhoto(selectedPersonnelName(), dataUrl);
+        currentPhotoDataUrl = dataUrl;
         if(selectedPersonnelName()){
           const profile = currentProfileForName(selectedPersonnelName());
           upsertLocalProfile({ ...profile, photoDataUrl:dataUrl, updatedAt:new Date().toISOString() });
@@ -1132,6 +1106,7 @@ document.querySelectorAll("[data-teacher-logout]").forEach(button=>{
   });
 });
 
+clearLegacyPhotoCache();
 LearnerOffline.registerServiceWorker().catch(()=>{});
 if(window.teacherEntryAllowed !== false){
   loadImage("/bakhaw-school-logo.png")
