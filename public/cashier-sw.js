@@ -1,4 +1,4 @@
-const cacheName = "roadworthy-cashier-shell-offline-login-v5";
+const cacheName = "roadworthy-cashier-shell-offline-login-v6";
 const imageCacheName = "roadworthy-cashier-images-current";
 const offlineHost = "bis1.onrender.com";
 const offlineEnabled = self.location.hostname.toLowerCase() === offlineHost;
@@ -166,6 +166,22 @@ function isCacheableApi(pathname){
     "/api/teacher-session",
     "/api/teacher-accounts",
     "/api/personnel-profiles",
+    "/api/guidance-cases"
+  ].includes(pathname);
+}
+
+function isGuidanceFreshPath(pathname){
+  return [
+    "/guidance",
+    "/guidance.html",
+    "/guidance-offline-shell",
+    "/guidance-report",
+    "/guidance-report.html",
+    "/guidance-report-offline-shell",
+    "/guidance.css",
+    "/guidance.js",
+    "/guidance-report.css",
+    "/guidance-report.js",
     "/api/guidance-cases"
   ].includes(pathname);
 }
@@ -363,6 +379,28 @@ async function cacheFirstThenUpdate(event, fallbackPath = ""){
   }
 }
 
+async function networkFirstThenCache(event, fallbackPath = ""){
+  const request = event.request;
+  const cache = await caches.open(cacheName);
+  const pathname = new URL(request.url).pathname;
+
+  try{
+    const response = await fetch(request, { cache:"no-store" });
+    if(response.ok && !response.redirected){
+      const cleanResponse = await cleanPersonnelProfileResponse(pathname, response);
+      await cache.put(request, cleanResponse.clone());
+      await cache.put(pathname, cleanResponse.clone());
+      return cleanResponse;
+    }
+    return response;
+  }catch{
+    return await cache.match(request)
+      || await cache.match(pathname, { ignoreSearch:true })
+      || (fallbackPath ? await cache.match(fallbackPath, { ignoreSearch:true }) : null)
+      || offlineFallbackResponse(request, pathname);
+  }
+}
+
 function offlineLoginResponse(request, fallbackNext = ""){
   const url = new URL(request.url);
   const next = url.searchParams.get("next") || fallbackNext || "/student-dashboard";
@@ -496,6 +534,10 @@ self.addEventListener("fetch", event=>{
 
   const fallbackPath = offlineFallbacks[url.pathname];
   if(fallbackPath || isStaticAsset(url.pathname) || isCacheableApi(url.pathname)){
-    event.respondWith(cacheFirstThenUpdate(event, fallbackPath));
+    event.respondWith(
+      isGuidanceFreshPath(url.pathname) || event.request.cache === "no-store"
+        ? networkFirstThenCache(event, fallbackPath)
+        : cacheFirstThenUpdate(event, fallbackPath)
+    );
   }
 });
