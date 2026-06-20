@@ -2627,7 +2627,17 @@ async function handleApi(req, res){
     try{
       const cases = await readGuidanceCases();
       const guidanceCase = await buildGuidanceCase(body, null, readTeacherSession(req));
-      guidanceCase.caseNumber = nextGuidanceCaseNumber(cases, guidanceCase.reportDate);
+      const requestedCaseNumber = String(body.caseNumber || "").trim();
+      const existingCase = requestedCaseNumber
+        ? cases.find(item=>String(item.caseNumber || "").trim().toLowerCase() === requestedCaseNumber.toLowerCase())
+        : null;
+      if(existingCase){
+        send(res, 200, JSON.stringify({ ok:true, guidanceCase:existingCase }));
+        return true;
+      }
+      guidanceCase.caseNumber = /^GDC-\d{4}-\d{4}$/i.test(requestedCaseNumber)
+        ? requestedCaseNumber.toUpperCase()
+        : nextGuidanceCaseNumber(cases, guidanceCase.reportDate);
       cases.unshift(guidanceCase);
       await writeGuidanceCases(cases);
       send(res, 201, JSON.stringify({ ok:true, guidanceCase }));

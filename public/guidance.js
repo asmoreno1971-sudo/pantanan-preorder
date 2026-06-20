@@ -710,6 +710,7 @@ function buildLocalGuidanceCase(payload, existingCase = null){
 
 function guidanceApiPayload(item){
   return {
+    caseNumber:item.caseNumber,
     reportDate:item.reportDate,
     incidentDate:item.incidentDate,
     incidentTime:item.incidentTime,
@@ -755,6 +756,35 @@ async function saveGuidanceCaseOnline(payload, existingCase = null){
     throw error;
   }
   return data.guidanceCase;
+}
+
+function sameGuidanceServerCase(left,right){
+  const leftNumber = String(left?.caseNumber || "").trim().toLowerCase();
+  const rightNumber = String(right?.caseNumber || "").trim().toLowerCase();
+  if(leftNumber && rightNumber && leftNumber === rightNumber){
+    return true;
+  }
+  return String(left?.id || "") && String(left.id) === String(right?.id || "");
+}
+
+async function uploadLocalGuidanceCasesToServer(serverCases = []){
+  const localCases = await LearnerOffline.loadGuidanceCases().catch(()=>[]);
+  const uploaded = [];
+  for(const localCase of localCases){
+    if(!localCase?.id || serverCases.some(serverCase=>sameGuidanceServerCase(serverCase,localCase))){
+      continue;
+    }
+    try{
+      const savedCase = await saveGuidanceCaseOnline(guidanceApiPayload(localCase),null);
+      uploaded.push(savedCase);
+      serverCases = mergeGuidanceCases([savedCase],serverCases);
+    }catch(error){
+      if(error.status === 401 || error.status === 403){
+        throw error;
+      }
+    }
+  }
+  return uploaded;
 }
 
 async function updateGuidanceSyncStatus(message = ""){
@@ -1021,7 +1051,17 @@ async function loadData(){
       if(!caseResponse.ok || !caseData.ok){
         throw new Error("Guidance records could not be loaded.");
       }
-      const serverCases = caseData.cases || [];
+      let serverCases = caseData.cases || [];
+      const uploadedCases = await uploadLocalGuidanceCasesToServer(serverCases);
+      if(uploadedCases.length){
+        const refreshedCaseResponse = await guidanceFetch(guidanceApiUrl("/api/guidance-cases"),{cache:"no-store"},20000);
+        const refreshedCaseData = await refreshedCaseResponse.json();
+        if(refreshedCaseResponse.ok && refreshedCaseData.ok){
+          serverCases = refreshedCaseData.cases || serverCases;
+        }else{
+          serverCases = mergeGuidanceCases(uploadedCases,serverCases);
+        }
+      }
       const pendingGuidanceChanges = await LearnerOffline.pendingGuidanceChanges();
       cases = serverCases;
       await LearnerOffline.replaceGuidanceCases(serverCases);
