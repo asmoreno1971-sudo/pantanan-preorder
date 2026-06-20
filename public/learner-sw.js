@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-offline-login-v10";
+const shellCache = "bakhaw-learner-shell-offline-login-v11";
 const imageCacheName = "roadworthy-cashier-images-current";
 const offlineHost = "bis1.onrender.com";
 const offlineEnabled = self.location.hostname.toLowerCase() === offlineHost;

@@ -2245,13 +2245,16 @@ async function handleApi(req, res){
     const profileKey = profile.name.toLowerCase();
     const index = profiles.findIndex(item=>item.name.toLowerCase() === profileKey);
     profile.updatedAt = new Date().toISOString();
+    let savedProfile;
     if(index >= 0){
       profiles[index] = mergePersonnelProfileData(profiles[index], profile);
+      savedProfile = profiles[index];
     }else{
       profiles.unshift(profile);
+      savedProfile = profile;
     }
     await writePersonnelProfileRecords(profiles);
-    send(res, 200, JSON.stringify({ ok:true, profile }));
+    send(res, 200, JSON.stringify({ ok:true, profile:savedProfile }));
     return true;
   }
 

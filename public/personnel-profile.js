@@ -449,6 +449,10 @@ function profileHasSavedDetails(profile){
   return profileFields.some(field=>String(profileFieldValue(profile, field) || "").trim());
 }
 
+function profileHasSavedContent(profile){
+  return profileHasSavedDetails(profile) || Boolean(String(profile?.photoDataUrl || "").trim());
+}
+
 function mergeProfileData(existing = {}, incoming = {}){
   const mergedFields = { ...(existing.fields || {}) };
   Object.entries(incoming.fields || {}).forEach(([key,value])=>{
@@ -913,7 +917,8 @@ async function loadCurrentTeacher(){
 }
 
 async function loadProfiles(){
-  profiles = storedPersonnelProfiles();
+  const localProfiles = storedPersonnelProfiles();
+  profiles = localProfiles;
   alignProfilesToOfficialPersonnel();
   showSelectedPersonnelSavedData();
   updateSyncStatus(profiles.length ? "Saved personnel profiles shown." : "No saved personnel profiles yet.");
@@ -940,7 +945,12 @@ async function loadProfiles(){
       saveStorageList(personnelFieldsKey, profileFields);
       renderProfileFields();
     }
-    profiles = mergeProfileLists(Array.isArray(data.profiles) ? data.profiles : []);
+    let serverProfiles = mergeProfileLists(Array.isArray(data.profiles) ? data.profiles : []);
+    const promotedProfiles = await promoteLocalProfilesToServer(localProfiles, serverProfiles);
+    if(promotedProfiles.length){
+      serverProfiles = mergeProfileLists(serverProfiles, promotedProfiles);
+    }
+    profiles = mergeProfileLists(serverProfiles);
     alignProfilesToOfficialPersonnel(false);
     saveStorageList(personnelProfilesKey, profiles);
     updateSyncStatus(`${profiles.length.toLocaleString()} personnel profile${profiles.length === 1 ? "" : "s"} loaded.`);
@@ -949,6 +959,34 @@ async function loadProfiles(){
     showSelectedPersonnelSavedData();
     updateSyncStatus(profiles.length ? "Saved profiles shown. Reconnect to refresh." : (error.message || "Personnel profiles could not be loaded."));
   }
+}
+
+async function promoteLocalProfilesToServer(localProfiles, serverProfiles){
+  if(!navigator.onLine || !Array.isArray(localProfiles) || !localProfiles.length){
+    return [];
+  }
+  const promoted = [];
+  for(const localProfile of localProfiles){
+    if(!profileHasSavedContent(localProfile)){
+      continue;
+    }
+    const serverProfile = serverProfiles.find(profile=>samePersonName(profile.name, localProfile.name));
+    const serverHasContent = profileHasSavedContent(serverProfile);
+    const localIsNewer = String(localProfile.updatedAt || "") > String(serverProfile?.updatedAt || "");
+    const localHasMissingPhoto = Boolean(localProfile.photoDataUrl) && !serverProfile?.photoDataUrl;
+    if(serverHasContent && !localIsNewer && !localHasMissingPhoto){
+      continue;
+    }
+    try{
+      const savedProfile = await saveProfileOnline(localProfile);
+      if(savedProfile){
+        promoted.push(savedProfile);
+      }
+    }catch{
+      queueProfile(localProfile);
+    }
+  }
+  return promoted;
 }
 
 async function syncPendingProfiles(){
@@ -1011,8 +1049,8 @@ profileForm.addEventListener("submit",async event=>{
       return;
     }
     upsertLocalProfile(savedProfile);
-    setFormProfile(profile);
-    profileFormMessage.textContent = `${profile.name} profile saved.`;
+    setFormProfile(savedProfile);
+    profileFormMessage.textContent = `${savedProfile.name} profile saved.`;
   }catch(error){
     if(error.status && error.status < 500){
       profileFormMessage.textContent = error.message;
