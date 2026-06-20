@@ -260,6 +260,28 @@ function publicErrorMessage(error){
   return error?.message || "The request could not be completed.";
 }
 
+function wait(ms){
+  return new Promise(resolve=>setTimeout(resolve, ms));
+}
+
+async function withDatabaseRetry(action, attempts = 3){
+  let lastError;
+  for(let attempt = 0; attempt < attempts; attempt += 1){
+    try{
+      return await action();
+    }catch(error){
+      lastError = error;
+      if(!isDatabaseConnectionError(error) || attempt === attempts - 1){
+        throw error;
+      }
+      dbReady = null;
+      dbPool = null;
+      await wait(200 * (attempt + 1));
+    }
+  }
+  throw lastError;
+}
+
 function normalizedTeacherUsername(value){
   return String(value || "")
     .trim()
@@ -671,14 +693,17 @@ async function getDbPool(){
 
 async function readDataRecord(key, filePath, fallbackValue){
   try{
-    const pool = await getDbPool();
+    const result = await withDatabaseRetry(async ()=>{
+      const pool = await getDbPool();
 
-    if(pool){
+      if(!pool){
+        return { usingDatabase:false };
+      }
       const dbKey = storageKey(key);
       const existing = await pool.query("select value from app_data where key = $1", [dbKey]);
 
       if(existing.rows.length){
-        return existing.rows[0].value;
+        return { usingDatabase:true, value:existing.rows[0].value };
       }
 
       const seed = await readJsonSeed(filePath, fallbackValue);
@@ -686,7 +711,11 @@ async function readDataRecord(key, filePath, fallbackValue){
         "insert into app_data (key, value, updated_at) values ($1, $2::jsonb, now()) on conflict (key) do nothing",
         [dbKey, JSON.stringify(seed)]
       );
-      return seed;
+      return { usingDatabase:true, value:seed };
+    });
+
+    if(result.usingDatabase){
+      return result.value;
     }
   }catch(error){
     if(!isDatabaseConnectionError(error)){
@@ -1381,14 +1410,21 @@ async function writeDataRecord(key, filePath, value){
   requirePersistentStorageForProduction(key, "write");
 
   try{
-    const pool = await getDbPool();
+    const wroteToDatabase = await withDatabaseRetry(async ()=>{
+      const pool = await getDbPool();
 
-    if(pool){
+      if(!pool){
+        return false;
+      }
       const dbKey = storageKey(key);
       await pool.query(
         "insert into app_data (key, value, updated_at) values ($1, $2::jsonb, now()) on conflict (key) do update set value = excluded.value, updated_at = now()",
         [dbKey, JSON.stringify(value)]
       );
+      return true;
+    });
+
+    if(wroteToDatabase){
       return;
     }
   }catch(error){
