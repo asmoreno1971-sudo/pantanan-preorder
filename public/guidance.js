@@ -1000,9 +1000,13 @@ async function loadData(){
   let savedCaseError = null;
   localStorage.removeItem(guidanceCaseBackupKey);
   if(navigator.onLine){
-    cases = [];
+    if(!cases.length){
+      cases = serverGuidanceCases();
+    }
     renderCases();
-    caseStatusMessage.textContent = "Loading online guidance cases...";
+    caseStatusMessage.textContent = cases.length
+      ? `${cases.length} guidance case${cases.length === 1 ? "" : "s"} shown. Refreshing online source...`
+      : "Loading online guidance cases...";
   }else{
     try{
       cases = mergeGuidanceCases(serverGuidanceCases(),await LearnerOffline.loadGuidanceCases());
