@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-offline-login-v6";
+const shellCache = "bakhaw-learner-shell-offline-login-v7";
 const imageCacheName = "roadworthy-cashier-images-current";
 const offlineHost = "bis1.onrender.com";
 const offlineEnabled = self.location.hostname.toLowerCase() === offlineHost;
@@ -183,7 +183,16 @@ function isGuidanceFreshPath(pathname){
     "/guidance.js",
     "/guidance-report.css",
     "/guidance-report.js",
-    "/api/guidance-cases"
+    "/api/guidance-cases",
+    "/personnel",
+    "/personnel.html",
+    "/personnel-offline-shell",
+    "/personnel-profile",
+    "/personnel-profile.html",
+    "/personnel-profile-offline-shell",
+    "/personnel.js",
+    "/personnel-profile.js",
+    "/api/personnel-profiles"
   ].includes(pathname);
 }
 

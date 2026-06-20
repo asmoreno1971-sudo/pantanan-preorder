@@ -832,6 +832,7 @@ async function writePersonnelProfileRecords(profiles){
 function normalizePersonnelProfile(profile = {}){
   const name = String(profile.name || "").trim().replace(/\s+/g, " ");
   const sex = String(profile.sex || "").trim();
+  const photoDataUrl = normalizePersonnelPhotoDataUrl(profile.photoDataUrl || profile.photo || profile.image || "");
   const fields = {};
   if(profile.fields && typeof profile.fields === "object" && !Array.isArray(profile.fields)){
     Object.entries(profile.fields).forEach(([key,value])=>{
@@ -883,9 +884,18 @@ function normalizePersonnelProfile(profile = {}){
     pagibig:String(profile.pagibig || "").trim(),
     prcLicense:String(profile.prcLicense || "").trim(),
     notes:String(profile.notes || "").trim(),
+    photoDataUrl,
     fields,
     updatedAt:String(profile.updatedAt || new Date().toISOString())
   };
+}
+
+function normalizePersonnelPhotoDataUrl(value){
+  const photo = String(value || "").trim();
+  if(!photo || photo.length > 2500000){
+    return "";
+  }
+  return /^data:image\/(?:png|jpe?g|webp);base64,[a-z0-9+/=]+$/i.test(photo) ? photo : "";
 }
 
 function mergePersonnelProfileData(existingProfile = {}, incomingProfile = {}){

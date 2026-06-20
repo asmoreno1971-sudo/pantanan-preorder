@@ -84,12 +84,14 @@ function savedPersonnelPhoto(name){
 }
 
 function loadSavedPersonnelPhoto(name){
-  const dataUrl = savedPersonnelPhoto(name);
+  const profile = currentProfileForName(name);
+  const dataUrl = profile.photoDataUrl || savedPersonnelPhoto(name);
   if(!dataUrl){
     teacherPhotoImage = null;
     renderTeacherPhotoFrame();
     return;
   }
+  savePersonnelPhoto(name, dataUrl);
   loadImage(dataUrl)
     .then(image=>{
       teacherPhotoImage = image;
@@ -455,7 +457,8 @@ function blankProfile(name = ""){
     tin:"",
     pagibig:"",
     prcLicense:"",
-    notes:""
+    notes:"",
+    photoDataUrl:""
   };
 }
 
@@ -557,6 +560,9 @@ function legacyProfileValue(profile, id){
 
 function setFormProfile(profile){
   personnelName.value = profile.name || "";
+  if(profile.photoDataUrl){
+    savePersonnelPhoto(profile.name, profile.photoDataUrl);
+  }
   profileFields.forEach(field=>{
     const input = profileForm.elements[`field:${field.id}`];
     if(input){
@@ -598,6 +604,7 @@ function profileFromForm(){
   profile.pagibig = profile.fields["pag-ibig"] || "";
   profile.prcLicense = profile.fields["prc-license-no"] || "";
   profile.notes = profile.fields.notes || "";
+  profile.photoDataUrl = savedPersonnelPhoto(profile.name);
   profile.updatedAt = new Date().toISOString();
   return profile;
 }
@@ -1087,6 +1094,10 @@ teacherPhotoInput?.addEventListener("change",()=>{
       .then(image=>{
         teacherPhotoImage = image;
         savePersonnelPhoto(selectedPersonnelName(), dataUrl);
+        if(selectedPersonnelName()){
+          const profile = currentProfileForName(selectedPersonnelName());
+          upsertLocalProfile({ ...profile, photoDataUrl:dataUrl, updatedAt:new Date().toISOString() });
+        }
         renderTeacherPhotoFrame();
       })
       .catch(()=>{
