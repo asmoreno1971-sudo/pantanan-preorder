@@ -60,12 +60,17 @@ async function loadTransactions(){
       renderTransactions(data.report);
       transactionStatus.innerText = "";
     }else{
-      const backup = readTransactionBackup(transactionDate.value || todayValue(), transactionPeriod);
-      renderTransactions(backup || data.report);
-      transactionStatus.innerText = backup ? "Showing browser backup" : "";
+      renderTransactions(data.report);
+      transactionStatus.innerText = "";
     }
   }catch{
-    transactionStatus.innerText = "Offline. Retrying...";
+    const backup = readTransactionBackup(transactionDate.value || todayValue(), transactionPeriod);
+    if(backup){
+      renderTransactions(backup);
+      transactionStatus.innerText = "Offline. Showing browser backup.";
+    }else{
+      transactionStatus.innerText = "Offline. Retrying...";
+    }
   }finally{
     transactionLoading = false;
   }

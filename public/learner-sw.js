@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-offline-login-v11";
+const shellCache = "bakhaw-learner-shell-shared-source-v13";
 const imageCacheName = "roadworthy-cashier-images-current";
 const offlineHost = "bis1.onrender.com";
 const offlineEnabled = self.location.hostname.toLowerCase() === offlineHost;
@@ -14,7 +14,6 @@ const installShellUrls = [
   "/kitchen.html",
   "/sales",
   "/sales.html",
-  "/transaction",
   "/transactions",
   "/transactions.html",
   "/expenses",
@@ -142,6 +141,10 @@ function isStaticAsset(pathname){
 }
 
 function isCacheableApi(pathname){
+  if(pathname === "/api/guidance-cases"){
+    return false;
+  }
+
   if(pathname.startsWith("/api/orders/") || pathname.startsWith("/api/expenses/")){
     return true;
   }
@@ -167,12 +170,38 @@ function isCacheableApi(pathname){
     "/api/teacher-session",
     "/api/teacher-accounts",
     "/api/personnel-profiles",
-    "/api/guidance-cases"
   ].includes(pathname);
 }
 
-function isGuidanceFreshPath(pathname){
+function isSharedSourcePath(pathname){
   return [
+    "/",
+    "/customer",
+    "/index.html",
+    "/admin",
+    "/admin.html",
+    "/cashier",
+    "/cashier.html",
+    "/kitchen",
+    "/kitchen.html",
+    "/sales",
+    "/sales.html",
+    "/transactions",
+    "/transactions.html",
+    "/expenses",
+    "/expenses.html",
+    "/offline-reset",
+    "/offline-reset.html",
+    "/qr",
+    "/qr.html",
+    "/login",
+    "/teacher-login",
+    "/teacher-login.html",
+    "/student-dashboard",
+    "/student-dashboard.html",
+    "/students",
+    "/students.html",
+    "/students-offline-shell",
     "/guidance",
     "/guidance.html",
     "/guidance-offline-shell",
@@ -183,7 +212,6 @@ function isGuidanceFreshPath(pathname){
     "/guidance.js",
     "/guidance-report.css",
     "/guidance-report.js",
-    "/api/guidance-cases",
     "/personnel",
     "/personnel.html",
     "/personnel-offline-shell",
@@ -192,7 +220,61 @@ function isGuidanceFreshPath(pathname){
     "/personnel-profile-offline-shell",
     "/personnel.js",
     "/personnel-profile.js",
-    "/api/personnel-profiles"
+    "/api/personnel-profiles",
+    "/teacher-accounts",
+    "/teacher-accounts.html",
+    "/teacher-accounts-offline-shell",
+    "/teacher-profile",
+    "/teacher-profile.html",
+    "/mineralex",
+    "/mineralex/",
+    "/mineralex/index.html",
+    "/styles.css",
+    "/admin.js",
+    "/app.js",
+    "/app-shell-offline.js",
+    "/cashier-fast.js",
+    "/cashier-offline.js",
+    "/expenses.js",
+    "/kitchen.js",
+    "/teacher-login.css",
+    "/teacher-login.js",
+    "/learner-offline.js",
+    "/mineralex/styles.css",
+    "/mineralex/script.js",
+    "/page-auth.js",
+    "/personnel.css",
+    "/personnel-profile.css",
+    "/qr.js",
+    "/sales.js",
+    "/student-dashboard.css",
+    "/student-dashboard.js",
+    "/students.css",
+    "/students.js",
+    "/teacher-accounts.css",
+    "/teacher-accounts.js",
+    "/teacher-session.css",
+    "/teacher-session.js",
+    "/transactions.js",
+    "/api/config",
+    "/api/menu",
+    "/api/customers.csv",
+    "/api/kiosk-settings",
+    "/api/kiosk-status",
+    "/api/storage-status",
+    "/api/orders",
+    "/api/sales/daily",
+    "/api/sales/profit",
+    "/api/transactions",
+    "/api/expenses",
+    "/api/students",
+    "/api/students.csv",
+    "/api/teacher-directory",
+    "/api/grade-sections",
+    "/api/advisory-directory",
+    "/api/personnel",
+    "/api/teacher-session",
+    "/api/teacher-accounts"
   ].includes(pathname);
 }
 
@@ -541,7 +623,7 @@ self.addEventListener("fetch", event=>{
 
   if(fallbackPath || isStaticAsset(url.pathname) || isCacheableApi(url.pathname)){
     event.respondWith(
-      isGuidanceFreshPath(url.pathname) || event.request.cache === "no-store"
+      isSharedSourcePath(url.pathname) || event.request.cache === "no-store"
         ? networkFirstThenCache(event, fallbackPath)
         : cacheFirstThenUpdate(event, fallbackPath)
     );

@@ -297,7 +297,7 @@
       const readyRegistration = await navigator.serviceWorker.ready;
       const readyWorker = readyRegistration.active || readyRegistration.waiting || readyRegistration.installing;
       const appShellPaths = [
-        "/", "/customer", "/admin", "/cashier", "/kitchen", "/sales", "/transaction", "/transactions", "/expenses", "/offline-reset", "/qr",
+        "/", "/customer", "/admin", "/cashier", "/kitchen", "/sales", "/transactions", "/expenses", "/offline-reset", "/qr",
         "/login", "/teacher-login", "/student-dashboard", "/students", "/personnel", "/personnel-profile",
         "/guidance", "/guidance-report", "/teacher-accounts", "/teacher-profile", "/mineralex", "/mineralex/"
       ];

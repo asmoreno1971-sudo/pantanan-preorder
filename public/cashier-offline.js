@@ -93,7 +93,7 @@
     const registration = await navigator.serviceWorker.ready;
     const worker = registration.active || registration.waiting || registration.installing;
     const appShellPaths = [
-      "/", "/customer", "/admin", "/cashier", "/kitchen", "/sales", "/transaction", "/transactions", "/expenses", "/offline-reset", "/qr",
+      "/", "/customer", "/admin", "/cashier", "/kitchen", "/sales", "/transactions", "/expenses", "/offline-reset", "/qr",
       "/login", "/teacher-login", "/student-dashboard", "/students", "/personnel", "/personnel-profile",
       "/guidance", "/guidance-report", "/teacher-accounts", "/teacher-profile", "/mineralex", "/mineralex/"
     ];

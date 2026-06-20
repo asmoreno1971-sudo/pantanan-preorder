@@ -10,6 +10,12 @@ let allCases = [];
 let reportRefreshInFlight = false;
 let lastReportRefresh = 0;
 
+function guidanceApiUrl(pathname){
+  const url = new URL(pathname, window.location.origin);
+  url.searchParams.set("fresh", String(Date.now()));
+  return `${url.pathname}${url.search}`;
+}
+
 const incidentTypes = [
   { label:"Physical", aliases:["physical","physical bullying"] },
   { label:"Social", aliases:["social","social / relational aggression"] },
@@ -195,22 +201,25 @@ async function loadReport(){
   reportRefreshInFlight = true;
   lastReportRefresh = Date.now();
   try{
-  const cases = await LearnerOffline.loadGuidanceCases();
-  allCases = Array.isArray(cases) ? cases : [];
-  setupPeriodFilters(allCases);
-  renderSelectedPeriod();
-
   if(!navigator.onLine){
+    const cases = await LearnerOffline.loadGuidanceCases();
+    allCases = Array.isArray(cases) ? cases : [];
+    setupPeriodFilters(allCases);
+    renderSelectedPeriod();
     reportStatus.textContent += " Offline data shown.";
     return;
   }
 
   try{
+    allCases = [];
+    setupPeriodFilters(allCases);
+    renderSelectedPeriod();
+    reportStatus.textContent = "Loading online guidance cases...";
     const controller = new AbortController();
-    const timeout = window.setTimeout(()=>controller.abort(),3000);
+    const timeout = window.setTimeout(()=>controller.abort(),20000);
     let response;
     try{
-      response = await fetch("/api/guidance-cases",{cache:"no-store",signal:controller.signal});
+      response = await fetch(guidanceApiUrl("/api/guidance-cases"),{cache:"no-store",signal:controller.signal});
     }finally{
       window.clearTimeout(timeout);
     }
@@ -223,11 +232,10 @@ async function loadReport(){
       throw new Error(data.message || "The latest cases could not be loaded.");
     }
     const latestCases = Array.isArray(data.cases) ? data.cases : [];
+    await LearnerOffline.replaceGuidanceCases(latestCases);
+    localStorage.removeItem("bakhaw-guidance-case-backup");
     const pending = await LearnerOffline.pendingGuidanceCount();
-    if(!pending){
-      await LearnerOffline.replaceGuidanceCases(latestCases);
-    }
-    allCases = pending ? await LearnerOffline.loadGuidanceCases() : latestCases;
+    allCases = latestCases;
     setupPeriodFilters(allCases);
     renderSelectedPeriod();
     if(pending){

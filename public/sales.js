@@ -46,7 +46,13 @@ async function loadSales(){
     });
     data = await res.json();
   }catch{
-    salesStatus.innerText = "Offline. Retrying...";
+    const backup = readSalesBackup(salesDate.value);
+    if(backup){
+      renderSales(backup);
+      salesStatus.innerText = "Offline. Showing browser backup.";
+    }else{
+      salesStatus.innerText = "Offline. Retrying...";
+    }
     salesLoading = false;
     return;
   }
@@ -62,9 +68,8 @@ async function loadSales(){
     renderSales(data.report);
     salesStatus.innerText = "";
   }else{
-    const backup = readSalesBackup(salesDate.value);
-    renderSales(backup || data.report);
-    salesStatus.innerText = backup ? "Showing browser backup" : "";
+    renderSales(data.report);
+    salesStatus.innerText = "";
   }
   loadProfit();
   salesLoading = false;
