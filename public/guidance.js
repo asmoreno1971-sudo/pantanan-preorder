@@ -39,8 +39,11 @@ const databaseErrorPattern = /getaddrinfo|ENOTFOUND|dpg-[a-z0-9-]+|database conn
 async function guidanceFetch(url, options = {}, timeoutMs = 3000){
   const controller = new AbortController();
   const timeout = window.setTimeout(()=>controller.abort(),timeoutMs);
+  const headers = new Headers(options.headers || {});
+  headers.set("Cache-Control", "no-cache");
+  headers.set("Pragma", "no-cache");
   try{
-    return await fetch(url,{...options,signal:controller.signal});
+    return await fetch(url,{cache:"no-store",...options,headers,signal:controller.signal});
   }finally{
     window.clearTimeout(timeout);
   }
@@ -49,6 +52,7 @@ async function guidanceFetch(url, options = {}, timeoutMs = 3000){
 function guidanceApiUrl(pathname){
   const url = new URL(pathname, window.location.origin);
   url.searchParams.set("fresh", String(Date.now()));
+  url.searchParams.set("online", "1");
   return `${url.pathname}${url.search}`;
 }
 
@@ -891,6 +895,12 @@ async function loadData(){
   lastGuidanceRefresh = Date.now();
   try{
   let savedCaseError = null;
+  const embeddedCases = serverGuidanceCases();
+  if(embeddedCases.length){
+    cases = mergeGuidanceCases([], embeddedCases);
+    renderCases();
+    caseStatusMessage.textContent = `${cases.length} online guidance case${cases.length === 1 ? "" : "s"} loaded from server. Refreshing...`;
+  }
   let deviceCases = [];
   try{
     deviceCases = await LearnerOffline.loadGuidanceCases?.() || [];
@@ -899,13 +909,13 @@ async function loadData(){
   }
   if(navigator.onLine){
     localStorage.removeItem("bakhaw-guidance-case-backup");
-    cases = mergeGuidanceCases(deviceCases, serverGuidanceCases());
+    cases = mergeGuidanceCases(deviceCases, embeddedCases);
     renderCases();
     caseStatusMessage.textContent = cases.length
       ? `${cases.length} guidance case${cases.length === 1 ? "" : "s"} shown. Refreshing online source...`
       : "Loading online guidance cases...";
   }else{
-    cases = mergeGuidanceCases(deviceCases, serverGuidanceCases());
+    cases = mergeGuidanceCases(deviceCases, embeddedCases);
     renderCases();
     caseStatusMessage.textContent = savedCaseError
       ? "Saved cases could not be read on this device."
