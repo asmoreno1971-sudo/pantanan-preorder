@@ -12,7 +12,7 @@
     "/teacher-accounts-offline-shell":"/teacher-accounts"
   }[window.location.pathname] || window.location.pathname;
   const protectedPage = document.body.matches(".teacher-accounts-page")
-    || ["/students", "/students.html", "/students-offline-shell", "/personnel", "/personnel.html", "/personnel-offline-shell", "/personnel-profile", "/personnel-profile.html", "/personnel-profile-offline-shell", "/student-dashboard", "/student-dashboard.html", "/student-dashboard-offline-shell", "/guidance", "/guidance.html", "/guidance-offline-shell", "/guidance-report", "/guidance-report.html", "/guidance-report-offline-shell", "/teacher-accounts", "/teacher-accounts.html", "/teacher-accounts-offline-shell"]
+    || ["/students", "/students.html", "/students-offline-shell", "/personnel", "/personnel.html", "/personnel-offline-shell", "/student-dashboard", "/student-dashboard.html", "/student-dashboard-offline-shell", "/guidance", "/guidance.html", "/guidance-offline-shell", "/guidance-report", "/guidance-report.html", "/guidance-report-offline-shell", "/teacher-accounts", "/teacher-accounts.html", "/teacher-accounts-offline-shell"]
       .includes(window.location.pathname);
   const privacyAgreementKey = "bakhawDataPrivacyNoticeAgreed";
   const localEntryAllowed = (

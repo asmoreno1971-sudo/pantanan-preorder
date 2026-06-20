@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-offline-login-v4";
+const shellCache = "bakhaw-learner-shell-offline-login-v5";
 const imageCacheName = "roadworthy-cashier-images-current";
 const offlineHost = "bis1.onrender.com";
 const offlineEnabled = self.location.hostname.toLowerCase() === offlineHost;
@@ -131,7 +131,6 @@ const appFallbackPaths = new Set(Object.keys(offlineFallbacks));
 const protectedFallbackPaths = new Set([
   "/students", "/students.html", "/students-offline-shell",
   "/personnel", "/personnel.html", "/personnel-offline-shell",
-  "/personnel-profile", "/personnel-profile.html", "/personnel-profile-offline-shell",
   "/student-dashboard", "/student-dashboard.html", "/student-dashboard-offline-shell",
   "/guidance", "/guidance.html", "/guidance-offline-shell",
   "/guidance-report", "/guidance-report.html", "/guidance-report-offline-shell",

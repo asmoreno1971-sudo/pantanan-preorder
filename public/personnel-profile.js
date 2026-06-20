@@ -341,8 +341,9 @@ async function saveProfileOnline(profile, timeoutMs = 45000){
   }, timeoutMs);
   const data = await response.json();
   if(response.status === 401){
-    window.location.replace(`/login?next=${encodeURIComponent("/personnel-profile")}`);
-    return null;
+    const error = new Error("Profile saved locally. Sign in from Dashboard later if you need to sync it online.");
+    error.status = response.status;
+    throw error;
   }
   if(!response.ok || !data.ok){
     const error = new Error(data.message || "Profile could not be saved.");
@@ -947,8 +948,7 @@ async function loadProfiles(){
     const response = await profileFetch("/api/personnel-profiles", { cache:"no-store" });
     const data = await response.json();
     if(response.status === 401){
-      window.location.replace(`/login?next=${encodeURIComponent("/personnel-profile")}`);
-      return;
+      throw new Error("Saved personnel profiles shown. Sign in from Dashboard to refresh online records.");
     }
     if(!response.ok || !data.ok){
       throw new Error(data.message || "Personnel profiles could not be loaded.");
@@ -1107,6 +1107,18 @@ document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState === "visible"){
     syncPendingProfiles().then(loadProfiles).catch(()=>{});
   }
+});
+
+document.querySelectorAll("[data-teacher-logout]").forEach(button=>{
+  button.addEventListener("click", event=>{
+    event.preventDefault();
+    window.LearnerOffline?.clearOfflineSession?.();
+    sessionStorage.removeItem("bakhawDataPrivacyNoticeAgreed");
+    if(navigator.onLine){
+      fetch("/api/teacher-logout", { method:"POST", keepalive:true }).catch(()=>{});
+    }
+    window.location.replace("/login");
+  });
 });
 
 LearnerOffline.registerServiceWorker().catch(()=>{});
