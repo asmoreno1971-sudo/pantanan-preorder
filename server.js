@@ -250,7 +250,7 @@ function isDatabaseConnectionError(error){
   const code = String(error?.code || "");
   const message = String(error?.message || "");
   return ["ENOTFOUND", "ECONNREFUSED", "ETIMEDOUT", "EAI_AGAIN"].includes(code)
-    || /getaddrinfo|database connection|connection terminated|timeout/i.test(message);
+    || /getaddrinfo|database connection|connection terminated|timeout|cannot find module 'pg'/i.test(message);
 }
 
 function publicErrorMessage(error){
@@ -698,6 +698,7 @@ async function readDataRecord(key, filePath, fallbackValue){
       throw error;
     }
     dbReady = null;
+    dbPool = null;
     console.warn(`Database unavailable while reading ${key}; using fallback data. ${error.message}`);
     return readJsonSeed(filePath, fallbackValue);
   }
@@ -1377,6 +1378,8 @@ function transactionLineKey(line){
 }
 
 async function writeDataRecord(key, filePath, value){
+  const reconnectTolerantKeys = new Set(["guidance-cases", "personnel-profiles"]);
+
   if(key === "guidance-cases"){
     await writeJsonFile(filePath, value);
     return;
@@ -1396,7 +1399,7 @@ async function writeDataRecord(key, filePath, value){
       return;
     }
   }catch(error){
-    if(!isDatabaseConnectionError(error) || key !== "guidance-cases"){
+    if(!isDatabaseConnectionError(error) || !reconnectTolerantKeys.has(key)){
       throw error;
     }
     dbReady = null;
