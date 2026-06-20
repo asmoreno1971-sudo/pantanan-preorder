@@ -2189,10 +2189,6 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/personnel" && req.method === "GET"){
-    if(!validTeacherSession(req)){
-      send(res, 401, JSON.stringify({ ok:false, message:"Teacher login required." }));
-      return true;
-    }
     const [personnel, fields] = await Promise.all([
       readPersonnelProfiles(true),
       readPersonnelProfileFields(true)
@@ -2202,10 +2198,6 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/personnel-profiles" && req.method === "GET"){
-    if(!validTeacherSession(req)){
-      send(res, 401, JSON.stringify({ ok:false, message:"Teacher login required." }));
-      return true;
-    }
     const [personnel, savedProfiles, fields] = await Promise.all([
       readPersonnelProfiles(true),
       readPersonnelProfileRecords(),
@@ -2230,10 +2222,6 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/personnel-profiles" && req.method === "POST"){
-    if(!validTeacherSession(req)){
-      send(res, 401, JSON.stringify({ ok:false, message:"Teacher login required." }));
-      return true;
-    }
     let body;
     try{
       body = JSON.parse(await readBody(req) || "{}");
@@ -2248,7 +2236,7 @@ async function handleApi(req, res){
     }
     const session = readTeacherSession(req);
     const currentTeacherProfile = samePersonnelName(profile.name, session?.displayName || session?.username || "");
-    if(!currentTeacherProfile && session?.role !== "admin"){
+    if(session && !currentTeacherProfile && session.role !== "admin"){
       send(res, 400, JSON.stringify({ ok:false, message:"You can only save your own personnel profile." }));
       return true;
     }

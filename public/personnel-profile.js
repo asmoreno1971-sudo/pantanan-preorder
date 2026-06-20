@@ -940,10 +940,7 @@ async function loadProfiles(){
       saveStorageList(personnelFieldsKey, profileFields);
       renderProfileFields();
     }
-    profiles = mergeProfileLists(
-      Array.isArray(data.profiles) ? data.profiles : [],
-      storageList(pendingProfilesKey)
-    );
+    profiles = mergeProfileLists(Array.isArray(data.profiles) ? data.profiles : []);
     alignProfilesToOfficialPersonnel(false);
     saveStorageList(personnelProfilesKey, profiles);
     updateSyncStatus(`${profiles.length.toLocaleString()} personnel profile${profiles.length === 1 ? "" : "s"} loaded.`);
