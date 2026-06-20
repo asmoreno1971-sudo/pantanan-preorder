@@ -1666,7 +1666,9 @@ async function readGuidanceStorageStatus(){
     return {
       ok:false,
       count:0,
-      message:error?.message || "Guidance storage could not be checked.",
+      message:isDatabaseConnectionError(error)
+        ? "Guidance database is unavailable."
+        : error?.message || "Guidance storage could not be checked.",
       code:String(error?.code || "")
     };
   }
