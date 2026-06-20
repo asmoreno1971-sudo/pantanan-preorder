@@ -1658,6 +1658,20 @@ async function readLiveRecordCount(reader){
   }
 }
 
+async function readGuidanceStorageStatus(){
+  try{
+    const cases = await readGuidanceCases();
+    return { ok:true, count:cases.length, message:"" };
+  }catch(error){
+    return {
+      ok:false,
+      count:0,
+      message:error?.message || "Guidance storage could not be checked.",
+      code:String(error?.code || "")
+    };
+  }
+}
+
 async function readLiveMenuStatus(){
   try{
     const menu = await readMenu();
@@ -2178,6 +2192,7 @@ async function handleApi(req, res){
     const menu = await readLiveMenuStatus();
     const orders = await readLiveRecordCount(()=>readOrders());
     const transactionLines = await readLiveRecordCount(()=>readReportingTransactionLines());
+    const guidance = await readGuidanceStorageStatus();
     send(res, 200, JSON.stringify({
       ok:true,
       menuContractVersion,
@@ -2191,6 +2206,10 @@ async function handleApi(req, res){
       orderCount:orders.count,
       transactionLineCount:transactionLines.count,
       transactionCount:transactionLines.transactionCount,
+      guidanceStorageOk:guidance.ok,
+      guidanceCaseCount:guidance.count,
+      guidanceStorageCode:guidance.code,
+      guidanceStorageMessage:guidance.message,
       storageWarning:databaseUrl ? "" : "DATABASE_URL is missing. Product saves are allowed, but live orders and transactions are blocked until Render Postgres is connected."
     }));
     return true;
