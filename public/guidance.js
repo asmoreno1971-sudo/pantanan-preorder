@@ -32,6 +32,7 @@ let advisories = [];
 let guidanceLoadInFlight = false;
 let lastGuidanceRefresh = 0;
 let guidanceFormDirty = false;
+let guidanceRetryTimer = null;
 const advisoryCacheKey = "bakhaw-guidance-advisories";
 const databaseErrorPattern = /getaddrinfo|ENOTFOUND|dpg-[a-z0-9-]+|database connection|database is temporarily unavailable/i;
 
@@ -87,6 +88,18 @@ window.addEventListener("load", scrubDatabaseErrorMessage);
 
 function serverGuidanceCases(){
   return Array.isArray(window.__BAKHAW_GUIDANCE_CASES__) ? window.__BAKHAW_GUIDANCE_CASES__ : [];
+}
+
+function queueGuidanceRetry(delay = 3000){
+  if(guidanceRetryTimer || !navigator.onLine){
+    return;
+  }
+  guidanceRetryTimer = window.setTimeout(()=>{
+    guidanceRetryTimer = null;
+    if(!caseId.value){
+      loadData();
+    }
+  },delay);
 }
 
 const profileFields = [
@@ -773,10 +786,7 @@ async function loadData(){
   let savedCaseError = null;
   if(navigator.onLine){
     localStorage.removeItem("bakhaw-guidance-case-backup");
-    await LearnerOffline.clearGuidanceLocalData?.().catch(()=>{});
-    if(!cases.length){
-      cases = serverGuidanceCases();
-    }
+    cases = serverGuidanceCases();
     renderCases();
     caseStatusMessage.textContent = cases.length
       ? `${cases.length} guidance case${cases.length === 1 ? "" : "s"} shown. Refreshing online source...`
@@ -825,7 +835,12 @@ async function loadData(){
       }
       let serverCases = caseData.cases || [];
       cases = serverCases;
+      await LearnerOffline.clearGuidanceLocalData?.().catch(()=>{});
       await LearnerOffline.replaceGuidanceCases(serverCases);
+      if(guidanceRetryTimer){
+        window.clearTimeout(guidanceRetryTimer);
+        guidanceRetryTimer = null;
+      }
       renderCases();
       await updateGuidanceSyncStatus(`${cases.length} online guidance case${cases.length === 1 ? "" : "s"} loaded.`);
 
@@ -862,6 +877,7 @@ async function loadData(){
         caseStatusMessage.textContent = error.message;
       }else{
         await updateGuidanceSyncStatus("Offline mode: saved Guidance data remains available.");
+        queueGuidanceRetry(cases.length ? 5000 : 2000);
       }
     }
   }

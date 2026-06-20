@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-shared-source-v14";
+const shellCache = "bakhaw-learner-shell-shared-source-v15";
 const imageCacheName = "roadworthy-cashier-images-current";
 const offlineHost = "bis1.onrender.com";
 const offlineEnabled = self.location.hostname.toLowerCase() === offlineHost;
@@ -53,13 +53,13 @@ const installShellUrls = [
   "/cashier-offline.js?v=current",
   "/expenses.js?v=current",
   "/guidance.css?v=current",
-  "/guidance.js?v=guidance-cleanup-v14",
+  "/guidance.js?v=guidance-sync-v15",
   "/guidance-report.css?v=current",
-  "/guidance-report.js?v=guidance-cleanup-v14",
+  "/guidance-report.js?v=guidance-sync-v15",
   "/kitchen.js?v=current",
   "/teacher-login.css?v=current",
   "/teacher-login.js?v=current",
-  "/learner-offline.js?v=guidance-cleanup-v14",
+  "/learner-offline.js?v=guidance-sync-v15",
   "/mineralex/styles.css",
   "/mineralex/script.js",
   "/page-auth.js?v=current",

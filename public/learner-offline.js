@@ -254,7 +254,7 @@
           .map(registration=>registration.unregister()));
         return;
       }
-      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=guidance-cleanup-v14", { scope:"/" });
+      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=guidance-sync-v15", { scope:"/" });
       await registration.update();
       const worker = registration.installing || registration.waiting || registration.active;
       if(worker && worker.state !== "activated"){
