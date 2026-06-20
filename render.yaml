@@ -2,6 +2,7 @@ services:
   - type: web
     name: bis1
     env: node
+    region: oregon
     plan: free
     buildCommand: npm install
     startCommand: npm start
@@ -26,6 +27,7 @@ services:
   - type: web
     name: foodkiosk2
     env: node
+    region: oregon
     plan: free
     buildCommand: npm install
     startCommand: npm start
