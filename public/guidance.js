@@ -635,6 +635,113 @@ function guidanceApiPayload(item){
   };
 }
 
+function guidanceStudentSnapshot(student){
+  return {
+    id:student.id,
+    name:studentName(student),
+    gradeSection:student.gradeSection,
+    sex:student.sex,
+    age:student.age,
+    birthday:student.birthday,
+    lrn:student.lrn,
+    address:student.address,
+    father:student.father,
+    mother:student.mother,
+    guardian:student.guardian,
+    contactNumber:student.contactNumber
+  };
+}
+
+function guidanceCaseFromPayload(payload, existingCase = null){
+  const primary = students.find(student=>student.id === String(payload.primaryStudentId || ""));
+  if(!primary){
+    throw new Error("Select the learner whose case profile will be opened.");
+  }
+
+  if(!payload.incidentDate || !payload.incidentLocation || !payload.aggressionType || !payload.immediateResponse || !payload.referredTo || !payload.intervention){
+    throw new Error("Complete the incident location, response, referral, and recommended intervention.");
+  }
+
+  const seen = new Set();
+  const involved = (payload.involved || [])
+    .map(item=>({
+      student:students.find(student=>student.id === String(item.studentId || "")),
+      role:String(item.role || "").trim(),
+      notes:String(item.notes || "").trim()
+    }))
+    .filter(item=>item.student && item.student.id !== primary.id)
+    .filter(item=>{
+      if(seen.has(item.student.id)){
+        return false;
+      }
+      seen.add(item.student.id);
+      return true;
+    });
+
+  const participants = [primary, ...involved.map(item=>item.student)];
+  const hasJhsLearner = participants.some(isJhs);
+  const advisers = [...new Map(participants.map(student=>{
+    const advisory = advisories.find(item=>item.gradeSection === student.gradeSection);
+    return [student.gradeSection, {
+      gradeSection:student.gradeSection,
+      teacher:advisory?.teacher || "Adviser not assigned",
+      department:advisory?.department || (isJhs(student) ? "JHS" : "Elementary")
+    }];
+  })).values()];
+  const now = new Date().toISOString();
+
+  return {
+    id:existingCase?.id || `offline-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    caseNumber:existingCase?.caseNumber || "Pending sync",
+    reportDate:payload.reportDate,
+    incidentDate:payload.incidentDate,
+    incidentTime:String(payload.incidentTime || "").trim(),
+    incidentLocation:String(payload.incidentLocation || "").trim(),
+    primaryStudent:guidanceStudentSnapshot(primary),
+    primaryRole:String(payload.primaryRole || "Victim").trim(),
+    involved:involved.map(item=>({
+      student:guidanceStudentSnapshot(item.student),
+      role:item.role || "Witness",
+      notes:item.notes
+    })),
+    aggressionType:String(payload.aggressionType || "").trim(),
+    aggressionDetails:String(payload.aggressionDetails || "").trim(),
+    immediateResponse:String(payload.immediateResponse || "").trim(),
+    referredTo:String(payload.referredTo || "").trim(),
+    intervention:String(payload.intervention || "").trim(),
+    interventionDetails:String(payload.interventionDetails || "").trim(),
+    advisers,
+    adviserInformed:payload.adviserInformed === true,
+    adviserInformedAt:payload.adviserInformed === true ? String(payload.adviserInformedAt || payload.reportDate).trim() : "",
+    status:["Open", "For Monitoring", "Resolved", "Referred"].includes(payload.status) ? payload.status : "Open",
+    guidanceLevel:hasJhsLearner ? "JHS" : "Elementary",
+    signatory:hasJhsLearner ? "Alexander S. Moreno" : "Monalisa G. Lebuna",
+    createdBy:existingCase?.createdBy || "",
+    createdAt:existingCase?.createdAt || now,
+    updatedAt:now,
+    pendingSync:true
+  };
+}
+
+function canSaveGuidanceCaseOnDevice(error){
+  const message = String(error?.message || "");
+  return !navigator.onLine
+    || error?.status === 503
+    || isConnectionFailure(error)
+    || /Guidance database is unavailable|database is temporarily unavailable|Case was not saved/i.test(message);
+}
+
+async function saveGuidanceCaseOnDevice(payload, existingCase = null){
+  const guidanceCase = guidanceCaseFromPayload(payload, existingCase);
+  if(!window.LearnerOffline?.saveGuidanceCase){
+    throw new Error("Guidance case could not be saved on this device.");
+  }
+  await LearnerOffline.saveGuidanceCase(guidanceCase);
+  cases = mergeGuidanceCases([guidanceCase], cases);
+  renderCases();
+  return guidanceCase;
+}
+
 async function saveGuidanceCaseOnline(payload, existingCase = null){
   const editingServerCase = existingCase?.id && !String(existingCase.id).startsWith("offline-");
   const endpoint = editingServerCase
@@ -784,15 +891,21 @@ async function loadData(){
   lastGuidanceRefresh = Date.now();
   try{
   let savedCaseError = null;
+  let deviceCases = [];
+  try{
+    deviceCases = await LearnerOffline.loadGuidanceCases?.() || [];
+  }catch{
+    savedCaseError = true;
+  }
   if(navigator.onLine){
     localStorage.removeItem("bakhaw-guidance-case-backup");
-    cases = serverGuidanceCases();
+    cases = mergeGuidanceCases(deviceCases, serverGuidanceCases());
     renderCases();
     caseStatusMessage.textContent = cases.length
       ? `${cases.length} guidance case${cases.length === 1 ? "" : "s"} shown. Refreshing online source...`
       : "Loading online guidance cases...";
   }else{
-    cases = serverGuidanceCases();
+    cases = mergeGuidanceCases(deviceCases, serverGuidanceCases());
     renderCases();
     caseStatusMessage.textContent = savedCaseError
       ? "Saved cases could not be read on this device."
@@ -831,12 +944,14 @@ async function loadData(){
       }
       const caseData = await caseResponse.json();
       if(!caseResponse.ok || !caseData.ok){
-        throw new Error("Guidance records could not be loaded.");
+        throw new Error(caseData.message || "Guidance records could not be loaded.");
       }
       let serverCases = caseData.cases || [];
-      cases = serverCases;
-      await LearnerOffline.clearGuidanceLocalData?.().catch(()=>{});
+      const localCases = await LearnerOffline.loadGuidanceCases?.().catch(()=>[]) || [];
+      cases = mergeGuidanceCases(localCases, serverCases);
       await LearnerOffline.replaceGuidanceCases(serverCases);
+      const pendingCases = cases.filter(item=>item.pendingSync === true || String(item.caseNumber || "").trim().toLowerCase() === "pending sync");
+      await Promise.all(pendingCases.map(item=>LearnerOffline.saveGuidanceCase(item).catch(()=>{})));
       if(guidanceRetryTimer){
         window.clearTimeout(guidanceRetryTimer);
         guidanceRetryTimer = null;
@@ -901,9 +1016,22 @@ guidanceForm.addEventListener("submit",async event=>{
       await loadData();
       return;
     }
-    throw new Error("Connect to the internet before saving a Guidance case.");
+    const savedCase = await saveGuidanceCaseOnDevice(payload,existingCase);
+    resetForm();
+    formMessage.textContent = `${savedCase.caseNumber} saved on this device. It will stay available here while the database is unavailable.`;
   }catch(error){
-    formMessage.textContent = error.message || "Guidance case could not be saved online.";
+    if(canSaveGuidanceCaseOnDevice(error)){
+      try{
+        const payload = casePayload();
+        const savedCase = await saveGuidanceCaseOnDevice(payload,existingCase);
+        resetForm();
+        formMessage.textContent = `${savedCase.caseNumber} saved on this device. It will stay available here while the database is unavailable.`;
+      }catch(deviceError){
+        formMessage.textContent = deviceError.message || "Guidance case could not be saved on this device.";
+      }
+    }else{
+      formMessage.textContent = error.message || "Guidance case could not be saved online.";
+    }
   }finally{
     saveCaseButton.disabled = false;
     saveCaseButton.textContent = caseId.value ? "Save Changes" : "Save Guidance Case";

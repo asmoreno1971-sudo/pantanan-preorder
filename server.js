@@ -74,6 +74,15 @@ const legacyMenuPaths = [...new Set([
   path.join(dataDir, "menu.json"),
   process.env.ADMIN_PRODUCTS_PATH ? path.resolve(process.env.ADMIN_PRODUCTS_PATH) : ""
 ])].filter(filePath=>filePath && path.resolve(filePath) !== menuPath);
+const databaseOutageReadFallbackKeys = new Set([
+  "guidance-cases",
+  "personnel-profiles",
+  "students"
+]);
+const databaseOutageWriteFallbackKeys = new Set([
+  "guidance-cases",
+  "personnel-profiles"
+]);
 
 const types = {
   ".html": "text/html; charset=utf-8",
@@ -723,7 +732,7 @@ async function readDataRecord(key, filePath, fallbackValue){
     }
     dbReady = null;
     dbPool = null;
-    if(key === "guidance-cases"){
+    if(!databaseOutageReadFallbackKeys.has(key)){
       throw error;
     }
     console.warn(`Database unavailable while reading ${key}; using fallback data. ${error.message}`);
@@ -1405,8 +1414,6 @@ function transactionLineKey(line){
 }
 
 async function writeDataRecord(key, filePath, value){
-  const reconnectTolerantKeys = new Set(["personnel-profiles"]);
-
   requirePersistentStorageForProduction(key, "write");
 
   try{
@@ -1433,7 +1440,7 @@ async function writeDataRecord(key, filePath, value){
     }
     dbReady = null;
     dbPool = null;
-    if(!reconnectTolerantKeys.has(key)){
+    if(!databaseOutageWriteFallbackKeys.has(key)){
       throw error;
     }
     console.warn(`Database unavailable while writing ${key}; using fallback data. ${error.message}`);
