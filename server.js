@@ -670,11 +670,6 @@ async function getDbPool(){
 }
 
 async function readDataRecord(key, filePath, fallbackValue){
-  if(key === "guidance-cases"){
-    await ensureJsonFile(filePath, null, fallbackValue);
-    return readJsonSeed(filePath, fallbackValue);
-  }
-
   try{
     const pool = await getDbPool();
 
@@ -695,6 +690,9 @@ async function readDataRecord(key, filePath, fallbackValue){
     }
   }catch(error){
     if(!isDatabaseConnectionError(error)){
+      throw error;
+    }
+    if(key === "guidance-cases"){
       throw error;
     }
     dbReady = null;
@@ -1378,12 +1376,7 @@ function transactionLineKey(line){
 }
 
 async function writeDataRecord(key, filePath, value){
-  const reconnectTolerantKeys = new Set(["guidance-cases", "personnel-profiles"]);
-
-  if(key === "guidance-cases"){
-    await writeJsonFile(filePath, value);
-    return;
-  }
+  const reconnectTolerantKeys = new Set(["personnel-profiles"]);
 
   requirePersistentStorageForProduction(key, "write");
 
@@ -2605,8 +2598,17 @@ async function handleApi(req, res){
   }
 
   if(pathname === "/api/guidance-cases" && req.method === "GET"){
-    const cases = await readGuidanceCases();
-    send(res, 200, JSON.stringify({ ok:true, cases }));
+    try{
+      const cases = await readGuidanceCases();
+      send(res, 200, JSON.stringify({ ok:true, cases }));
+    }catch(error){
+      send(res, isDatabaseConnectionError(error) ? 503 : 500, JSON.stringify({
+        ok:false,
+        message:isDatabaseConnectionError(error)
+          ? "Guidance database is unavailable. Cases could not be loaded."
+          : "Guidance cases could not be loaded."
+      }));
+    }
     return true;
   }
 
@@ -2640,7 +2642,7 @@ async function handleApi(req, res){
       send(res, isDatabaseConnectionError(error) ? 503 : 400, JSON.stringify({
         ok:false,
         message:isDatabaseConnectionError(error)
-          ? "Guidance case saved locally while the database reconnects."
+          ? "Guidance database is unavailable. Case was not saved."
           : error.message
       }));
     }
@@ -2674,7 +2676,7 @@ async function handleApi(req, res){
     send(res, isDatabaseConnectionError(error) ? 503 : 400, JSON.stringify({
       ok:false,
       message:isDatabaseConnectionError(error)
-        ? "Guidance case saved locally while the database reconnects."
+        ? "Guidance database is unavailable. Case was not saved."
         : error.message
     }));
   }
@@ -2683,15 +2685,24 @@ async function handleApi(req, res){
 
   if(pathname.startsWith("/api/guidance-cases/") && req.method === "DELETE"){
     const id = decodeURIComponent(pathname.split("/")[3] || "");
-    const cases = await readGuidanceCases();
-    const index = cases.findIndex(item=>item.id === id);
-    if(index < 0){
-      send(res, 404, JSON.stringify({ ok:false, message:"Guidance case not found." }));
-      return true;
+    try{
+      const cases = await readGuidanceCases();
+      const index = cases.findIndex(item=>item.id === id);
+      if(index < 0){
+        send(res, 404, JSON.stringify({ ok:false, message:"Guidance case not found." }));
+        return true;
+      }
+      const [guidanceCase] = cases.splice(index, 1);
+      await writeGuidanceCases(cases);
+      send(res, 200, JSON.stringify({ ok:true, guidanceCase }));
+    }catch(error){
+      send(res, isDatabaseConnectionError(error) ? 503 : 400, JSON.stringify({
+        ok:false,
+        message:isDatabaseConnectionError(error)
+          ? "Guidance database is unavailable. Case was not deleted."
+          : error.message
+      }));
     }
-    const [guidanceCase] = cases.splice(index, 1);
-    await writeGuidanceCases(cases);
-    send(res, 200, JSON.stringify({ ok:true, guidanceCase }));
     return true;
   }
 
