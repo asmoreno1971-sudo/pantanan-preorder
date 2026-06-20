@@ -147,9 +147,10 @@
   async function replaceGuidanceCases(cases){
     const db = await openDatabase();
     return new Promise((resolve, reject)=>{
-      const transaction = db.transaction(guidanceCasesStore, "readwrite");
+      const transaction = db.transaction([guidanceCasesStore, guidanceChangesStore], "readwrite");
       const store = transaction.objectStore(guidanceCasesStore);
       store.clear();
+      transaction.objectStore(guidanceChangesStore).clear();
       (Array.isArray(cases) ? cases : []).forEach(guidanceCase=>store.put(guidanceCase));
       transaction.oncomplete = ()=>{
         db.close();
@@ -175,49 +176,6 @@
   async function removeGuidanceCase(id){
     await useStore(guidanceCasesStore, "readwrite", store=>store.delete(id));
     announceUpdate("guidance");
-  }
-
-  async function queueGuidanceChange(method, guidanceCase){
-    const id = String(guidanceCase.id || uuid());
-    const changes = await pendingGuidanceChanges();
-    const existing = changes.find(change=>change.id === id);
-
-    if(existing){
-      if(existing.method === "POST"){
-        if(method === "DELETE"){
-          await removeGuidanceChange(existing.changeId);
-          return null;
-        }
-        existing.record = { ...guidanceCase, id };
-        existing.queuedAt = new Date().toISOString();
-        await useStore(guidanceChangesStore, "readwrite", store=>store.put(existing));
-        return existing;
-      }
-      await removeGuidanceChange(existing.changeId);
-    }
-
-    const change = {
-      changeId:`${Date.now()}-${uuid()}`,
-      method,
-      id,
-      record:{ ...guidanceCase, id },
-      queuedAt:new Date().toISOString()
-    };
-    await useStore(guidanceChangesStore, "readwrite", store=>store.put(change));
-    return change;
-  }
-
-  async function pendingGuidanceChanges(){
-    const changes = await useStore(guidanceChangesStore, "readonly", store=>store.getAll());
-    return changes.sort((a, b)=>String(a.queuedAt).localeCompare(String(b.queuedAt)));
-  }
-
-  async function removeGuidanceChange(changeId){
-    await useStore(guidanceChangesStore, "readwrite", store=>store.delete(changeId));
-  }
-
-  async function pendingGuidanceCount(){
-    return useStore(guidanceChangesStore, "readonly", store=>store.count());
   }
 
   async function digest(value){
@@ -342,10 +300,6 @@
     loadGuidanceCases,
     saveGuidanceCase,
     removeGuidanceCase,
-    queueGuidanceChange,
-    pendingGuidanceChanges,
-    removeGuidanceChange,
-    pendingGuidanceCount,
     rememberCredentials,
     verifyCredentials,
     setOfflineSession,

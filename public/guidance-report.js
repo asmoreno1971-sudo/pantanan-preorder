@@ -234,13 +234,9 @@ async function loadReport(){
     const latestCases = Array.isArray(data.cases) ? data.cases : [];
     await LearnerOffline.replaceGuidanceCases(latestCases);
     localStorage.removeItem("bakhaw-guidance-case-backup");
-    const pending = await LearnerOffline.pendingGuidanceCount();
     allCases = latestCases;
     setupPeriodFilters(allCases);
     renderSelectedPeriod();
-    if(pending){
-      reportStatus.textContent += ` ${pending} local change${pending === 1 ? "" : "s"} waiting to sync.`;
-    }
   }catch(error){
     if(!(error instanceof TypeError) && error?.name !== "AbortError"){
       reportStatus.textContent = error.message;
