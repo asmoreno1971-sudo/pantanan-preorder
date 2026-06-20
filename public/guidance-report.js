@@ -232,8 +232,9 @@ async function loadReport(){
       throw new Error(data.message || "The latest cases could not be loaded.");
     }
     const latestCases = Array.isArray(data.cases) ? data.cases : [];
-    await LearnerOffline.replaceGuidanceCases(latestCases);
     localStorage.removeItem("bakhaw-guidance-case-backup");
+    await LearnerOffline.clearGuidanceLocalData?.().catch(()=>{});
+    await LearnerOffline.replaceGuidanceCases(latestCases);
     allCases = latestCases;
     setupPeriodFilters(allCases);
     renderSelectedPeriod();

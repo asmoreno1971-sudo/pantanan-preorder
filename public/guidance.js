@@ -772,6 +772,8 @@ async function loadData(){
   try{
   let savedCaseError = null;
   if(navigator.onLine){
+    localStorage.removeItem("bakhaw-guidance-case-backup");
+    await LearnerOffline.clearGuidanceLocalData?.().catch(()=>{});
     if(!cases.length){
       cases = serverGuidanceCases();
     }
@@ -878,7 +880,6 @@ guidanceForm.addEventListener("submit",async event=>{
     const payload = casePayload();
     if(navigator.onLine){
       const savedCase = await saveGuidanceCaseOnline(payload,existingCase);
-      await LearnerOffline.saveGuidanceCase(savedCase);
       resetForm();
       formMessage.textContent = `${savedCase.caseNumber} saved online.`;
       await loadData();
@@ -947,9 +948,9 @@ caseList.addEventListener("click",async event=>{
       if(!response.ok || !data.ok){
         throw new Error(data.message || "Case could not be deleted.");
       }
-      await LearnerOffline.removeGuidanceCase(item.id);
       cases = cases.filter(entry=>entry.id !== item.id);
       renderCases();
+      await loadData();
     }catch(error){
       caseStatusMessage.textContent = error.message || "Guidance case could not be deleted online.";
     }

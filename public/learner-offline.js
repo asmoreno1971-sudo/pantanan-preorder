@@ -161,6 +161,22 @@
     });
   }
 
+  async function clearGuidanceLocalData(){
+    const db = await openDatabase();
+    return new Promise((resolve, reject)=>{
+      const transaction = db.transaction([guidanceCasesStore, guidanceChangesStore], "readwrite");
+      transaction.objectStore(guidanceCasesStore).clear();
+      transaction.objectStore(guidanceChangesStore).clear();
+      transaction.oncomplete = ()=>{
+        db.close();
+        localStorage.removeItem("bakhaw-guidance-case-backup");
+        announceUpdate("guidance");
+        resolve();
+      };
+      transaction.onerror = ()=>{ db.close(); reject(transaction.error); };
+    });
+  }
+
   async function loadGuidanceCases(){
     const guidanceCases = await useStore(guidanceCasesStore, "readonly", store=>store.getAll());
     return guidanceCases.sort((a, b)=>
@@ -238,7 +254,7 @@
           .map(registration=>registration.unregister()));
         return;
       }
-      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=current", { scope:"/" });
+      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=guidance-cleanup-v14", { scope:"/" });
       await registration.update();
       const worker = registration.installing || registration.waiting || registration.active;
       if(worker && worker.state !== "activated"){
@@ -297,6 +313,7 @@
     removeChange,
     pendingCount,
     replaceGuidanceCases,
+    clearGuidanceLocalData,
     loadGuidanceCases,
     saveGuidanceCase,
     removeGuidanceCase,
