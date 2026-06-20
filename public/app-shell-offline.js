@@ -1,6 +1,7 @@
 (function(){
   const offlineHost = "bis1.onrender.com";
   const offlineEnabled = window.location.hostname.toLowerCase() === offlineHost;
+  const shellVersion = "online-offline-v19";
   const appShellPaths = [
     "/", "/customer", "/admin", "/cashier", "/kitchen", "/sales", "/transactions", "/expenses", "/offline-reset", "/qr",
     "/login", "/teacher-login", "/student-dashboard", "/students", "/personnel", "/personnel-profile",
@@ -37,7 +38,7 @@
       return;
     }
 
-    const registration = await navigator.serviceWorker.register("/learner-sw.js?v=current", { scope:"/" });
+    const registration = await navigator.serviceWorker.register(`/learner-sw.js?v=${shellVersion}`, { scope:"/" });
     await registration.update().catch(()=>{});
     await postShellUrls();
   }

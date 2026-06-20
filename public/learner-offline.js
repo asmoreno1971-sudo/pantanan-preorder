@@ -1,6 +1,7 @@
 (function(){
   const offlineHost = "bis1.onrender.com";
   const offlineEnabled = window.location.hostname.toLowerCase() === offlineHost;
+  const shellVersion = "online-offline-v19";
   const databaseName = "bakhaw-learner-offline-v1";
   const databaseVersion = 2;
   const recordsStore = "records";
@@ -254,7 +255,7 @@
           .map(registration=>registration.unregister()));
         return;
       }
-      const registration = await navigator.serviceWorker.register("/learner-sw.js?v=guidance-sync-v18", { scope:"/" });
+      const registration = await navigator.serviceWorker.register(`/learner-sw.js?v=${shellVersion}`, { scope:"/" });
       await registration.update();
       const worker = registration.installing || registration.waiting || registration.active;
       if(worker && worker.state !== "activated"){
