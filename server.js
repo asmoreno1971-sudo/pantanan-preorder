@@ -692,11 +692,11 @@ async function readDataRecord(key, filePath, fallbackValue){
     if(!isDatabaseConnectionError(error)){
       throw error;
     }
+    dbReady = null;
+    dbPool = null;
     if(key === "guidance-cases"){
       throw error;
     }
-    dbReady = null;
-    dbPool = null;
     console.warn(`Database unavailable while reading ${key}; using fallback data. ${error.message}`);
     return readJsonSeed(filePath, fallbackValue);
   }
@@ -1392,11 +1392,14 @@ async function writeDataRecord(key, filePath, value){
       return;
     }
   }catch(error){
-    if(!isDatabaseConnectionError(error) || !reconnectTolerantKeys.has(key)){
+    if(!isDatabaseConnectionError(error)){
       throw error;
     }
     dbReady = null;
     dbPool = null;
+    if(!reconnectTolerantKeys.has(key)){
+      throw error;
+    }
     console.warn(`Database unavailable while writing ${key}; using fallback data. ${error.message}`);
   }
 
