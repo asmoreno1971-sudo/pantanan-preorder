@@ -728,11 +728,52 @@ function guidanceCaseFromPayload(payload, existingCase = null){
 }
 
 function canSaveGuidanceCaseOnDevice(error){
-  const message = String(error?.message || "");
   return !navigator.onLine
-    || error?.status === 503
-    || isConnectionFailure(error)
-    || /Guidance database is unavailable|database is temporarily unavailable|Case was not saved/i.test(message);
+    || isConnectionFailure(error);
+}
+
+function guidanceCaseSyncPayload(guidanceCase){
+  return {
+    reportDate:guidanceCase.reportDate,
+    incidentDate:guidanceCase.incidentDate,
+    incidentTime:guidanceCase.incidentTime,
+    incidentLocation:guidanceCase.incidentLocation,
+    primaryStudentId:guidanceCase.primaryStudent?.id || "",
+    primaryRole:guidanceCase.primaryRole || "Victim",
+    involved:(Array.isArray(guidanceCase.involved) ? guidanceCase.involved : []).map(item=>({
+      studentId:item.student?.id || "",
+      role:item.role || "Witness",
+      notes:item.notes || ""
+    })),
+    aggressionType:guidanceCase.aggressionType,
+    aggressionDetails:guidanceCase.aggressionDetails,
+    immediateResponse:guidanceCase.immediateResponse,
+    referredTo:guidanceCase.referredTo,
+    intervention:guidanceCase.intervention,
+    interventionDetails:guidanceCase.interventionDetails,
+    status:guidanceCase.status || "Open",
+    adviserInformed:guidanceCase.adviserInformed === true,
+    adviserInformedAt:guidanceCase.adviserInformedAt || guidanceCase.reportDate
+  };
+}
+
+async function syncPendingGuidanceCases(){
+  if(!navigator.onLine || !window.LearnerOffline?.loadGuidanceCases){
+    return false;
+  }
+  const localCases = await LearnerOffline.loadGuidanceCases().catch(()=>[]);
+  const pendingCases = localCases.filter(item=>
+    item?.pendingSync === true
+    || String(item?.caseNumber || "").trim().toLowerCase() === "pending sync"
+    || String(item?.id || "").startsWith("offline-")
+  );
+  let syncedAny = false;
+  for(const pendingCase of pendingCases){
+    const savedCase = await saveGuidanceCaseOnline(guidanceCaseSyncPayload(pendingCase), null);
+    await LearnerOffline.removeGuidanceCase?.(pendingCase.id).catch(()=>{});
+    syncedAny = Boolean(savedCase) || syncedAny;
+  }
+  return syncedAny;
 }
 
 async function saveGuidanceCaseOnDevice(payload, existingCase = null){
@@ -909,7 +950,7 @@ async function loadData(){
   }
   if(navigator.onLine){
     localStorage.removeItem("bakhaw-guidance-case-backup");
-    cases = mergeGuidanceCases(deviceCases, embeddedCases);
+    cases = mergeGuidanceCases([], embeddedCases);
     renderCases();
     caseStatusMessage.textContent = cases.length
       ? `${cases.length} guidance case${cases.length === 1 ? "" : "s"} shown. Refreshing online source...`
@@ -947,6 +988,7 @@ async function loadData(){
 
   if(navigator.onLine){
     try{
+      const syncedPendingCases = await syncPendingGuidanceCases();
       const caseResponse = await guidanceFetch(guidanceApiUrl("/api/guidance-cases"),{cache:"no-store"},20000);
       if(isGuidanceAuthResponse(caseResponse)){
         await keepGuidancePageOpen("Guidance session expired online. Saved cases remain available here.");
@@ -957,17 +999,14 @@ async function loadData(){
         throw new Error(caseData.message || "Guidance records could not be loaded.");
       }
       let serverCases = caseData.cases || [];
-      const localCases = await LearnerOffline.loadGuidanceCases?.().catch(()=>[]) || [];
-      cases = mergeGuidanceCases(localCases, serverCases);
+      cases = mergeGuidanceCases([], serverCases);
       await LearnerOffline.replaceGuidanceCases(serverCases);
-      const pendingCases = cases.filter(item=>item.pendingSync === true || String(item.caseNumber || "").trim().toLowerCase() === "pending sync");
-      await Promise.all(pendingCases.map(item=>LearnerOffline.saveGuidanceCase(item).catch(()=>{})));
       if(guidanceRetryTimer){
         window.clearTimeout(guidanceRetryTimer);
         guidanceRetryTimer = null;
       }
       renderCases();
-      await updateGuidanceSyncStatus(`${cases.length} online guidance case${cases.length === 1 ? "" : "s"} loaded.`);
+      await updateGuidanceSyncStatus(`${cases.length} online guidance case${cases.length === 1 ? "" : "s"} loaded.${syncedPendingCases ? " Offline case synced." : ""}`);
 
       try{
         const [studentResponse,adviserResponse] = await Promise.all([
