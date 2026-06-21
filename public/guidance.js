@@ -60,9 +60,10 @@ function guidanceApiUrl(pathname){
 function isConnectionFailure(error){
   const message = String(error?.message || "");
   return !navigator.onLine
+    || error?.status === 503
     || error instanceof TypeError
     || error?.name === "AbortError"
-    || /getaddrinfo|ENOTFOUND|database connection|database is temporarily unavailable|connection terminated|timeout/i.test(message);
+    || /getaddrinfo|ENOTFOUND|database connection|database is temporarily unavailable|database is unavailable|connection terminated|timeout/i.test(message);
 }
 
 function isGuidanceAuthResponse(response){
@@ -1066,7 +1067,9 @@ async function loadData(){
       if(!isConnectionFailure(error)){
         caseStatusMessage.textContent = error.message;
       }else{
-        await updateGuidanceSyncStatus("Offline mode: saved Guidance data remains available.");
+        await updateGuidanceSyncStatus(cases.length
+          ? "Guidance database is unavailable. Pending cases remain on this device and will sync automatically."
+          : "Guidance database is unavailable. New cases will be saved on this device until it returns.");
         queueGuidanceRetry(cases.length ? 5000 : 2000);
       }
     }
