@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-shared-source-v31";
+const shellCache = "bakhaw-learner-shell-shared-source-v32";
 const imageCacheName = "roadworthy-cashier-images-current";
 const offlineHost = "bis1.onrender.com";
 const offlineEnabled = self.location.hostname.toLowerCase() === offlineHost;
@@ -53,13 +53,13 @@ const installShellUrls = [
   "/cashier-offline.js?v=online-offline-v19",
   "/expenses.js?v=online-offline-v19",
   "/guidance.css?v=online-offline-v19",
-  "/guidance.js?v=offline-sync-guidance-v31",
+  "/guidance.js?v=offline-sync-guidance-v32",
   "/guidance-report.css?v=online-offline-v19",
   "/guidance-report.js?v=online-offline-v19",
   "/kitchen.js?v=online-offline-v19",
   "/teacher-login.css?v=online-offline-v19",
   "/teacher-login.js?v=online-offline-v19",
-  "/learner-offline.js?v=online-offline-v19",
+  "/learner-offline.js?v=online-offline-v20",
   "/mineralex/styles.css",
   "/mineralex/script.js",
   "/page-auth.js?v=online-offline-v19",
@@ -171,6 +171,20 @@ function isCacheableApi(pathname){
     "/api/teacher-accounts",
     "/api/personnel-profiles",
   ].includes(pathname);
+}
+
+function isGuidanceLiveShellPath(pathname){
+  return [
+    "/guidance",
+    "/guidance.html",
+    "/guidance-offline-shell",
+    "/guidance.css",
+    "/guidance.js"
+  ].includes(pathname);
+}
+
+function isGuidanceLiveApiPath(pathname){
+  return pathname.startsWith("/api/guidance");
 }
 
 function isSharedSourcePath(pathname){
@@ -618,6 +632,24 @@ self.addEventListener("fetch", event=>{
         return await cache.match(event.request) || new Response("", { status:404 });
       }
     })());
+    return;
+  }
+
+  if(isGuidanceLiveApiPath(url.pathname)){
+    event.respondWith(
+      fetch(event.request, { cache:"no-store" }).catch(()=>new Response(JSON.stringify({
+        ok:false,
+        message:"Guidance live storage is unavailable."
+      }), {
+        status:503,
+        headers:{ "Content-Type":"application/json; charset=utf-8" }
+      }))
+    );
+    return;
+  }
+
+  if(isGuidanceLiveShellPath(url.pathname)){
+    event.respondWith(networkFirstThenCache(event, fallbackPath));
     return;
   }
 

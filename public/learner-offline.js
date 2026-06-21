@@ -1,7 +1,7 @@
 (function(){
   const offlineHost = "bis1.onrender.com";
   const offlineEnabled = window.location.hostname.toLowerCase() === offlineHost;
-  const shellVersion = "online-offline-v19";
+  const shellVersion = "online-offline-v20";
   const databaseName = "bakhaw-learner-offline-v1";
   const databaseVersion = 2;
   const recordsStore = "records";

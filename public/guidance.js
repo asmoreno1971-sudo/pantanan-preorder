@@ -1022,8 +1022,10 @@ async function loadData(){
   const pendingCases = deviceCases.filter(isPendingGuidanceCase);
   if(navigator.onLine){
     localStorage.removeItem("bakhaw-guidance-case-backup");
-    cases = mergeGuidanceCases(pendingCases, []);
-    renderCases();
+    if(!cases.length && pendingCases.length){
+      cases = mergeGuidanceCases(pendingCases, []);
+      renderCases();
+    }
     caseStatusMessage.textContent = "";
   }else{
     cases = mergeGuidanceCases(pendingCases, []);
@@ -1220,21 +1222,19 @@ window.addEventListener("online",async ()=>{
   await updateGuidanceSyncStatus("Connection restored. Syncing pending cases and loading shared Guidance cases...");
   try{
     await retryPendingGuidanceSync();
-    if(!guidanceFormDirty){
-      await loadData();
-    }
+    await loadData();
   }catch(error){
     caseStatusMessage.textContent = "";
   }
 });
 window.addEventListener("offline",()=>updateGuidanceSyncStatus("Offline mode: new cases stay pending on this device."));
 window.addEventListener("pageshow",()=>{
-  if(Date.now() - lastGuidanceRefresh > 15000 && !caseId.value && !guidanceFormDirty){
+  if(Date.now() - lastGuidanceRefresh > 5000){
     loadData();
   }
 });
 document.addEventListener("visibilitychange",()=>{
-  if(document.visibilityState === "visible" && Date.now() - lastGuidanceRefresh > 15000 && !caseId.value && !guidanceFormDirty){
+  if(document.visibilityState === "visible" && Date.now() - lastGuidanceRefresh > 5000){
     loadData();
   }
 });
@@ -1255,10 +1255,10 @@ window.setInterval(()=>{
   if(navigator.onLine){
     retryPendingGuidanceSync();
   }
-  if(document.visibilityState === "visible" && !guidanceFormDirty && Date.now() - lastGuidanceRefresh > 30000){
+  if(document.visibilityState === "visible" && Date.now() - lastGuidanceRefresh > 5000){
     loadData();
   }
-},10000);
+},5000);
 
 if(window.teacherEntryAllowed !== false){
   LearnerOffline.registerServiceWorker().catch(()=>{});
