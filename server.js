@@ -75,12 +75,10 @@ const legacyMenuPaths = [...new Set([
   process.env.ADMIN_PRODUCTS_PATH ? path.resolve(process.env.ADMIN_PRODUCTS_PATH) : ""
 ])].filter(filePath=>filePath && path.resolve(filePath) !== menuPath);
 const databaseOutageReadFallbackKeys = new Set([
-  "guidance-cases",
   "personnel-profiles",
   "students"
 ]);
 const databaseOutageWriteFallbackKeys = new Set([
-  "guidance-cases",
   "personnel-profiles"
 ]);
 
