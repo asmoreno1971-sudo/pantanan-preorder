@@ -771,6 +771,8 @@ function guidanceCaseFromPayload(payload, existingCase = null){
 function guidanceCaseSyncPayload(guidanceCase){
   return {
     caseNumber:isPendingGuidanceCase(guidanceCase) ? "" : guidanceCase.caseNumber,
+    clientPendingId:guidanceCase.id || "",
+    localCaseNumber:guidanceCase.localCaseNumber || guidanceCaseNumberForDisplay(guidanceCase),
     reportDate:guidanceCase.reportDate,
     incidentDate:guidanceCase.incidentDate,
     incidentTime:guidanceCase.incidentTime,
@@ -841,8 +843,34 @@ async function saveGuidanceCaseOnDevice(payload, existingCase = null){
     throw new Error("Guidance case could not be saved on this device.");
   }
   await LearnerOffline.saveGuidanceCase(guidanceCase);
+  queueGuidanceRetry(250);
   renderCases();
   return guidanceCase;
+}
+
+async function removeSyncedGuidanceLocalCases(serverCases = []){
+  if(!window.LearnerOffline?.loadGuidanceCases || !window.LearnerOffline?.removeGuidanceCase){
+    return 0;
+  }
+  const serverPendingIds = new Set(serverCases
+    .map(item=>String(item.clientPendingId || "").trim())
+    .filter(Boolean));
+  const serverLocalNumbers = new Set(serverCases
+    .map(item=>String(item.localCaseNumber || "").trim())
+    .filter(Boolean));
+  if(!serverPendingIds.size && !serverLocalNumbers.size){
+    return 0;
+  }
+  const localCases = await LearnerOffline.loadGuidanceCases().catch(()=>[]);
+  const removals = localCases.filter(item=>
+    isPendingGuidanceCase(item)
+    && (
+      serverPendingIds.has(String(item.id || "").trim())
+      || serverLocalNumbers.has(String(item.localCaseNumber || guidanceCaseNumberForDisplay(item) || "").trim())
+    )
+  );
+  await Promise.all(removals.map(item=>LearnerOffline.removeGuidanceCase(item.id).catch(()=>{})));
+  return removals.length;
 }
 
 async function syncPendingGuidanceCases(){
@@ -1121,6 +1149,7 @@ async function loadData(){
         throw new Error(caseData.message || "Guidance records could not be loaded.");
       }
       let serverCases = caseData.cases || [];
+      await removeSyncedGuidanceLocalCases(serverCases);
       cases = mergeGuidanceCases([], serverCases);
       if(guidanceRetryTimer){
         window.clearTimeout(guidanceRetryTimer);

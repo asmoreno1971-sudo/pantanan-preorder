@@ -1186,6 +1186,8 @@ async function buildGuidanceCase(body, existingCase = null, session = null){
   return {
     id:existingCase?.id || crypto.randomUUID(),
     caseNumber:existingCase?.caseNumber || "",
+    clientPendingId:String(body.clientPendingId || existingCase?.clientPendingId || "").trim(),
+    localCaseNumber:String(body.localCaseNumber || existingCase?.localCaseNumber || "").trim(),
     reportDate,
     incidentDate,
     incidentTime:String(body.incidentTime || "").trim(),
@@ -2825,9 +2827,12 @@ async function handleApi(req, res){
       const cases = await readGuidanceCases();
       const guidanceCase = await buildGuidanceCase(body, null, readTeacherSession(req));
       const requestedCaseNumber = String(body.caseNumber || "").trim();
+      const clientPendingId = String(body.clientPendingId || "").trim();
       const existingCase = requestedCaseNumber
         ? cases.find(item=>String(item.caseNumber || "").trim().toLowerCase() === requestedCaseNumber.toLowerCase())
-        : null;
+        : clientPendingId
+          ? cases.find(item=>String(item.clientPendingId || "").trim() === clientPendingId)
+          : null;
       if(existingCase){
         send(res, 200, JSON.stringify({ ok:true, guidanceCase:existingCase }));
         return true;
