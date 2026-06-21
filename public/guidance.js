@@ -86,7 +86,7 @@ function scrubDatabaseErrorMessage(){
     formMessage.textContent = "Guidance case could not be saved online. Please reconnect and try again.";
   }
   if(caseStatusMessage && databaseErrorPattern.test(String(caseStatusMessage.textContent || ""))){
-    caseStatusMessage.textContent = "Guidance cases could not be refreshed online.";
+    caseStatusMessage.textContent = "";
   }
 }
 
@@ -873,9 +873,7 @@ async function retryPendingGuidanceSync(){
 }
 
 async function updateGuidanceSyncStatus(message = ""){
-  if(message){
-    caseStatusMessage.textContent = message;
-  }
+  caseStatusMessage.textContent = "";
 }
 
 function resetForm(){
@@ -916,11 +914,8 @@ function renderCases(){
     item.caseNumber,item.primaryStudent?.name,item.primaryStudent?.gradeSection,
     item.aggressionType,item.status
   ].join(" ").toLowerCase().includes(query);
-  const sharedCases = cases.filter(item=>!isPendingGuidanceCase(item));
-  const pendingCases = cases.filter(isPendingGuidanceCase);
-  const visibleShared = sharedCases.filter(matchesQuery);
-  const visiblePending = pendingCases.filter(matchesQuery);
-  caseStatusMessage.textContent = `${visibleShared.length} of ${sharedCases.length} shared saved guidance case${sharedCases.length === 1 ? "" : "s"}${pendingCases.length ? `. ${pendingCases.length} pending on this device.` : ""}`;
+  const visibleCases = cases.filter(matchesQuery);
+  caseStatusMessage.textContent = "";
   const cardHtml = item=>`
     <article class="case-card">
       <div class="case-card-head">
@@ -934,15 +929,7 @@ function renderCases(){
         <button class="danger" type="button" data-action="delete" data-id="${escapeHtml(item.id)}">Delete</button>
       </div>
     </article>`;
-  const sections = [];
-  sections.push(visibleShared.length
-    ? visibleShared.map(cardHtml).join("")
-    : `<div class="profile-card empty">No shared saved guidance cases match.</div>`);
-  if(visiblePending.length){
-    sections.push(`<div class="profile-card empty"><strong>Pending on this device</strong><br>These cases will sync when internet and shared storage are available.</div>`);
-    sections.push(visiblePending.map(cardHtml).join(""));
-  }
-  caseList.innerHTML = sections.join("");
+  caseList.innerHTML = visibleCases.map(cardHtml).join("");
 }
 
 function mergeGuidanceCases(localCases = [], serverCases = []){
@@ -1041,15 +1028,11 @@ async function loadData(){
     localStorage.removeItem("bakhaw-guidance-case-backup");
     cases = mergeGuidanceCases(pendingCases, []);
     renderCases();
-    caseStatusMessage.textContent = pendingCases.length
-      ? `${pendingCases.length} pending Guidance case${pendingCases.length === 1 ? "" : "s"} waiting to sync. Loading shared source...`
-      : "Loading shared Guidance cases...";
+    caseStatusMessage.textContent = "";
   }else{
     cases = mergeGuidanceCases(pendingCases, []);
     renderCases();
-    caseStatusMessage.textContent = pendingCases.length
-      ? `${pendingCases.length} pending Guidance case${pendingCases.length === 1 ? "" : "s"} saved on this device.`
-      : "Offline mode: no pending Guidance cases on this device.";
+    caseStatusMessage.textContent = "";
   }
 
   try{
@@ -1121,7 +1104,7 @@ async function loadData(){
       }
     }catch(error){
       if(!isConnectionFailure(error)){
-        caseStatusMessage.textContent = error.message;
+        caseStatusMessage.textContent = "";
       }else{
         const latestDeviceCases = await LearnerOffline.loadGuidanceCases?.().catch(()=>[]) || [];
         cases = mergeGuidanceCases(latestDeviceCases.filter(isPendingGuidanceCase), []);
@@ -1218,7 +1201,7 @@ caseList.addEventListener("click",async event=>{
     editCase(item);
   }else if(button.dataset.action === "delete" && confirm(`Delete ${item.caseNumber}? This cannot be undone.`)){
     if(!navigator.onLine){
-      caseStatusMessage.textContent = "Connect to the internet before deleting a Guidance case.";
+      caseStatusMessage.textContent = "";
       return;
     }
     try{
@@ -1231,7 +1214,7 @@ caseList.addEventListener("click",async event=>{
       renderCases();
       await loadData();
     }catch(error){
-      caseStatusMessage.textContent = error.message || "Guidance case could not be deleted online.";
+      caseStatusMessage.textContent = "";
     }
   }
 });
@@ -1244,7 +1227,7 @@ window.addEventListener("online",async ()=>{
       await loadData();
     }
   }catch(error){
-    caseStatusMessage.textContent = error.message;
+    caseStatusMessage.textContent = "";
   }
 });
 window.addEventListener("offline",()=>updateGuidanceSyncStatus("Offline mode: new cases stay pending on this device."));
