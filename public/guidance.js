@@ -837,6 +837,11 @@ function resetForm(){
   formTitle.textContent = "Guidance Case";
   caseNumberPreview.textContent = "Auto-generated when saved";
   document.getElementById("reportDate").value = displayDate(localIsoDate());
+  document.getElementById("aggressionType").value = "Physical Bullying";
+  document.getElementById("caseStatus").value = "Open";
+  document.getElementById("immediateResponse").value = "Informed Parent / Guardian";
+  document.getElementById("referredTo").value = "Guidance Office";
+  document.getElementById("intervention").value = "Counseling / Psychosocial Support";
   primaryProfile.className = "profile-card empty";
   primaryProfile.textContent = "Select a learner to reveal the complete profile.";
   involvedList.innerHTML = "";
