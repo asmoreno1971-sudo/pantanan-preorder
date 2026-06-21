@@ -146,26 +146,6 @@ function escapeHtml(value){
     .replace(/'/g, "&#039;");
 }
 
-function guidanceCaseRegisterHtml(cases){
-  const savedCases = Array.isArray(cases) ? cases : [];
-  const status = `${savedCases.length} of ${savedCases.length} guidance case${savedCases.length === 1 ? "" : "s"}`;
-  const cards = savedCases.length ? savedCases.map(item=>`
-        <article class="case-card">
-          <div class="case-card-head"><h3>${escapeHtml(item.caseNumber)}</h3></div>
-          <p class="case-learner-name"><strong>${escapeHtml(item.primaryStudent?.name)}</strong></p>
-          <div class="case-card-actions">
-            <button class="report" type="button" data-action="report" data-id="${escapeHtml(item.id)}">Report</button>
-            <button type="button" data-action="edit" data-id="${escapeHtml(item.id)}">Edit</button>
-            <button class="danger" type="button" data-action="delete" data-id="${escapeHtml(item.id)}">Delete</button>
-          </div>
-        </article>`).join("") : `<div class="profile-card empty">No guidance cases match.</div>`;
-
-  return {
-    statusHtml:`<p id="caseStatusMessage" role="status">${escapeHtml(status)}</p>`,
-    listHtml:`<div id="caseList" class="case-list">${cards}</div>`
-  };
-}
-
 function parseCookies(req){
   return String(req.headers.cookie || "")
     .split(";")
@@ -3581,14 +3561,6 @@ async function serveStatic(req, res){
 
     if(ext === ".html"){
       let html = body.toString("utf8");
-      if(requested === "guidance.html"){
-        const cases = await readGuidanceCases().catch(()=>[]);
-        const renderedRegister = guidanceCaseRegisterHtml(cases);
-        html = html
-          .replace(/<p id="caseStatusMessage" role="status">[\s\S]*?<\/p>/, renderedRegister.statusHtml)
-          .replace(/<div id="caseList" class="case-list"><\/div>/, renderedRegister.listHtml);
-        html = html.replace("</head>", `<script>window.__BAKHAW_GUIDANCE_CASES__=${JSON.stringify(cases).replace(/</g,"\\u003c")};</script></head>`);
-      }
       if(isPantananHost(host)){
         html = html.replace(/Roadworthy/g, "Pantanan");
       }

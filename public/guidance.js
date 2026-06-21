@@ -91,10 +91,6 @@ if(caseStatusMessage){
 scrubDatabaseErrorMessage();
 window.addEventListener("load", scrubDatabaseErrorMessage);
 
-function serverGuidanceCases(){
-  return Array.isArray(window.__BAKHAW_GUIDANCE_CASES__) ? window.__BAKHAW_GUIDANCE_CASES__ : [];
-}
-
 function queueGuidanceRetry(delay = 3000){
   if(guidanceRetryTimer || !navigator.onLine){
     return;
@@ -925,7 +921,8 @@ async function refreshCasesFromDevice(){
     await loadData();
     return;
   }
-  cases = serverGuidanceCases();
+  const deviceCases = await LearnerOffline.loadGuidanceCases?.().catch(()=>[]) || [];
+  cases = mergeGuidanceCases(deviceCases.filter(isPendingGuidanceCase), []);
   renderCases();
 }
 
@@ -968,12 +965,6 @@ async function loadData(){
   lastGuidanceRefresh = Date.now();
   try{
   let savedCaseError = null;
-  const embeddedCases = serverGuidanceCases();
-  if(embeddedCases.length){
-    cases = mergeGuidanceCases([], embeddedCases);
-    renderCases();
-    caseStatusMessage.textContent = `${cases.length} online guidance case${cases.length === 1 ? "" : "s"} loaded from server. Refreshing...`;
-  }
   if(navigator.onLine){
     await purgeLegacyGuidanceLocalData();
   }
@@ -985,17 +976,17 @@ async function loadData(){
   }
   if(navigator.onLine){
     localStorage.removeItem("bakhaw-guidance-case-backup");
-    cases = mergeGuidanceCases(deviceCases.filter(isPendingGuidanceCase), embeddedCases);
+    cases = mergeGuidanceCases(deviceCases.filter(isPendingGuidanceCase), []);
     renderCases();
     caseStatusMessage.textContent = cases.length
-      ? `${cases.length} guidance case${cases.length === 1 ? "" : "s"} shown. Refreshing online source...`
+      ? `${cases.length} pending guidance case${cases.length === 1 ? "" : "s"} waiting to sync. Loading online source...`
       : "Loading online guidance cases...";
   }else{
-    cases = mergeGuidanceCases(deviceCases, embeddedCases);
+    cases = mergeGuidanceCases(deviceCases.filter(isPendingGuidanceCase), []);
     renderCases();
     caseStatusMessage.textContent = savedCaseError
       ? "Saved cases could not be read on this device."
-      : `${cases.length} offline guidance case${cases.length === 1 ? "" : "s"} shown.`;
+      : `${cases.length} pending offline guidance case${cases.length === 1 ? "" : "s"} shown.`;
   }
 
   try{
@@ -1013,8 +1004,8 @@ async function loadData(){
   renderCases();
   if(!navigator.onLine && !savedCaseError){
     await updateGuidanceSyncStatus(cases.length
-      ? "Offline mode: showing guidance cases saved on this device."
-      : "No offline guidance cases are saved on this device yet.");
+      ? "Offline mode: showing pending guidance cases saved on this device."
+      : "No pending offline guidance cases are saved on this device.");
   }
 
   if(!navigator.onLine){
