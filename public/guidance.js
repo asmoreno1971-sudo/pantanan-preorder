@@ -30,6 +30,7 @@ let students = [];
 let cases = [];
 let advisories = [];
 let guidanceLoadInFlight = false;
+let guidancePendingSyncInFlight = false;
 let lastGuidanceRefresh = 0;
 let guidanceFormDirty = false;
 let guidanceRetryTimer = null;
@@ -66,6 +67,12 @@ function isConnectionFailure(error){
     || /getaddrinfo|ENOTFOUND|database connection|database is temporarily unavailable|database is unavailable|connection terminated|timeout/i.test(message);
 }
 
+function guidanceStorageUnavailableMessage(){
+  return navigator.onLine
+    ? "Internet is available, but shared Guidance storage is unavailable. Pending cases will keep retrying."
+    : "Offline mode: pending Guidance cases stay on this device.";
+}
+
 function isGuidanceAuthResponse(response){
   return response && (response.status === 401 || response.status === 403);
 }
@@ -98,9 +105,7 @@ function queueGuidanceRetry(delay = 3000){
   }
   guidanceRetryTimer = window.setTimeout(()=>{
     guidanceRetryTimer = null;
-    if(!caseId.value && !guidanceFormDirty){
-      loadData();
-    }
+    retryPendingGuidanceSync();
   },delay);
 }
 
@@ -829,6 +834,44 @@ async function syncPendingGuidanceCases(){
   return syncedAny;
 }
 
+async function retryPendingGuidanceSync(){
+  if(guidancePendingSyncInFlight || !navigator.onLine){
+    return false;
+  }
+  guidancePendingSyncInFlight = true;
+  try{
+    const localCases = await LearnerOffline.loadGuidanceCases?.().catch(()=>[]) || [];
+    const pendingCases = localCases.filter(isPendingGuidanceCase);
+    if(!pendingCases.length){
+      return false;
+    }
+
+    const syncedAny = await syncPendingGuidanceCases();
+    const remainingCases = await LearnerOffline.loadGuidanceCases?.().catch(()=>[]) || [];
+    const remainingPending = remainingCases.filter(isPendingGuidanceCase);
+    cases = mergeGuidanceCases(remainingPending, cases.filter(item=>!isPendingGuidanceCase(item)));
+    renderCases();
+    if(syncedAny){
+      await updateGuidanceSyncStatus("Pending Guidance case synced. Loading shared Guidance cases...");
+      if(!guidanceFormDirty){
+        await loadData();
+      }
+      return true;
+    }
+    return false;
+  }catch(error){
+    if(isConnectionFailure(error)){
+      await updateGuidanceSyncStatus(guidanceStorageUnavailableMessage());
+      queueGuidanceRetry(5000);
+      return false;
+    }
+    await updateGuidanceSyncStatus(error.message || "Pending Guidance case could not sync.");
+    return false;
+  }finally{
+    guidancePendingSyncInFlight = false;
+  }
+}
+
 async function updateGuidanceSyncStatus(message = ""){
   if(message){
     caseStatusMessage.textContent = message;
@@ -1084,7 +1127,7 @@ async function loadData(){
         cases = mergeGuidanceCases(latestDeviceCases.filter(isPendingGuidanceCase), []);
         renderCases();
         await updateGuidanceSyncStatus(cases.length
-          ? `Shared Guidance storage is unavailable. ${cases.length} pending case${cases.length === 1 ? "" : "s"} remain on this device.`
+          ? `${guidanceStorageUnavailableMessage()} ${cases.length} pending case${cases.length === 1 ? "" : "s"} remain on this device.`
           : "Shared Guidance storage is unavailable. New cases can still be saved on this device.");
         queueGuidanceRetry(5000);
       }
@@ -1119,6 +1162,9 @@ guidanceForm.addEventListener("submit",async event=>{
     const savedCase = await saveGuidanceCaseOnDevice(payload,existingCase);
     resetForm();
     formMessage.textContent = `${savedCase.caseNumber} saved on this device and will sync when shared storage is available.`;
+    if(navigator.onLine){
+      queueGuidanceRetry(1000);
+    }
   }catch(error){
     formMessage.textContent = error.message || "Guidance case could not be saved.";
   }finally{
@@ -1193,6 +1239,7 @@ caseList.addEventListener("click",async event=>{
 window.addEventListener("online",async ()=>{
   await updateGuidanceSyncStatus("Connection restored. Syncing pending cases and loading shared Guidance cases...");
   try{
+    await retryPendingGuidanceSync();
     if(!guidanceFormDirty){
       await loadData();
     }
@@ -1225,6 +1272,9 @@ LearnerOffline.onDataUpdated?.(async update=>{
 guidanceForm.addEventListener("input",()=>{ guidanceFormDirty = true; });
 guidanceForm.addEventListener("change",()=>{ guidanceFormDirty = true; });
 window.setInterval(()=>{
+  if(navigator.onLine){
+    retryPendingGuidanceSync();
+  }
   if(document.visibilityState === "visible" && !guidanceFormDirty && Date.now() - lastGuidanceRefresh > 30000){
     loadData();
   }
