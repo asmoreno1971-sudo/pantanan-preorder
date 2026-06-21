@@ -841,7 +841,6 @@ async function saveGuidanceCaseOnDevice(payload, existingCase = null){
     throw new Error("Guidance case could not be saved on this device.");
   }
   await LearnerOffline.saveGuidanceCase(guidanceCase);
-  cases = mergeGuidanceCases([guidanceCase], cases);
   renderCases();
   return guidanceCase;
 }
@@ -875,15 +874,10 @@ async function retryPendingGuidanceSync(){
     }
 
     const syncedAny = await syncPendingGuidanceCases();
-    const remainingCases = await LearnerOffline.loadGuidanceCases?.().catch(()=>[]) || [];
-    const remainingPending = remainingCases.filter(isPendingGuidanceCase);
-    cases = mergeGuidanceCases(remainingPending, cases.filter(item=>!isPendingGuidanceCase(item)));
     renderCases();
     if(syncedAny){
       await updateGuidanceSyncStatus("Pending Guidance case synced. Loading shared Guidance cases...");
-      if(!guidanceFormDirty){
-        await loadData();
-      }
+      await loadData();
       return true;
     }
     return false;
@@ -1043,12 +1037,9 @@ async function refreshCasesFromDevice(){
     await loadData();
     return;
   }
-  const deviceCases = await LearnerOffline.loadGuidanceCases?.().catch(()=>[]) || [];
-  cases = mergeGuidanceCases(deviceCases.filter(isPendingGuidanceCase), []);
+  cases = [];
   renderCases();
-  await updateGuidanceSyncStatus(cases.length
-    ? `${cases.length} pending Guidance case${cases.length === 1 ? "" : "s"} saved on this device.`
-    : "Offline mode: no pending Guidance cases on this device.");
+  await updateGuidanceSyncStatus("");
 }
 
 function editCase(item){
@@ -1090,22 +1081,11 @@ async function loadData(){
   lastGuidanceRefresh = Date.now();
   try{
   await purgeLegacyGuidanceLocalData();
-  let deviceCases = [];
-  try{
-    deviceCases = await LearnerOffline.loadGuidanceCases?.() || [];
-  }catch{
-    deviceCases = [];
-  }
-  const pendingCases = deviceCases.filter(isPendingGuidanceCase);
   if(navigator.onLine){
     localStorage.removeItem("bakhaw-guidance-case-backup");
-    if(!cases.length && pendingCases.length){
-      cases = mergeGuidanceCases(pendingCases, []);
-      renderCases();
-    }
     caseStatusMessage.textContent = "";
   }else{
-    cases = mergeGuidanceCases(pendingCases, []);
+    cases = [];
     renderCases();
     caseStatusMessage.textContent = "";
   }
@@ -1150,15 +1130,12 @@ async function loadData(){
       await updateGuidanceSyncStatus(`${cases.length} shared Guidance case${cases.length === 1 ? "" : "s"} loaded.${syncedPendingCases ? " Pending case synced." : ""}`);
       queueGuidanceDirectoryRefresh();
     }catch(error){
+      cases = [];
+      renderCases();
       if(!isConnectionFailure(error)){
         caseStatusMessage.textContent = "";
       }else{
-        const latestDeviceCases = await LearnerOffline.loadGuidanceCases?.().catch(()=>[]) || [];
-        cases = mergeGuidanceCases(latestDeviceCases.filter(isPendingGuidanceCase), []);
-        renderCases();
-        await updateGuidanceSyncStatus(cases.length
-          ? `${guidanceStorageUnavailableMessage()} ${cases.length} pending case${cases.length === 1 ? "" : "s"} remain on this device.`
-          : "Shared Guidance storage is unavailable. New cases can still be saved on this device.");
+        await updateGuidanceSyncStatus(guidanceStorageUnavailableMessage());
         queueGuidanceRetry(5000);
       }
     }
