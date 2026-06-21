@@ -34,6 +34,7 @@ let lastGuidanceRefresh = 0;
 let guidanceFormDirty = false;
 let guidanceRetryTimer = null;
 const advisoryCacheKey = "bakhaw-guidance-advisories";
+const guidanceLegacyPurgeKey = "bakhaw-guidance-local-purged-v21";
 const databaseErrorPattern = /getaddrinfo|ENOTFOUND|dpg-[a-z0-9-]+|database connection|database is temporarily unavailable/i;
 
 async function guidanceFetch(url, options = {}, timeoutMs = 3000){
@@ -776,6 +777,15 @@ async function syncPendingGuidanceCases(){
   return syncedAny;
 }
 
+async function purgeLegacyGuidanceLocalData(){
+  if(localStorage.getItem(guidanceLegacyPurgeKey) === "yes"){
+    return;
+  }
+  localStorage.removeItem("bakhaw-guidance-case-backup");
+  await LearnerOffline.clearGuidanceLocalData?.().catch(()=>{});
+  localStorage.setItem(guidanceLegacyPurgeKey, "yes");
+}
+
 async function saveGuidanceCaseOnDevice(payload, existingCase = null){
   const guidanceCase = guidanceCaseFromPayload(payload, existingCase);
   if(!window.LearnerOffline?.saveGuidanceCase){
@@ -942,9 +952,12 @@ async function loadData(){
     renderCases();
     caseStatusMessage.textContent = `${cases.length} online guidance case${cases.length === 1 ? "" : "s"} loaded from server. Refreshing...`;
   }
+  if(navigator.onLine){
+    await purgeLegacyGuidanceLocalData();
+  }
   let deviceCases = [];
   try{
-    deviceCases = await LearnerOffline.loadGuidanceCases?.() || [];
+    deviceCases = navigator.onLine ? [] : (await LearnerOffline.loadGuidanceCases?.() || []);
   }catch{
     savedCaseError = true;
   }
