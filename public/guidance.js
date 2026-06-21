@@ -872,12 +872,16 @@ function resetFormIfIdle(){
 
 function renderCases(){
   const query = caseSearch.value.trim().toLowerCase();
-  const visible = cases.filter(item=>[
+  const matchesQuery = item=>[
     item.caseNumber,item.primaryStudent?.name,item.primaryStudent?.gradeSection,
     item.aggressionType,item.status
-  ].join(" ").toLowerCase().includes(query));
-  caseStatusMessage.textContent = `${visible.length} of ${cases.length} guidance case${cases.length === 1 ? "" : "s"}`;
-  caseList.innerHTML = visible.length ? visible.map(item=>`
+  ].join(" ").toLowerCase().includes(query);
+  const sharedCases = cases.filter(item=>!isPendingGuidanceCase(item));
+  const pendingCases = cases.filter(isPendingGuidanceCase);
+  const visibleShared = sharedCases.filter(matchesQuery);
+  const visiblePending = pendingCases.filter(matchesQuery);
+  caseStatusMessage.textContent = `${visibleShared.length} of ${sharedCases.length} shared saved guidance case${sharedCases.length === 1 ? "" : "s"}${pendingCases.length ? `. ${pendingCases.length} pending on this device.` : ""}`;
+  const cardHtml = item=>`
     <article class="case-card">
       <div class="case-card-head">
         <h3>${escapeHtml(item.caseNumber)}</h3>
@@ -889,7 +893,16 @@ function renderCases(){
         <button type="button" data-action="edit" data-id="${escapeHtml(item.id)}">Edit</button>
         <button class="danger" type="button" data-action="delete" data-id="${escapeHtml(item.id)}">Delete</button>
       </div>
-    </article>`).join("") : `<div class="profile-card empty">No guidance cases match.</div>`;
+    </article>`;
+  const sections = [];
+  sections.push(visibleShared.length
+    ? visibleShared.map(cardHtml).join("")
+    : `<div class="profile-card empty">No shared saved guidance cases match.</div>`);
+  if(visiblePending.length){
+    sections.push(`<div class="profile-card empty"><strong>Pending on this device</strong><br>These cases are not shared with other devices yet.</div>`);
+    sections.push(visiblePending.map(cardHtml).join(""));
+  }
+  caseList.innerHTML = sections.join("");
 }
 
 function mergeGuidanceCases(localCases = [], serverCases = []){
