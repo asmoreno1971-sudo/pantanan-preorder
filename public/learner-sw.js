@@ -1,4 +1,4 @@
-const shellCache = "bakhaw-learner-shell-shared-source-v32";
+const shellCache = "bakhaw-learner-shell-shared-source-v33";
 const imageCacheName = "roadworthy-cashier-images-current";
 const offlineHost = "bis1.onrender.com";
 const offlineEnabled = self.location.hostname.toLowerCase() === offlineHost;
@@ -53,13 +53,13 @@ const installShellUrls = [
   "/cashier-offline.js?v=online-offline-v19",
   "/expenses.js?v=online-offline-v19",
   "/guidance.css?v=online-offline-v19",
-  "/guidance.js?v=offline-sync-guidance-v32",
+  "/guidance.js?v=offline-sync-guidance-v33",
   "/guidance-report.css?v=online-offline-v19",
   "/guidance-report.js?v=online-offline-v19",
   "/kitchen.js?v=online-offline-v19",
   "/teacher-login.css?v=online-offline-v19",
   "/teacher-login.js?v=online-offline-v19",
-  "/learner-offline.js?v=online-offline-v20",
+  "/learner-offline.js?v=online-offline-v21",
   "/mineralex/styles.css",
   "/mineralex/script.js",
   "/page-auth.js?v=online-offline-v19",
@@ -533,10 +533,7 @@ self.addEventListener("install", event=>{
     event.waitUntil(self.skipWaiting());
     return;
   }
-  event.waitUntil(
-    warmShellUrls(installShellUrls)
-      .then(()=>self.skipWaiting())
-  );
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", event=>{

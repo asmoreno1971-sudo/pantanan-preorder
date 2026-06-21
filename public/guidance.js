@@ -31,7 +31,9 @@ let cases = [];
 let advisories = [];
 let guidanceLoadInFlight = false;
 let guidancePendingSyncInFlight = false;
+let guidanceDirectoryRefreshInFlight = false;
 let lastGuidanceRefresh = 0;
+let lastGuidanceDirectoryRefresh = 0;
 let guidanceFormDirty = false;
 let guidanceRetryTimer = null;
 const advisoryCacheKey = "bakhaw-guidance-advisories";
@@ -872,6 +874,51 @@ async function updateGuidanceSyncStatus(message = ""){
   caseStatusMessage.textContent = "";
 }
 
+function queueGuidanceDirectoryRefresh(delay = 600){
+  if(!navigator.onLine || guidanceDirectoryRefreshInFlight || Date.now() - lastGuidanceDirectoryRefresh < 60000){
+    return;
+  }
+  window.setTimeout(refreshGuidanceDirectoryOnline, delay);
+}
+
+async function refreshGuidanceDirectoryOnline(){
+  if(!navigator.onLine || guidanceDirectoryRefreshInFlight || Date.now() - lastGuidanceDirectoryRefresh < 60000){
+    return;
+  }
+  guidanceDirectoryRefreshInFlight = true;
+  lastGuidanceDirectoryRefresh = Date.now();
+  try{
+    const [studentResponse,adviserResponse] = await Promise.all([
+      guidanceFetch(guidanceApiUrl("/api/students"),{cache:"no-store"},10000),
+      guidanceFetch(guidanceApiUrl("/api/advisory-directory"),{cache:"no-store"},10000)
+    ]);
+    const [studentData,adviserData] = await Promise.all([
+      studentResponse.json(),
+      adviserResponse.json()
+    ]);
+    if(studentResponse.ok && studentData.ok){
+      const pendingLearnerChanges = await LearnerOffline.pendingCount();
+      students = pendingLearnerChanges
+        ? await LearnerOffline.loadRecords()
+        : (studentData.students || []);
+      if(!pendingLearnerChanges){
+        await LearnerOffline.replaceRecords(students);
+      }
+    }
+    if(adviserResponse.ok && adviserData.ok){
+      advisories = adviserData.advisories || [];
+      localStorage.setItem(advisoryCacheKey,JSON.stringify(advisories));
+    }
+    refreshStudentOptions();
+    resetFormIfIdle();
+    renderCases();
+  }catch{
+    refreshStudentOptions();
+  }finally{
+    guidanceDirectoryRefreshInFlight = false;
+  }
+}
+
 function resetForm(){
   guidanceForm.reset();
   caseId.value = "";
@@ -1071,35 +1118,7 @@ async function loadData(){
       }
       renderCases();
       await updateGuidanceSyncStatus(`${cases.length} shared Guidance case${cases.length === 1 ? "" : "s"} loaded.${syncedPendingCases ? " Pending case synced." : ""}`);
-
-      try{
-        const [studentResponse,adviserResponse] = await Promise.all([
-          guidanceFetch(guidanceApiUrl("/api/students"),{cache:"no-store"},15000),
-          guidanceFetch(guidanceApiUrl("/api/advisory-directory"),{cache:"no-store"},15000)
-        ]);
-        const [studentData,adviserData] = await Promise.all([
-          studentResponse.json(),
-          adviserResponse.json()
-        ]);
-        if(studentResponse.ok && studentData.ok){
-          const pendingLearnerChanges = await LearnerOffline.pendingCount();
-          students = pendingLearnerChanges
-            ? await LearnerOffline.loadRecords()
-            : (studentData.students || []);
-          if(!pendingLearnerChanges){
-            await LearnerOffline.replaceRecords(students);
-          }
-        }
-        if(adviserResponse.ok && adviserData.ok){
-          advisories = adviserData.advisories || [];
-          localStorage.setItem(advisoryCacheKey,JSON.stringify(advisories));
-        }
-        refreshStudentOptions();
-        resetFormIfIdle();
-        renderCases();
-      }catch{
-        refreshStudentOptions();
-      }
+      queueGuidanceDirectoryRefresh();
     }catch(error){
       if(!isConnectionFailure(error)){
         caseStatusMessage.textContent = "";
@@ -1260,7 +1279,13 @@ window.setInterval(()=>{
   }
 },5000);
 
+function registerGuidanceServiceWorkerLater(){
+  window.setTimeout(()=>{
+    LearnerOffline.registerServiceWorker({warmCurrentOnly:true}).catch(()=>{});
+  },2500);
+}
+
 if(window.teacherEntryAllowed !== false){
-  LearnerOffline.registerServiceWorker().catch(()=>{});
   loadData();
+  registerGuidanceServiceWorkerLater();
 }

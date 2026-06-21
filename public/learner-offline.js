@@ -1,7 +1,7 @@
 (function(){
   const offlineHost = "bis1.onrender.com";
   const offlineEnabled = window.location.hostname.toLowerCase() === offlineHost;
-  const shellVersion = "online-offline-v20";
+  const shellVersion = "online-offline-v21";
   const databaseName = "bakhaw-learner-offline-v1";
   const databaseVersion = 2;
   const recordsStore = "records";
@@ -246,7 +246,7 @@
     sessionStorage.removeItem("bakhawGuidanceAdmin");
   }
 
-  async function registerServiceWorker(){
+  async function registerServiceWorker(options = {}){
     if("serviceWorker" in navigator){
       if(!offlineEnabled){
         const registrations = await navigator.serviceWorker.getRegistrations();
@@ -271,11 +271,13 @@
       }
       const readyRegistration = await navigator.serviceWorker.ready;
       const readyWorker = readyRegistration.active || readyRegistration.waiting || readyRegistration.installing;
-      const appShellPaths = [
-        "/", "/customer", "/admin", "/cashier", "/kitchen", "/sales", "/transactions", "/expenses", "/offline-reset", "/qr",
-        "/login", "/teacher-login", "/student-dashboard", "/students", "/personnel", "/personnel-profile",
-        "/guidance", "/guidance-report", "/teacher-accounts", "/teacher-profile", "/mineralex", "/mineralex/"
-      ];
+      const appShellPaths = options.warmCurrentOnly
+        ? [window.location.pathname || "/"]
+        : [
+          "/", "/customer", "/admin", "/cashier", "/kitchen", "/sales", "/transactions", "/expenses", "/offline-reset", "/qr",
+          "/login", "/teacher-login", "/student-dashboard", "/students", "/personnel", "/personnel-profile",
+          "/guidance", "/guidance-report", "/teacher-accounts", "/teacher-profile", "/mineralex", "/mineralex/"
+        ];
       readyWorker?.postMessage({
         type:"CACHE_SHELL_URLS",
         urls:[
@@ -294,7 +296,7 @@
     if(!offlineEnabled || !navigator.onLine || !("serviceWorker" in navigator)){
       return;
     }
-    registerServiceWorker().catch(()=>{});
+    registerServiceWorker({warmCurrentOnly: /^\/guidance(?:\/|$|[?#])/.test(window.location.pathname)}).catch(()=>{});
   }
 
   if(offlineEnabled){
