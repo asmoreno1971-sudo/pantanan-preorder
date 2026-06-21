@@ -257,7 +257,7 @@ function renderCaseReport(item){
       <p>FOR OFFICIAL SCHOOL USE ONLY</p>
     </div>
     <div class="report-meta">
-      ${reportCell("Case Number",item.caseNumber)}
+      ${reportCell("Case Number",guidanceCaseNumberForDisplay(item))}
       ${reportCell("Report Date",reportDisplayDate(item.reportDate) || item.reportDate)}
       ${reportCell("Case Status",item.status)}
       ${reportCell("Guidance Level",item.guidanceLevel)}
@@ -340,7 +340,7 @@ function renderCaseReport(item){
     </div>
     <footer class="report-footer">
       Confidential learner record. Handle and store in accordance with the Data Privacy Act of 2012.
-      Generated from ${reportValue(item.caseNumber)}.
+      Generated from ${reportValue(guidanceCaseNumberForDisplay(item))}.
     </footer>`;
 }
 
@@ -372,7 +372,7 @@ function consolidatedLearners(){
         role:entry.role || "Not provided",
         incidentDate:item.incidentDate,
         status:item.status || "Not provided",
-        caseNumber:item.caseNumber || "Not provided"
+        caseNumber:guidanceCaseNumberForDisplay(item)
       });
     });
   });
@@ -667,6 +667,27 @@ function guidanceStudentSnapshot(student){
   };
 }
 
+function isPendingCaseNumber(value){
+  return !String(value || "").trim() || String(value || "").trim().toLowerCase() === "pending sync";
+}
+
+function localGuidanceCaseNumber(item = {}){
+  const year = String(item.reportDate || item.incidentDate || item.createdAt || localIsoDate()).match(/\d{4}/)?.[0] || String(new Date().getFullYear());
+  const seed = String(item.id || item.createdAt || item.updatedAt || item.primaryStudent?.name || `${Date.now()}`);
+  let hash = 0;
+  for(const character of seed){
+    hash = (hash * 31 + character.charCodeAt(0)) % 9000;
+  }
+  return `GDC-${year}-${String(hash + 1000).padStart(4, "0")}`;
+}
+
+function guidanceCaseNumberForDisplay(item = {}){
+  if(isPendingGuidanceCase(item)){
+    return item.localCaseNumber || (isPendingCaseNumber(item.caseNumber) ? localGuidanceCaseNumber(item) : item.caseNumber);
+  }
+  return item.caseNumber || "Not provided";
+}
+
 function guidanceCaseFromPayload(payload, existingCase = null){
   const primary = students.find(student=>student.id === String(payload.primaryStudentId || ""));
   if(!primary){
@@ -704,10 +725,19 @@ function guidanceCaseFromPayload(payload, existingCase = null){
     }];
   })).values()];
   const now = new Date().toISOString();
+  const id = existingCase?.id || `offline-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const localCaseNumber = existingCase?.localCaseNumber || localGuidanceCaseNumber({
+    id,
+    reportDate:payload.reportDate,
+    incidentDate:payload.incidentDate,
+    createdAt:existingCase?.createdAt || now,
+    primaryStudent:guidanceStudentSnapshot(primary)
+  });
 
   return {
-    id:existingCase?.id || `offline-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-    caseNumber:existingCase?.caseNumber || "Pending sync",
+    id,
+    caseNumber:existingCase?.caseNumber && !isPendingCaseNumber(existingCase.caseNumber) ? existingCase.caseNumber : localCaseNumber,
+    localCaseNumber,
     reportDate:payload.reportDate,
     incidentDate:payload.incidentDate,
     incidentTime:String(payload.incidentTime || "").trim(),
@@ -740,7 +770,7 @@ function guidanceCaseFromPayload(payload, existingCase = null){
 
 function guidanceCaseSyncPayload(guidanceCase){
   return {
-    caseNumber:String(guidanceCase.caseNumber || "").trim() === "Pending sync" ? "" : guidanceCase.caseNumber,
+    caseNumber:isPendingGuidanceCase(guidanceCase) ? "" : guidanceCase.caseNumber,
     reportDate:guidanceCase.reportDate,
     incidentDate:guidanceCase.incidentDate,
     incidentTime:guidanceCase.incidentTime,
@@ -766,7 +796,7 @@ function guidanceCaseSyncPayload(guidanceCase){
 
 function isPendingGuidanceCase(item){
   return item?.pendingSync === true
-    || String(item?.caseNumber || "").trim().toLowerCase() === "pending sync"
+    || isPendingCaseNumber(item?.caseNumber)
     || String(item?.id || "").startsWith("offline-");
 }
 
@@ -954,7 +984,7 @@ function resetFormIfIdle(){
 function renderCases(){
   const query = caseSearch.value.trim().toLowerCase();
   const matchesQuery = item=>[
-    item.caseNumber,item.primaryStudent?.name,item.primaryStudent?.gradeSection,
+    guidanceCaseNumberForDisplay(item),item.primaryStudent?.name,item.primaryStudent?.gradeSection,
     item.aggressionType,item.status
   ].join(" ").toLowerCase().includes(query);
   const visibleCases = cases.filter(matchesQuery);
@@ -962,7 +992,7 @@ function renderCases(){
   const cardHtml = item=>`
     <article class="case-card">
       <div class="case-card-head">
-        <h3>${escapeHtml(item.caseNumber)}</h3>
+        <h3>${escapeHtml(guidanceCaseNumberForDisplay(item))}</h3>
         <span class="case-card-status">Status: ${escapeHtml(item.status || "Open")}</span>
       </div>
       <p class="case-learner-name"><strong>${escapeHtml(item.primaryStudent?.name)}</strong></p>
@@ -988,12 +1018,12 @@ function mergeGuidanceCases(localCases = [], serverCases = []){
   });
   const allCases = [...merged.values()];
   const realCaseLearners = new Set(allCases
-    .filter(item=>String(item.caseNumber || "").trim().toLowerCase() !== "pending sync")
+    .filter(item=>!isPendingGuidanceCase(item))
     .map(item=>String(item.primaryStudent?.id || item.primaryStudent?.name || "").trim().toLowerCase())
     .filter(Boolean));
   return allCases
     .filter(item=>{
-      if(String(item.caseNumber || "").trim().toLowerCase() !== "pending sync"){
+      if(!isPendingGuidanceCase(item)){
         return true;
       }
       const learnerKey = String(item.primaryStudent?.id || item.primaryStudent?.name || "").trim().toLowerCase();
@@ -1025,7 +1055,7 @@ function editCase(item){
   resetForm();
   caseId.value = item.id;
   formTitle.textContent = "Edit Guidance Case";
-  caseNumberPreview.textContent = item.caseNumber;
+  caseNumberPreview.textContent = guidanceCaseNumberForDisplay(item);
   document.getElementById("reportDate").value = displayDate(item.reportDate);
   document.getElementById("incidentDate").value = displayDate(item.incidentDate);
   setIncidentTime(item.incidentTime);
@@ -1217,7 +1247,7 @@ caseList.addEventListener("click",async event=>{
     openCaseReport(item);
   }else if(button.dataset.action === "edit"){
     editCase(item);
-  }else if(button.dataset.action === "delete" && confirm(`Delete ${item.caseNumber}? This cannot be undone.`)){
+  }else if(button.dataset.action === "delete" && confirm(`Delete ${guidanceCaseNumberForDisplay(item)}? This cannot be undone.`)){
     if(!navigator.onLine){
       caseStatusMessage.textContent = "";
       return;
