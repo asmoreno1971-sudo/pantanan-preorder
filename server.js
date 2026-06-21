@@ -6,12 +6,8 @@ const crypto = require("node:crypto");
 const root = __dirname;
 const publicDir = path.join(root, "public");
 const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : root;
-const databaseUrlSource = process.env.DATABASE_URL
-  ? "DATABASE_URL"
-  : process.env.EXTERNAL_DATABASE_URL
-    ? "EXTERNAL_DATABASE_URL"
-    : "";
-const databaseUrl = process.env.DATABASE_URL || process.env.EXTERNAL_DATABASE_URL || "";
+const databaseUrlOptions = buildDatabaseUrlOptions();
+const databaseUrl = databaseUrlOptions[0]?.url || "";
 const dataNamespace = String(process.env.DATA_NAMESPACE || "").trim();
 const teacherProfileHome = process.env.TEACHER_PROFILE_HOME === "true";
 const isProduction = process.env.NODE_ENV === "production";
@@ -65,6 +61,7 @@ let menuFileReady = null;
 let ordersFileReady = null;
 let dbPool = null;
 let dbReady = null;
+let activeDatabaseUrlIndex = 0;
 let studentSeedPromise = null;
 let teacherDirectoryCache = null;
 let teacherDirectoryCachedAt = 0;
@@ -245,6 +242,78 @@ function isDatabaseConnectionError(error){
     || /getaddrinfo|database connection|connection terminated|timeout|cannot find module 'pg'/i.test(message);
 }
 
+function renderExternalDatabaseUrl(value){
+  const raw = String(value || "").trim();
+  if(!raw){
+    return "";
+  }
+
+  try{
+    const url = new URL(raw);
+    const host = url.hostname;
+    if(/^dpg-[a-z0-9-]+$/i.test(host) && !host.includes(".")){
+      const region = String(process.env.RENDER_DATABASE_REGION || process.env.RENDER_REGION || "oregon")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, "") || "oregon";
+      url.hostname = `${host}.${region}-postgres.render.com`;
+      return url.toString();
+    }
+  }catch{
+    return raw;
+  }
+
+  return raw;
+}
+
+function buildDatabaseUrlOptions(){
+  const options = [];
+  const seen = new Set();
+
+  function add(source, url){
+    const value = String(url || "").trim();
+    if(!value || seen.has(value)){
+      return;
+    }
+    seen.add(value);
+    options.push({ source, url:value });
+  }
+
+  function addConfigured(source, url){
+    const value = String(url || "").trim();
+    const renderExternal = renderExternalDatabaseUrl(value);
+    if(renderExternal && renderExternal !== value){
+      add(`${source}_RENDER_EXTERNAL`, renderExternal);
+    }
+    add(source, value);
+  }
+
+  addConfigured("DATABASE_URL", process.env.DATABASE_URL);
+  addConfigured("EXTERNAL_DATABASE_URL", process.env.EXTERNAL_DATABASE_URL);
+  return options;
+}
+
+function currentDatabaseOption(){
+  return databaseUrlOptions[activeDatabaseUrlIndex] || null;
+}
+
+function resetDbPool(){
+  if(dbPool?.end){
+    dbPool.end().catch(()=>{});
+  }
+  dbPool = null;
+  dbReady = null;
+}
+
+function activateNextDatabaseOption(){
+  if(activeDatabaseUrlIndex >= databaseUrlOptions.length - 1){
+    return false;
+  }
+  resetDbPool();
+  activeDatabaseUrlIndex += 1;
+  return true;
+}
+
 function publicErrorMessage(error){
   if(isDatabaseConnectionError(error)){
     return "Database connection is temporarily unavailable. Try again, or use offline login on this device if it was already set up.";
@@ -266,8 +335,8 @@ async function withDatabaseRetry(action, attempts = 3){
       if(!isDatabaseConnectionError(error) || attempt === attempts - 1){
         throw error;
       }
-      dbReady = null;
-      dbPool = null;
+      resetDbPool();
+      activateNextDatabaseOption();
       await wait(200 * (attempt + 1));
     }
   }
@@ -657,15 +726,16 @@ async function writeOrders(orders){
 }
 
 async function getDbPool(){
-  if(!databaseUrl){
+  const databaseOption = currentDatabaseOption();
+  if(!databaseOption?.url){
     return null;
   }
 
   if(!dbPool){
     const { Pool } = require("pg");
     dbPool = new Pool({
-      connectionString:databaseUrl,
-      ssl: databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1") ? false : { rejectUnauthorized:false }
+      connectionString:databaseOption.url,
+      ssl: databaseOption.url.includes("localhost") || databaseOption.url.includes("127.0.0.1") ? false : { rejectUnauthorized:false }
     });
   }
 
@@ -1565,14 +1635,19 @@ function storageMode(){
 }
 
 function databaseHost(){
-  if(!databaseUrl){
+  const databaseOption = currentDatabaseOption();
+  if(!databaseOption?.url){
     return "";
   }
   try{
-    return new URL(databaseUrl).hostname;
+    return new URL(databaseOption.url).hostname;
   }catch{
     return "invalid-database-url";
   }
+}
+
+function databaseSource(){
+  return currentDatabaseOption()?.source || "";
 }
 
 async function readMenu(){
@@ -2201,7 +2276,7 @@ async function handleApi(req, res){
       menuContractVersion,
       storageMode:storageMode(),
       storagePersistent:Boolean(databaseUrl),
-      storageDatabaseSource:databaseUrlSource,
+      storageDatabaseSource:databaseSource(),
       storageDatabaseHost:databaseHost(),
       writeProtected:isProduction && !databaseUrl,
       productWriteProtected:false,
