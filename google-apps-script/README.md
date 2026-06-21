@@ -17,3 +17,26 @@
 
 The app will then create, update, and delete matching learner rows. Existing rows are
 matched by LRN first, with grade/section plus family and first name as a fallback.
+
+## Google Sheets guidance-case synchronization
+
+Use this when `bis1` should store Guidance Saved Cases in the shared spreadsheet
+instead of Render Postgres.
+
+1. Open the BIS1 spreadsheet:
+   `https://docs.google.com/spreadsheets/d/1MwsZdl1wPMdbYYBjrsGZOj5ECFprf-3hYoAJUmiF5KE/edit?gid=1252717516`
+2. Open **Extensions > Apps Script** or create a standalone Apps Script project.
+3. Replace the editor contents with `guidance-sheet-sync.gs`.
+4. Open **Project Settings > Script Properties** and add:
+   - Property: `SYNC_SECRET`
+   - Value: a long private random password
+5. Select **Deploy > New deployment > Web app**.
+6. Set **Execute as** to yourself and **Who has access** to anyone.
+7. Copy the web app `/exec` URL.
+8. In the Render `bis1` service, add:
+   - `GUIDANCE_SHEET_SYNC_URL` = the web app `/exec` URL
+   - `GUIDANCE_SHEET_SYNC_SECRET` = the same Script Property value
+9. Redeploy `bis1`.
+
+The script creates a `Guidance Cases` tab in the spreadsheet. BIS1 then reads and
+writes Saved Cases through that tab, so laptop and phone use the same source.

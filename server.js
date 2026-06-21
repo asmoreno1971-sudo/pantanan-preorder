@@ -37,10 +37,13 @@ const teacherSessionCookie = "bakhawTeacherSession";
 const teacherDefaultPin = "1234";
 const teacherDefaultPinVersion = "20260613-all-directory-teachers";
 const teacherDirectoryCsvUrl = "https://docs.google.com/spreadsheets/d/1llV9k9pReCpe7HAYt2-vZjlqMYXDmlQixgifcfRPOy0/export?format=csv&gid=785227885";
+const advisoryDirectoryCsvUrl = "https://docs.google.com/spreadsheets/d/1MwsZdl1wPMdbYYBjrsGZOj5ECFprf-3hYoAJUmiF5KE/export?format=csv&gid=1252717516";
 const teacherDirectoryFetchTimeoutMs = 2500;
 const personnelProfileCsvUrl = "https://docs.google.com/spreadsheets/d/1llV9k9pReCpe7HAYt2-vZjlqMYXDmlQixgifcfRPOy0/export?format=csv&gid=331359598";
 const studentSheetSyncUrl = String(process.env.STUDENT_SHEET_SYNC_URL || "").trim();
 const studentSheetSyncSecret = String(process.env.STUDENT_SHEET_SYNC_SECRET || "").trim();
+const guidanceSheetSyncUrl = String(process.env.GUIDANCE_SHEET_SYNC_URL || "").trim();
+const guidanceSheetSyncSecret = String(process.env.GUIDANCE_SHEET_SYNC_SECRET || "").trim();
 const teacherDirectoryFallback = [
   "ALEXANDER S. MORENO", "ANALYN L. PORRAS", "BENITA T. LIZADA", "CHARLEY A. EMPESTAN",
   "CRISTY R. DENIEGA", "DARLYN JOY C. HERRERA", "EDEN P. BARCEBAS", "GELINE JR. L. ARELLANO",
@@ -402,16 +405,18 @@ async function readTeacherDirectory(forceRefresh = false){
 
 async function readGradeSections(){
   try{
-    const response = await fetch(teacherDirectoryCsvUrl, { signal:AbortSignal.timeout(10000) });
+    const response = await fetch(advisoryDirectoryCsvUrl, { signal:AbortSignal.timeout(10000) });
     if(!response.ok){
       throw new Error(`Google Sheet returned ${response.status}.`);
     }
     const rows = parseCsvRows(await response.text());
+    const header = rows[0] || [];
+    const sectionIndex = header.findIndex(label=>/^grade\s*section$/i.test(String(label || "").trim()));
     const sections = rows.slice(1)
-      .map(row=>String(row[14] || "").trim())
+      .map(row=>String(row[sectionIndex >= 0 ? sectionIndex : 1] || "").trim())
       .filter(Boolean);
     if(!sections.length){
-      throw new Error("Column O did not contain grade and section names.");
+      throw new Error("The advisory sheet did not contain grade and section names.");
     }
     gradeSectionCache = [...new Set(sections)]
       .sort((a, b)=>a.localeCompare(b, undefined, { numeric:true }));
@@ -426,20 +431,24 @@ async function readGradeSections(){
 
 async function readAdvisoryDirectory(){
   try{
-    const response = await fetch(teacherDirectoryCsvUrl, { signal:AbortSignal.timeout(10000) });
+    const response = await fetch(advisoryDirectoryCsvUrl, { signal:AbortSignal.timeout(10000) });
     if(!response.ok){
       throw new Error(`Google Sheet returned ${response.status}.`);
     }
     const rows = parseCsvRows(await response.text());
+    const header = rows[0] || [];
+    const sectionIndex = header.findIndex(label=>/^grade\s*section$/i.test(String(label || "").trim()));
+    const teacherIndex = header.findIndex(label=>/teacher\s+with\s+advisory/i.test(String(label || "").trim()));
+    const departmentIndex = header.findIndex(label=>/^department$/i.test(String(label || "").trim()));
     const advisories = rows.slice(1)
       .map(row=>({
-        teacher:String(row[10] || "").trim(),
-        department:String(row[11] || "").trim(),
-        gradeSection:String(row[14] || "").trim()
+        teacher:String(row[teacherIndex >= 0 ? teacherIndex : 2] || "").trim(),
+        department:String(row[departmentIndex >= 0 ? departmentIndex : 3] || "").trim(),
+        gradeSection:String(row[sectionIndex >= 0 ? sectionIndex : 1] || "").trim()
       }))
       .filter(entry=>entry.teacher && entry.gradeSection);
     if(!advisories.length){
-      throw new Error("Columns K, L, and O did not contain advisory assignments.");
+      throw new Error("The advisory sheet did not contain advisory assignments.");
     }
     advisoryDirectoryCache = advisories;
   }catch{
@@ -889,7 +898,49 @@ async function writeStudents(students){
   await writeDataRecord("students", studentsPath, students.map(normalizeStudent).filter(Boolean));
 }
 
+function guidanceSheetSyncConfigured(){
+  return Boolean(guidanceSheetSyncUrl && guidanceSheetSyncSecret);
+}
+
+async function guidanceSheetRequest(payload){
+  if(!guidanceSheetSyncConfigured()){
+    return null;
+  }
+
+  const response = await fetch(guidanceSheetSyncUrl, {
+    method:"POST",
+    headers:{ "Content-Type":"text/plain; charset=utf-8" },
+    body:JSON.stringify({
+      secret:guidanceSheetSyncSecret,
+      ...payload
+    }),
+    signal:AbortSignal.timeout(30000)
+  });
+  const result = await response.json().catch(()=>({}));
+  if(!response.ok || !result.ok){
+    throw new Error(result.message || `Guidance Sheet sync failed with status ${response.status}.`);
+  }
+  return result;
+}
+
+async function readGuidanceCasesFromSheet(){
+  const result = await guidanceSheetRequest({ action:"list" });
+  const cases = result?.cases || [];
+  if(!Array.isArray(cases)){
+    throw new Error("Guidance Sheet returned invalid case data.");
+  }
+  return cases;
+}
+
+async function writeGuidanceCasesToSheet(cases){
+  await guidanceSheetRequest({ action:"replace", cases });
+}
+
 async function readGuidanceCases(){
+  if(guidanceSheetSyncConfigured()){
+    return readGuidanceCasesFromSheet();
+  }
+
   const cases = await readDataRecord("guidance-cases", guidanceCasesPath, []);
   if(!Array.isArray(cases)){
     throw new Error("Guidance case storage is not an array.");
@@ -900,6 +951,10 @@ async function readGuidanceCases(){
 async function writeGuidanceCases(cases){
   if(!Array.isArray(cases)){
     throw new Error("Guidance case write blocked: invalid case data.");
+  }
+  if(guidanceSheetSyncConfigured()){
+    await writeGuidanceCasesToSheet(cases);
+    return;
   }
   await writeDataRecord("guidance-cases", guidanceCasesPath, cases);
 }
@@ -1737,11 +1792,17 @@ async function readLiveRecordCount(reader){
 async function readGuidanceStorageStatus(){
   try{
     const cases = await readGuidanceCases();
-    return { ok:true, count:cases.length, message:"" };
+    return {
+      ok:true,
+      count:cases.length,
+      source:guidanceSheetSyncConfigured() ? "google-sheet" : storageMode(),
+      message:""
+    };
   }catch(error){
     return {
       ok:false,
       count:0,
+      source:guidanceSheetSyncConfigured() ? "google-sheet" : storageMode(),
       message:isDatabaseConnectionError(error)
         ? "Guidance database is unavailable."
         : error?.message || "Guidance storage could not be checked.",
@@ -2287,6 +2348,7 @@ async function handleApi(req, res){
       transactionLineCount:transactionLines.count,
       transactionCount:transactionLines.transactionCount,
       guidanceStorageOk:guidance.ok,
+      guidanceStorageSource:guidance.source,
       guidanceCaseCount:guidance.count,
       guidanceStorageCode:guidance.code,
       guidanceStorageMessage:guidance.message,
