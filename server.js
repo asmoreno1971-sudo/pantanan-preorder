@@ -6,6 +6,11 @@ const crypto = require("node:crypto");
 const root = __dirname;
 const publicDir = path.join(root, "public");
 const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : root;
+const databaseUrlSource = process.env.DATABASE_URL
+  ? "DATABASE_URL"
+  : process.env.EXTERNAL_DATABASE_URL
+    ? "EXTERNAL_DATABASE_URL"
+    : "";
 const databaseUrl = process.env.DATABASE_URL || process.env.EXTERNAL_DATABASE_URL || "";
 const dataNamespace = String(process.env.DATA_NAMESPACE || "").trim();
 const teacherProfileHome = process.env.TEACHER_PROFILE_HOME === "true";
@@ -1559,6 +1564,17 @@ function storageMode(){
   return isProduction ? "canonical-menu-json-orders" : "json-fallback";
 }
 
+function databaseHost(){
+  if(!databaseUrl){
+    return "";
+  }
+  try{
+    return new URL(databaseUrl).hostname;
+  }catch{
+    return "invalid-database-url";
+  }
+}
+
 async function readMenu(){
   await ensureMenuFile();
 
@@ -2185,6 +2201,8 @@ async function handleApi(req, res){
       menuContractVersion,
       storageMode:storageMode(),
       storagePersistent:Boolean(databaseUrl),
+      storageDatabaseSource:databaseUrlSource,
+      storageDatabaseHost:databaseHost(),
       writeProtected:isProduction && !databaseUrl,
       productWriteProtected:false,
       orderWriteProtected:isProduction && !databaseUrl,
