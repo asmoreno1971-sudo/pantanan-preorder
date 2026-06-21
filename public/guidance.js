@@ -98,7 +98,7 @@ function queueGuidanceRetry(delay = 3000){
   }
   guidanceRetryTimer = window.setTimeout(()=>{
     guidanceRetryTimer = null;
-    if(!caseId.value){
+    if(!caseId.value && !guidanceFormDirty){
       loadData();
     }
   },delay);
@@ -862,6 +862,14 @@ function resetForm(){
   guidanceFormDirty = false;
 }
 
+function resetFormIfIdle(){
+  if(guidanceFormDirty || caseId.value || guidanceForm.contains(document.activeElement)){
+    return false;
+  }
+  resetForm();
+  return true;
+}
+
 function renderCases(){
   const query = caseSearch.value.trim().toLowerCase();
   const visible = cases.filter(item=>[
@@ -1001,7 +1009,7 @@ async function loadData(){
     advisories = [];
   }
   refreshStudentOptions();
-  resetForm();
+  resetFormIfIdle();
   renderCases();
   if(!navigator.onLine && !savedCaseError){
     await updateGuidanceSyncStatus(cases.length
@@ -1058,7 +1066,7 @@ async function loadData(){
           localStorage.setItem(advisoryCacheKey,JSON.stringify(advisories));
         }
         refreshStudentOptions();
-        resetForm();
+        resetFormIfIdle();
         renderCases();
       }catch{
         refreshStudentOptions();
@@ -1182,19 +1190,21 @@ caseList.addEventListener("click",async event=>{
 window.addEventListener("online",async ()=>{
   await updateGuidanceSyncStatus("Connection restored. Loading online guidance cases...");
   try{
-    await loadData();
+    if(!guidanceFormDirty){
+      await loadData();
+    }
   }catch(error){
     caseStatusMessage.textContent = error.message;
   }
 });
 window.addEventListener("offline",()=>updateGuidanceSyncStatus("Offline mode: changes remain on this device."));
 window.addEventListener("pageshow",()=>{
-  if(Date.now() - lastGuidanceRefresh > 15000 && !caseId.value){
+  if(Date.now() - lastGuidanceRefresh > 15000 && !caseId.value && !guidanceFormDirty){
     loadData();
   }
 });
 document.addEventListener("visibilitychange",()=>{
-  if(document.visibilityState === "visible" && Date.now() - lastGuidanceRefresh > 15000 && !caseId.value){
+  if(document.visibilityState === "visible" && Date.now() - lastGuidanceRefresh > 15000 && !caseId.value && !guidanceFormDirty){
     loadData();
   }
 });
