@@ -178,6 +178,16 @@ function populateIncidentTimes(){
   incidentTime.insertAdjacentHTML("beforeend",options.join(""));
 }
 
+function currentIncidentTime(){
+  const now = new Date();
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const rounded = Math.round(minutes / 30) * 30;
+  const clamped = Math.min(16 * 60, Math.max(7 * 60, rounded));
+  const hour = Math.floor(clamped / 60);
+  const minute = clamped % 60;
+  return `${String(hour).padStart(2,"0")}:${String(minute).padStart(2,"0")}`;
+}
+
 function setIncidentTime(value){
   const savedTime = String(value || "");
   if(savedTime && ![...incidentTime.options].some(option=>option.value === savedTime)){
@@ -837,6 +847,9 @@ function resetForm(){
   formTitle.textContent = "Guidance Case";
   caseNumberPreview.textContent = "Auto-generated when saved";
   document.getElementById("reportDate").value = displayDate(localIsoDate());
+  document.getElementById("incidentDate").value = displayDate(localIsoDate());
+  setIncidentTime(currentIncidentTime());
+  document.getElementById("incidentLocation").value = "Classroom";
   document.getElementById("aggressionType").value = "Physical Bullying";
   document.getElementById("caseStatus").value = "Open";
   document.getElementById("immediateResponse").value = "Informed Parent / Guardian";
