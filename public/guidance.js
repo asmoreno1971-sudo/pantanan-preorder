@@ -763,11 +763,7 @@ async function syncPendingGuidanceCases(){
     return false;
   }
   const localCases = await LearnerOffline.loadGuidanceCases().catch(()=>[]);
-  const pendingCases = localCases.filter(item=>
-    item?.pendingSync === true
-    || String(item?.caseNumber || "").trim().toLowerCase() === "pending sync"
-    || String(item?.id || "").startsWith("offline-")
-  );
+  const pendingCases = localCases.filter(isPendingGuidanceCase);
   let syncedAny = false;
   for(const pendingCase of pendingCases){
     const savedCase = await saveGuidanceCaseOnline(guidanceCaseSyncPayload(pendingCase), null);
@@ -777,12 +773,20 @@ async function syncPendingGuidanceCases(){
   return syncedAny;
 }
 
+function isPendingGuidanceCase(item){
+  return item?.pendingSync === true
+    || String(item?.caseNumber || "").trim().toLowerCase() === "pending sync"
+    || String(item?.id || "").startsWith("offline-");
+}
+
 async function purgeLegacyGuidanceLocalData(){
   if(localStorage.getItem(guidanceLegacyPurgeKey) === "yes"){
     return;
   }
   localStorage.removeItem("bakhaw-guidance-case-backup");
+  const pendingCases = (await LearnerOffline.loadGuidanceCases?.().catch(()=>[]) || []).filter(isPendingGuidanceCase);
   await LearnerOffline.clearGuidanceLocalData?.().catch(()=>{});
+  await Promise.all(pendingCases.map(item=>LearnerOffline.saveGuidanceCase?.(item).catch(()=>{})));
   localStorage.setItem(guidanceLegacyPurgeKey, "yes");
 }
 
@@ -957,13 +961,13 @@ async function loadData(){
   }
   let deviceCases = [];
   try{
-    deviceCases = navigator.onLine ? [] : (await LearnerOffline.loadGuidanceCases?.() || []);
+    deviceCases = await LearnerOffline.loadGuidanceCases?.() || [];
   }catch{
     savedCaseError = true;
   }
   if(navigator.onLine){
     localStorage.removeItem("bakhaw-guidance-case-backup");
-    cases = mergeGuidanceCases([], embeddedCases);
+    cases = mergeGuidanceCases(deviceCases.filter(isPendingGuidanceCase), embeddedCases);
     renderCases();
     caseStatusMessage.textContent = cases.length
       ? `${cases.length} guidance case${cases.length === 1 ? "" : "s"} shown. Refreshing online source...`
