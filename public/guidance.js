@@ -647,165 +647,10 @@ function guidanceApiPayload(item){
   };
 }
 
-function guidanceStudentSnapshot(student){
-  return {
-    id:student.id,
-    name:studentName(student),
-    gradeSection:student.gradeSection,
-    sex:student.sex,
-    age:student.age,
-    birthday:student.birthday,
-    lrn:student.lrn,
-    address:student.address,
-    father:student.father,
-    mother:student.mother,
-    guardian:student.guardian,
-    contactNumber:student.contactNumber
-  };
-}
-
-function guidanceCaseFromPayload(payload, existingCase = null){
-  const primary = students.find(student=>student.id === String(payload.primaryStudentId || ""));
-  if(!primary){
-    throw new Error("Select the learner whose case profile will be opened.");
-  }
-
-  if(!payload.incidentDate || !payload.incidentLocation || !payload.aggressionType || !payload.immediateResponse || !payload.referredTo || !payload.intervention){
-    throw new Error("Complete the incident location, response, referral, and recommended intervention.");
-  }
-
-  const seen = new Set();
-  const involved = (payload.involved || [])
-    .map(item=>({
-      student:students.find(student=>student.id === String(item.studentId || "")),
-      role:String(item.role || "").trim(),
-      notes:String(item.notes || "").trim()
-    }))
-    .filter(item=>item.student && item.student.id !== primary.id)
-    .filter(item=>{
-      if(seen.has(item.student.id)){
-        return false;
-      }
-      seen.add(item.student.id);
-      return true;
-    });
-
-  const participants = [primary, ...involved.map(item=>item.student)];
-  const hasJhsLearner = participants.some(isJhs);
-  const advisers = [...new Map(participants.map(student=>{
-    const advisory = advisories.find(item=>item.gradeSection === student.gradeSection);
-    return [student.gradeSection, {
-      gradeSection:student.gradeSection,
-      teacher:advisory?.teacher || "Adviser not assigned",
-      department:advisory?.department || (isJhs(student) ? "JHS" : "Elementary")
-    }];
-  })).values()];
-  const now = new Date().toISOString();
-
-  return {
-    id:existingCase?.id || `offline-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-    caseNumber:existingCase?.caseNumber || "Pending sync",
-    reportDate:payload.reportDate,
-    incidentDate:payload.incidentDate,
-    incidentTime:String(payload.incidentTime || "").trim(),
-    incidentLocation:String(payload.incidentLocation || "").trim(),
-    primaryStudent:guidanceStudentSnapshot(primary),
-    primaryRole:String(payload.primaryRole || "Victim").trim(),
-    involved:involved.map(item=>({
-      student:guidanceStudentSnapshot(item.student),
-      role:item.role || "Witness",
-      notes:item.notes
-    })),
-    aggressionType:String(payload.aggressionType || "").trim(),
-    aggressionDetails:String(payload.aggressionDetails || "").trim(),
-    immediateResponse:String(payload.immediateResponse || "").trim(),
-    referredTo:String(payload.referredTo || "").trim(),
-    intervention:String(payload.intervention || "").trim(),
-    interventionDetails:String(payload.interventionDetails || "").trim(),
-    advisers,
-    adviserInformed:payload.adviserInformed === true,
-    adviserInformedAt:payload.adviserInformed === true ? String(payload.adviserInformedAt || payload.reportDate).trim() : "",
-    status:["Open", "For Monitoring", "Resolved", "Referred"].includes(payload.status) ? payload.status : "Open",
-    guidanceLevel:hasJhsLearner ? "JHS" : "Elementary",
-    signatory:hasJhsLearner ? "Alexander S. Moreno" : "Monalisa G. Lebuna",
-    createdBy:existingCase?.createdBy || "",
-    createdAt:existingCase?.createdAt || now,
-    updatedAt:now,
-    pendingSync:true
-  };
-}
-
-function canSaveGuidanceCaseOnDevice(error){
-  return !navigator.onLine
-    || isConnectionFailure(error);
-}
-
-function guidanceCaseSyncPayload(guidanceCase){
-  return {
-    reportDate:guidanceCase.reportDate,
-    incidentDate:guidanceCase.incidentDate,
-    incidentTime:guidanceCase.incidentTime,
-    incidentLocation:guidanceCase.incidentLocation,
-    primaryStudentId:guidanceCase.primaryStudent?.id || "",
-    primaryRole:guidanceCase.primaryRole || "Victim",
-    involved:(Array.isArray(guidanceCase.involved) ? guidanceCase.involved : []).map(item=>({
-      studentId:item.student?.id || "",
-      role:item.role || "Witness",
-      notes:item.notes || ""
-    })),
-    aggressionType:guidanceCase.aggressionType,
-    aggressionDetails:guidanceCase.aggressionDetails,
-    immediateResponse:guidanceCase.immediateResponse,
-    referredTo:guidanceCase.referredTo,
-    intervention:guidanceCase.intervention,
-    interventionDetails:guidanceCase.interventionDetails,
-    status:guidanceCase.status || "Open",
-    adviserInformed:guidanceCase.adviserInformed === true,
-    adviserInformedAt:guidanceCase.adviserInformedAt || guidanceCase.reportDate
-  };
-}
-
-async function syncPendingGuidanceCases(){
-  if(!navigator.onLine || !window.LearnerOffline?.loadGuidanceCases){
-    return false;
-  }
-  const localCases = await LearnerOffline.loadGuidanceCases().catch(()=>[]);
-  const pendingCases = localCases.filter(isPendingGuidanceCase);
-  let syncedAny = false;
-  for(const pendingCase of pendingCases){
-    const savedCase = await saveGuidanceCaseOnline(guidanceCaseSyncPayload(pendingCase), null);
-    await LearnerOffline.removeGuidanceCase?.(pendingCase.id).catch(()=>{});
-    syncedAny = Boolean(savedCase) || syncedAny;
-  }
-  return syncedAny;
-}
-
-function isPendingGuidanceCase(item){
-  return item?.pendingSync === true
-    || String(item?.caseNumber || "").trim().toLowerCase() === "pending sync"
-    || String(item?.id || "").startsWith("offline-");
-}
-
 async function purgeLegacyGuidanceLocalData(){
-  if(localStorage.getItem(guidanceLegacyPurgeKey) === "yes"){
-    return;
-  }
   localStorage.removeItem("bakhaw-guidance-case-backup");
-  const pendingCases = (await LearnerOffline.loadGuidanceCases?.().catch(()=>[]) || []).filter(isPendingGuidanceCase);
   await LearnerOffline.clearGuidanceLocalData?.().catch(()=>{});
-  await Promise.all(pendingCases.map(item=>LearnerOffline.saveGuidanceCase?.(item).catch(()=>{})));
   localStorage.setItem(guidanceLegacyPurgeKey, "yes");
-}
-
-async function saveGuidanceCaseOnDevice(payload, existingCase = null){
-  const guidanceCase = guidanceCaseFromPayload(payload, existingCase);
-  if(!window.LearnerOffline?.saveGuidanceCase){
-    throw new Error("Guidance case could not be saved on this device.");
-  }
-  await LearnerOffline.saveGuidanceCase(guidanceCase);
-  cases = mergeGuidanceCases([guidanceCase], cases);
-  renderCases();
-  return guidanceCase;
 }
 
 async function saveGuidanceCaseOnline(payload, existingCase = null){
@@ -872,16 +717,12 @@ function resetFormIfIdle(){
 
 function renderCases(){
   const query = caseSearch.value.trim().toLowerCase();
-  const matchesQuery = item=>[
+  const visible = cases.filter(item=>[
     item.caseNumber,item.primaryStudent?.name,item.primaryStudent?.gradeSection,
     item.aggressionType,item.status
-  ].join(" ").toLowerCase().includes(query);
-  const sharedCases = cases.filter(item=>!isPendingGuidanceCase(item));
-  const pendingCases = cases.filter(isPendingGuidanceCase);
-  const visibleShared = sharedCases.filter(matchesQuery);
-  const visiblePending = pendingCases.filter(matchesQuery);
-  caseStatusMessage.textContent = `${visibleShared.length} of ${sharedCases.length} shared saved guidance case${sharedCases.length === 1 ? "" : "s"}${pendingCases.length ? `. ${pendingCases.length} pending on this device.` : ""}`;
-  const cardHtml = item=>`
+  ].join(" ").toLowerCase().includes(query));
+  caseStatusMessage.textContent = `${visible.length} of ${cases.length} shared saved guidance case${cases.length === 1 ? "" : "s"}`;
+  caseList.innerHTML = visible.length ? visible.map(item=>`
     <article class="case-card">
       <div class="case-card-head">
         <h3>${escapeHtml(item.caseNumber)}</h3>
@@ -893,16 +734,7 @@ function renderCases(){
         <button type="button" data-action="edit" data-id="${escapeHtml(item.id)}">Edit</button>
         <button class="danger" type="button" data-action="delete" data-id="${escapeHtml(item.id)}">Delete</button>
       </div>
-    </article>`;
-  const sections = [];
-  sections.push(visibleShared.length
-    ? visibleShared.map(cardHtml).join("")
-    : `<div class="profile-card empty">No shared saved guidance cases match.</div>`);
-  if(visiblePending.length){
-    sections.push(`<div class="profile-card empty"><strong>Pending on this device</strong><br>These cases are not shared with other devices yet.</div>`);
-    sections.push(visiblePending.map(cardHtml).join(""));
-  }
-  caseList.innerHTML = sections.join("");
+    </article>`).join("") : `<div class="profile-card empty">No shared saved guidance cases match.</div>`;
 }
 
 function mergeGuidanceCases(localCases = [], serverCases = []){
@@ -943,9 +775,9 @@ async function refreshCasesFromDevice(){
     await loadData();
     return;
   }
-  const deviceCases = await LearnerOffline.loadGuidanceCases?.().catch(()=>[]) || [];
-  cases = mergeGuidanceCases(deviceCases.filter(isPendingGuidanceCase), []);
+  cases = [];
   renderCases();
+  await updateGuidanceSyncStatus("Shared Guidance storage is unavailable while offline.");
 }
 
 function editCase(item){
@@ -986,29 +818,16 @@ async function loadData(){
   guidanceLoadInFlight = true;
   lastGuidanceRefresh = Date.now();
   try{
-  let savedCaseError = null;
-  if(navigator.onLine){
-    await purgeLegacyGuidanceLocalData();
-  }
-  let deviceCases = [];
-  try{
-    deviceCases = await LearnerOffline.loadGuidanceCases?.() || [];
-  }catch{
-    savedCaseError = true;
-  }
+  await purgeLegacyGuidanceLocalData();
   if(navigator.onLine){
     localStorage.removeItem("bakhaw-guidance-case-backup");
-    cases = mergeGuidanceCases(deviceCases.filter(isPendingGuidanceCase), []);
+    cases = [];
     renderCases();
-    caseStatusMessage.textContent = cases.length
-      ? `${cases.length} pending guidance case${cases.length === 1 ? "" : "s"} waiting to sync. Loading online source...`
-      : "Loading online guidance cases...";
+    caseStatusMessage.textContent = "Loading shared Guidance cases...";
   }else{
-    cases = mergeGuidanceCases(deviceCases.filter(isPendingGuidanceCase), []);
+    cases = [];
     renderCases();
-    caseStatusMessage.textContent = savedCaseError
-      ? "Saved cases could not be read on this device."
-      : `${cases.length} pending offline guidance case${cases.length === 1 ? "" : "s"} shown.`;
+    caseStatusMessage.textContent = "Shared Guidance storage is unavailable while offline.";
   }
 
   try{
@@ -1024,11 +843,6 @@ async function loadData(){
   refreshStudentOptions();
   resetFormIfIdle();
   renderCases();
-  if(!navigator.onLine && !savedCaseError){
-    await updateGuidanceSyncStatus(cases.length
-      ? "Offline mode: showing pending guidance cases saved on this device."
-      : "No pending offline guidance cases are saved on this device.");
-  }
 
   if(!navigator.onLine){
     return;
@@ -1036,7 +850,6 @@ async function loadData(){
 
   if(navigator.onLine){
     try{
-      const syncedPendingCases = await syncPendingGuidanceCases();
       const caseResponse = await guidanceFetch(guidanceApiUrl("/api/guidance-cases"),{cache:"no-store"},20000);
       if(isGuidanceAuthResponse(caseResponse)){
         await keepGuidancePageOpen("Guidance session expired online. Saved cases remain available here.");
@@ -1048,13 +861,12 @@ async function loadData(){
       }
       let serverCases = caseData.cases || [];
       cases = mergeGuidanceCases([], serverCases);
-      await LearnerOffline.replaceGuidanceCases(serverCases);
       if(guidanceRetryTimer){
         window.clearTimeout(guidanceRetryTimer);
         guidanceRetryTimer = null;
       }
       renderCases();
-      await updateGuidanceSyncStatus(`${cases.length} online guidance case${cases.length === 1 ? "" : "s"} loaded.${syncedPendingCases ? " Offline case synced." : ""}`);
+      await updateGuidanceSyncStatus(`${cases.length} shared Guidance case${cases.length === 1 ? "" : "s"} loaded.`);
 
       try{
         const [studentResponse,adviserResponse] = await Promise.all([
@@ -1088,10 +900,10 @@ async function loadData(){
       if(!isConnectionFailure(error)){
         caseStatusMessage.textContent = error.message;
       }else{
-        await updateGuidanceSyncStatus(cases.length
-          ? "Guidance database is unavailable. Pending cases remain on this device and will sync automatically."
-          : "Guidance database is unavailable. New cases will be saved on this device until it returns.");
-        queueGuidanceRetry(cases.length ? 5000 : 2000);
+        cases = [];
+        renderCases();
+        await updateGuidanceSyncStatus("Shared Guidance storage is unavailable. Cases are not saved on this device.");
+        queueGuidanceRetry(5000);
       }
     }
   }
@@ -1108,29 +920,17 @@ guidanceForm.addEventListener("submit",async event=>{
   const existingCase = editing ? cases.find(item=>item.id === caseId.value) : null;
   try{
     const payload = casePayload();
-    if(navigator.onLine){
-      const savedCase = await saveGuidanceCaseOnline(payload,existingCase);
-      resetForm();
-      formMessage.textContent = `${savedCase.caseNumber} saved online.`;
-      await loadData();
-      return;
+    if(!navigator.onLine){
+      throw new Error("Shared Guidance storage is unavailable while offline. Case was not saved.");
     }
-    const savedCase = await saveGuidanceCaseOnDevice(payload,existingCase);
+    const savedCase = await saveGuidanceCaseOnline(payload,existingCase);
     resetForm();
-    formMessage.textContent = `${savedCase.caseNumber} saved on this device. It will stay available here while the database is unavailable.`;
+    formMessage.textContent = `${savedCase.caseNumber} saved to shared Guidance storage.`;
+    await loadData();
   }catch(error){
-    if(canSaveGuidanceCaseOnDevice(error)){
-      try{
-        const payload = casePayload();
-        const savedCase = await saveGuidanceCaseOnDevice(payload,existingCase);
-        resetForm();
-        formMessage.textContent = `${savedCase.caseNumber} saved on this device. It will stay available here while the database is unavailable.`;
-      }catch(deviceError){
-        formMessage.textContent = deviceError.message || "Guidance case could not be saved on this device.";
-      }
-    }else{
-      formMessage.textContent = error.message || "Guidance case could not be saved online.";
-    }
+    formMessage.textContent = isConnectionFailure(error)
+      ? "Shared Guidance storage is unavailable. Case was not saved."
+      : (error.message || "Guidance case could not be saved to shared storage.");
   }finally{
     saveCaseButton.disabled = false;
     saveCaseButton.textContent = caseId.value ? "Save Changes" : "Save Guidance Case";
