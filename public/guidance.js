@@ -182,22 +182,18 @@ function populateIncidentTimes(){
 
 function currentIncidentTime(){
   const now = new Date();
-  const minutes = now.getHours() * 60 + now.getMinutes();
-  const rounded = Math.round(minutes / 30) * 30;
-  const clamped = Math.min(16 * 60, Math.max(7 * 60, rounded));
-  const hour = Math.floor(clamped / 60);
-  const minute = clamped % 60;
-  return `${String(hour).padStart(2,"0")}:${String(minute).padStart(2,"0")}`;
+  return `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
 }
 
-function setIncidentTime(value){
+function setIncidentTime(value, suffix = "saved"){
   const savedTime = String(value || "");
   if(savedTime && ![...incidentTime.options].some(option=>option.value === savedTime)){
     const [hourText,minute = "00"] = savedTime.split(":");
     const hour24 = Number(hourText);
     const hour12 = hour24 % 12 || 12;
     const period = hour24 < 12 ? "AM" : "PM";
-    incidentTime.add(new Option(`${hour12}:${minute} ${period} (saved)`,savedTime));
+    const labelSuffix = suffix ? ` (${suffix})` : "";
+    incidentTime.add(new Option(`${hour12}:${minute} ${period}${labelSuffix}`,savedTime));
   }
   incidentTime.value = savedTime;
 }
@@ -883,7 +879,7 @@ function resetForm(){
   caseNumberPreview.textContent = "Auto-generated when saved";
   document.getElementById("reportDate").value = displayDate(localIsoDate());
   document.getElementById("incidentDate").value = displayDate(localIsoDate());
-  setIncidentTime(currentIncidentTime());
+  setIncidentTime(currentIncidentTime(), "");
   document.getElementById("incidentLocation").value = "Classroom";
   document.getElementById("aggressionType").value = "Physical Bullying";
   document.getElementById("caseStatus").value = "Open";
@@ -1173,6 +1169,7 @@ bindDatePicker("reportDate","reportDatePicker");
 bindDatePicker("incidentDate","incidentDatePicker");
 bindDatePicker("adviserInformedAt","adviserInformedAtPicker");
 populateIncidentTimes();
+resetForm();
 caseSearch.addEventListener("input",renderCases);
 document.getElementById("closeCaseReport").addEventListener("click",()=>caseReportDialog.close());
 document.getElementById("printCaseReport").addEventListener("click",()=>{
